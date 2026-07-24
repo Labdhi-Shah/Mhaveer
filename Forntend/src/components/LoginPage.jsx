@@ -3,7 +3,7 @@ import axios from 'axios';
 import logoSvg from '../assets/logo.svg';
 
 // 🟢 તમારી લૉગિન API નો URL અહીં સેટ કર્યો છે
-const API_URL = 'http://localhost:5000/api/auth/login';
+const API_URL = 'https://mhaveer.onrender.com/api/auth/login';
 
 const LoginPage = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({
@@ -67,7 +67,7 @@ const LoginPage = ({ onLoginSuccess }) => {
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/forgot-password', {
+      const response = await axios.post('https://mhaveer.onrender.com/api/auth/forgot-password', {
         email: resetEmail,
       });
       setMessage({ type: 'success', text: response.data.message || 'Password reset link sent to your email.' });

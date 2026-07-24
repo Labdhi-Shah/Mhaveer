@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import logoSvg from '../assets/logo.svg';
 
+// 🟢 તમારી લૉગિન API નો URL અહીં સેટ કર્યો છે
+const API_URL = 'http://localhost:5000/api/auth/login';
 
 const LoginPage = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    role: 'Viewer',
   });
 
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -19,29 +20,41 @@ const LoginPage = ({ onLoginSuccess }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // 🟢 લૉગિન બટન પર ક્લિક કરવાથી આ ફંક્શન રન થશે
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, formData);
+      // 🟢 API માં email અને password મોકલીએ છીએ (POST Request)
+      const response = await axios.post(API_URL, {
+        email: formData.email,
+        password: formData.password,
+      });
 
+      // 🟢 જો backend માંથી success: true આવે તો આ કૉલ થશે
       if (response.data.success) {
-        localStorage.setItem('authToken', response.data.token);
-        localStorage.setItem('userRole', response.data.role);
-        localStorage.setItem('loginTime', new Date().getTime());
+        // બ્રાઉઝરના localStorage માં ડેટા સેવ કરીએ છીએ
+        if (response.data.token) {
+          localStorage.setItem('authToken', response.data.token);
+        }
+        localStorage.setItem('userRole', response.data.role || 'admin');
 
         setMessage({ type: 'success', text: 'Login Successful! Redirecting...' });
 
-        if (onLoginSuccess) {
-          onLoginSuccess();
-        }
+        // 🟢 App.jsx ને જાણ કરીએ છીએ જેથી તે Dashboard ખોલી શકે
+        setTimeout(() => {
+          if (onLoginSuccess) {
+            onLoginSuccess(response.data.role);
+          }
+        }, 1000); // 1 સેકન્ડ પછી ડેશબોર્ડ પર જશે
       }
     } catch (error) {
+      // 🔴 જો પાસવર્ડ કે ઈમેલ ખોટો હોય તો અહીં એરર મેસેજ બતાવશે
       setMessage({
         type: 'error',
-        text: error.response?.data?.message || 'Login failed. Please check your credentials.',
+        text: error.response?.data?.message || 'Login failed. Invalid credentials.',
       });
     } finally {
       setLoading(false);
@@ -54,7 +67,7 @@ const LoginPage = ({ onLoginSuccess }) => {
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/forgot-password`, {
+      const response = await axios.post('http://localhost:5000/api/auth/forgot-password', {
         email: resetEmail,
       });
       setMessage({ type: 'success', text: response.data.message || 'Password reset link sent to your email.' });
@@ -180,10 +193,10 @@ const styles = {
     alignItems: 'center',
     height: '100vh',
     width: '100vw',
-    position: 'fixed', // 🟢 આખી સ્ક્રીનમાં કવર કરવા માટે
+    position: 'fixed',
     top: 0,
     left: 0,
-    backgroundColor: '#f0f4f8', // 🟢 તમારો બેકગ્રાઉન્ડ કલર આખી સ્ક્રીનમાં આવી જશે
+    backgroundColor: '#f0f4f8',
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     boxSizing: 'border-box',
     margin: 0,
@@ -222,14 +235,6 @@ const styles = {
     color: '#C59B27',
     letterSpacing: '1px',
   },
-  formTitle: {
-    textAlign: 'center',
-    margin: '15px 0 20px 0',
-    fontSize: '16px',
-    color: '#666666',
-    borderBottom: '1px solid #eee',
-    paddingBottom: '10px',
-  },
   form: {
     display: 'flex',
     flexDirection: 'column',
@@ -254,18 +259,6 @@ const styles = {
     outline: 'none',
     color: '#475569',
     backgroundColor: '#FAFAFA',
-  },
-  select: {
-    width: '100%',
-    padding: '11px',
-    borderRadius: '6px',
-    border: '1px solid #CBD5E1',
-    fontSize: '14px',
-    backgroundColor: '#FAFAFA',
-    color: '#475569',
-    boxSizing: 'border-box',
-    cursor: 'pointer',
-    outline: 'none',
   },
   forgotPassContainer: {
     textAlign: 'right',

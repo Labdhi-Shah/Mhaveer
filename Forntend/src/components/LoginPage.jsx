@@ -85,10 +85,10 @@ const LoginPage = ({ onLoginSuccess }) => {
     <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.logoContainer}>
-          <img 
-            src={logoSvg} 
-            alt="Mhaveer Fincap Logo" 
-            style={styles.logoImage} 
+          <img
+            src={logoSvg}
+            alt="Mhaveer Fincap Logo"
+            style={styles.logoImage}
           />
           <h1 style={styles.brandTitle}>MHAVEER FINCAP</h1>
           <p style={styles.brandTagline}>FINANCE TODAY, SECURE TOMORROW</p>

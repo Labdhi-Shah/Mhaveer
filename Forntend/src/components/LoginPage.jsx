@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import logoSvg from '../assets/logo.svg';
 
-const API_BASE_URL = 'http://localhost:5000/api';
 
 const ROLES = [
   'Super Admin',

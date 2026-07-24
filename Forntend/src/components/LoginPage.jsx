@@ -3,18 +3,6 @@ import axios from 'axios';
 import logoSvg from '../assets/logo.svg';
 
 
-const ROLES = [
-  'Super Admin',
-  'Admin',
-  'Branch Manager',
-  'RM',
-  'Sales Executive',
-  'Credit Manager',
-  'Documentation Executive',
-  'Accountant',
-  'Viewer',
-];
-
 const LoginPage = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     email: '',
@@ -93,7 +81,6 @@ const LoginPage = ({ onLoginSuccess }) => {
           <p style={styles.brandTagline}>FINANCE TODAY, SECURE TOMORROW</p>
         </div>
 
-
         {message.text && (
           <div
             style={{
@@ -133,8 +120,6 @@ const LoginPage = ({ onLoginSuccess }) => {
                 style={styles.input}
               />
             </div>
-
-            
 
             <div style={styles.forgotPassContainer}>
               <span
@@ -193,12 +178,17 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: '100vh',
-    width: '100%',
-    backgroundColor: '#f0f4f8',
+    height: '100vh',
+    width: '100vw',
+    position: 'fixed', // 🟢 આખી સ્ક્રીનમાં કવર કરવા માટે
+    top: 0,
+    left: 0,
+    backgroundColor: '#f0f4f8', // 🟢 તમારો બેકગ્રાઉન્ડ કલર આખી સ્ક્રીનમાં આવી જશે
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     boxSizing: 'border-box',
-    padding: '40px 20px', // 🟢 ઉપર-નીચે 40px ની સ્પેસ આપી જેથી કાર્ડ કટ ન થાય
+    margin: 0,
+    padding: '20px',
+    overflowY: 'auto',
   },
   card: {
     width: '100%',
@@ -207,7 +197,7 @@ const styles = {
     borderRadius: '12px',
     backgroundColor: '#ffffff',
     boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
-    borderTop: '4px solid #C59B27', // 🟢 ઉપરની ગોલ્ડ લાઈન કટ વગર પ્રોપર દેખાશે
+    borderTop: '4px solid #C59B27',
   },
   logoContainer: {
     textAlign: 'center',

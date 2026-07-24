@@ -9,4 +9,4 @@ function App() {
   );
 }
 
-export def
+export default App;

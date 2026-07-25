@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import logoSvg from '../assets/logo.svg';
 
-// 🟢 તમારી લૉગિન API નો URL અહીં સેટ કર્યો છે
-const API_URL = 'https://mhaveer.onrender.com/api/auth/login';
-
 const LoginPage = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     email: '',
@@ -28,7 +25,7 @@ const LoginPage = ({ onLoginSuccess }) => {
 
     try {
       // 🟢 API માં email અને password મોકલીએ છીએ (POST Request)
-      const response = await axios.post(API_URL, {
+      const response = await axios.post('https://mhaveer.onrender.com/api/auth/login', {
         email: formData.email,
         password: formData.password,
       });
@@ -107,7 +104,7 @@ const LoginPage = ({ onLoginSuccess }) => {
         )}
 
         {!isForgotPassword ? (
-          <form onSubmit={handleLoginSubmit} style={styles.form}>
+          <form style={styles.form}>
             <div style={styles.inputGroup}>
               <label style={styles.label}>Email Address</label>
               <input
@@ -146,12 +143,12 @@ const LoginPage = ({ onLoginSuccess }) => {
               </span>
             </div>
 
-            <button type="submit" disabled={loading} style={styles.button}>
+            <button type="button" onClick={handleLoginSubmit} disabled={loading} style={styles.button}>
               {loading ? 'Logging in...' : 'Sign In'}
             </button>
           </form>
         ) : (
-          <form onSubmit={handleForgotPasswordSubmit} style={styles.form}>
+          <form style={styles.form}>
             <div style={styles.inputGroup}>
               <label style={styles.label}>Enter Registered Email</label>
               <input
@@ -164,7 +161,7 @@ const LoginPage = ({ onLoginSuccess }) => {
               />
             </div>
 
-            <button type="submit" disabled={loading} style={styles.button}>
+            <button type="button" onClick={handleForgotPasswordSubmit} disabled={loading} style={styles.button}>
               {loading ? 'Sending Link...' : 'Send Reset Link'}
             </button>
 

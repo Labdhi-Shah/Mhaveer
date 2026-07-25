@@ -20,6 +20,12 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use("/api/auth", authRoutes);
+app.get("/api/test", (req, res) => {
+  res.json({
+    success: true,
+    message: "API Working"
+  });
+});
 
 // Test Route
 app.get("/", (req, res) => {

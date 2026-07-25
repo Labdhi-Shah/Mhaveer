@@ -1,4 +1,5 @@
 import { useState } from "react";
+import logoSvg from '../assets/logo.svg';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -75,13 +76,26 @@ function Login() {
         <div style={{ padding: "40px 30px" }}>
           {/* Logo Area */}
           <div style={{ textAlign: "center", marginBottom: "35px" }}>
-            <div style={{ marginBottom: "10px" }}>
-              <svg width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20 75 V 30 L 45 50 L 60 30 V 75" stroke="#0b2746" strokeWidth="8" fill="none" strokeLinejoin="round"/>
-                <path d="M45 75 V 50 L 80 25 V 75" fill="none" stroke="#d4af37" strokeWidth="8" strokeLinejoin="round"/>
-                <path d="M72 32 L 80 25 L 88 32" fill="none" stroke="#d4af37" strokeWidth="8" strokeLinejoin="round"/>
-              </svg>
+            <div style={{ marginBottom: "15px", display: "flex", justifyContent: "center" }}>
+              {/* Imported Logo SVG */}
+              <img
+                src={logoSvg}
+                alt="Mhaveer Fincap Logo"
+                style={{
+                  width: "100px",
+                  height: "100px",
+                  objectFit: "contain",
+                }}
+                onError={(e) => {
+                  // Fallback to SVG path if img fails to load
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'block';
+                }}
+              />
+              
+             
             </div>
+
             <h1
               style={{
                 fontSize: "24px",

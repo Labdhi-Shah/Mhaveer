@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
+const API_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api/auth/login' 
+  : 'https://mhaveer.onrender.com/api/auth/login';
+
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post('https://mhaveer.onrender.com/api/auth/login', {
+      const response = await axios.post(API_URL, {
         email: email,
         password: password,
       });

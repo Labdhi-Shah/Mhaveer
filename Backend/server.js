@@ -19,13 +19,15 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
-app.use("/api/auth", authRoutes);
-app.get("/api/test", (req, res) => {
+
+app.post("/api/auth/login", (req, res) => {
   res.json({
     success: true,
-    message: "API Working"
+    message: "Direct Login Working"
   });
 });
+
+app.use("/api/auth", authRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

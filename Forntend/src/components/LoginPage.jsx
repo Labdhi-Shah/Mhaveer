@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import logoSvg from '../assets/logo.svg';
-
-// 🟢 તમારી લૉગિન API નો URL અહીં સેટ કર્યો છે
-const API_URL = 'http://localhost:5000/api/auth/login';
 
 const LoginPage = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({
@@ -11,8 +7,6 @@ const LoginPage = ({ onLoginSuccess }) => {
     password: '',
   });
 
-  const [isForgotPassword, setIsForgotPassword] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
@@ -21,64 +15,30 @@ const LoginPage = ({ onLoginSuccess }) => {
   };
 
   // 🟢 લૉગિન બટન પર ક્લિક કરવાથી આ ફંક્શન રન થશે
-  const handleLoginSubmit = async (e) => {
+  const handleLoginSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage({ type: '', text: '' });
 
-    try {
-      // 🟢 API માં email અને password મોકલીએ છીએ (POST Request)
-      const response = await axios.post(API_URL, {
-        email: formData.email,
-        password: formData.password,
-      });
+    const { email, password } = formData;
 
-      // 🟢 જો backend માંથી success: true આવે તો આ કૉલ થશે
-      if (response.data.success) {
-        // બ્રાઉઝરના localStorage માં ડેટા સેવ કરીએ છીએ
-        if (response.data.token) {
-          localStorage.setItem('authToken', response.data.token);
-        }
-        localStorage.setItem('userRole', response.data.role || 'admin');
+    if (!email || !password) {
+      setMessage({ type: 'error', text: 'Please enter email and password.' });
+      setLoading(false);
+      return;
+    }
 
-        setMessage({ type: 'success', text: 'Login Successful! Redirecting...' });
+    // 🟢 API નો કૉલ નથી; લોકલ-only લૉગિન વર્કફ્લો
+    localStorage.setItem('authToken', 'local-dummy-token');
+    localStorage.setItem('userRole', 'admin');
+    setMessage({ type: 'success', text: 'Login successful. Redirecting...' });
 
-        // 🟢 App.jsx ને જાણ કરીએ છીએ જેથી તે Dashboard ખોલી શકે
-        setTimeout(() => {
-          if (onLoginSuccess) {
-            onLoginSuccess(response.data.role);
-          }
-        }, 1000); // 1 સેકન્ડ પછી ડેશબોર્ડ પર જશે
+    setTimeout(() => {
+      setLoading(false);
+      if (onLoginSuccess) {
+        onLoginSuccess('admin');
       }
-    } catch (error) {
-      // 🔴 જો પાસવર્ડ કે ઈમેલ ખોટો હોય તો અહીં એરર મેસેજ બતાવશે
-      setMessage({
-        type: 'error',
-        text: error.response?.data?.message || 'Login failed. Invalid credentials.',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleForgotPasswordSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage({ type: '', text: '' });
-
-    try {
-      const response = await axios.post('http://localhost:5000/api/auth/forgot-password', {
-        email: resetEmail,
-      });
-      setMessage({ type: 'success', text: response.data.message || 'Password reset link sent to your email.' });
-    } catch (error) {
-      setMessage({
-        type: 'error',
-        text: error.response?.data?.message || 'Failed to send reset link.',
-      });
-    } finally {
-      setLoading(false);
-    }
+    }, 500);
   };
 
   return (

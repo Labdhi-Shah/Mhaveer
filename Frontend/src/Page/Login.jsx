@@ -20,7 +20,8 @@ function Login() {
       setLoading(true);
       setMessage("");
 
-      const response = await fetch(`${API}/api/auth/login`, {
+      const baseUrl = API.endsWith('/') ? API.slice(0, -1) : API;
+      const response = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

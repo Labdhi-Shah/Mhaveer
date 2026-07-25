@@ -34,11 +34,11 @@ function Login() {
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         localStorage.setItem("token", data.token);
         setMessage("✅ Login Successful");
       } else {
-        setMessage(data.message);
+        setMessage(data.message || "Invalid Email or Password");
       }
     } catch (error) {
       console.log(error);
@@ -51,78 +51,175 @@ function Login() {
   return (
     <div
       style={{
-        height: "100vh",
+        minHeight: "100vh",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        background: "#f3f4f6",
+        background: "#f0f4f8",
+        fontFamily: "'Inter', sans-serif",
       }}
     >
-      <form
-        onSubmit={handleLogin}
+      <div
         style={{
-          width: "350px",
+          width: "100%",
+          maxWidth: "420px",
           background: "#fff",
-          padding: "30px",
-          borderRadius: "10px",
-          boxShadow: "0 0 10px rgba(0,0,0,.2)",
+          borderRadius: "16px",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
+          overflow: "hidden",
         }}
       >
-        <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
-          Admin Login
-        </h2>
+        {/* Top Golden Border */}
+        <div style={{ height: "6px", background: "#d4af37" }}></div>
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "12px",
-            marginBottom: "15px",
-          }}
-        />
+        <div style={{ padding: "40px 30px" }}>
+          {/* Logo Area */}
+          <div style={{ textAlign: "center", marginBottom: "35px" }}>
+            <div style={{ marginBottom: "10px" }}>
+              <svg width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 75 V 30 L 45 50 L 60 30 V 75" stroke="#0b2746" strokeWidth="8" fill="none" strokeLinejoin="round"/>
+                <path d="M45 75 V 50 L 80 25 V 75" fill="none" stroke="#d4af37" strokeWidth="8" strokeLinejoin="round"/>
+                <path d="M72 32 L 80 25 L 88 32" fill="none" stroke="#d4af37" strokeWidth="8" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <h1
+              style={{
+                fontSize: "24px",
+                fontWeight: "900",
+                color: "#0b2746",
+                margin: "0 0 10px 0",
+                letterSpacing: "1px",
+              }}
+            >
+              MHAVEER FINCAP
+            </h1>
+            <div
+              style={{
+                fontSize: "11px",
+                fontWeight: "700",
+                color: "#d4af37",
+                letterSpacing: "1px",
+                textTransform: "uppercase",
+              }}
+            >
+              Finance Today, Secure Tomorrow
+            </div>
+          </div>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "12px",
-            marginBottom: "20px",
-          }}
-        />
+          <form onSubmit={handleLogin}>
+            {/* Email Field */}
+            <div style={{ marginBottom: "20px" }}>
+              <label
+                style={{
+                  display: "block",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: "#4a5568",
+                  marginBottom: "8px",
+                }}
+              >
+                Email Address
+              </label>
+              <input
+                type="email"
+                placeholder="Enter email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "14px 16px",
+                  borderRadius: "8px",
+                  border: "1px solid #e2e8f0",
+                  fontSize: "14px",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            width: "100%",
-            padding: "12px",
-            background: "#2563eb",
-            color: "#fff",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          {loading ? "Please Wait..." : "Login"}
-        </button>
+            {/* Password Field */}
+            <div style={{ marginBottom: "15px" }}>
+              <label
+                style={{
+                  display: "block",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: "#4a5568",
+                  marginBottom: "8px",
+                }}
+              >
+                Password
+              </label>
+              <input
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "14px 16px",
+                  borderRadius: "8px",
+                  border: "1px solid #e2e8f0",
+                  fontSize: "14px",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
 
-        {message && (
-          <p
-            style={{
-              textAlign: "center",
-              marginTop: "15px",
-              color: "red",
-            }}
-          >
-            {message}
-          </p>
-        )}
-      </form>
+            {/* Forgot Password */}
+            <div style={{ textAlign: "right", marginBottom: "25px" }}>
+              <a
+                href="#"
+                style={{
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  color: "#d4af37",
+                  textDecoration: "none",
+                }}
+              >
+                Forgot Password?
+              </a>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: "100%",
+                padding: "14px",
+                background: "#0b2746",
+                color: "#fff",
+                fontSize: "16px",
+                fontWeight: "600",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+                transition: "background 0.3s",
+              }}
+            >
+              {loading ? "Please Wait..." : "Sign In"}
+            </button>
+
+            {/* Message */}
+            {message && (
+              <p
+                style={{
+                  textAlign: "center",
+                  marginTop: "15px",
+                  color: message.includes("✅") ? "green" : "red",
+                  fontSize: "14px",
+                }}
+              >
+                {message}
+              </p>
+            )}
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

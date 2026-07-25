@@ -20,7 +20,7 @@ function Login() {
       setLoading(true);
       setMessage("");
 
-      const baseUrl = API.endsWith('/') ? API.slice(0, -1) : API;
+      const baseUrl = (API || "").replace(/\/+$/, "");
       const response = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: {

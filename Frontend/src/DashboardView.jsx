@@ -1,48 +1,78 @@
-import { PlusCircle, Users2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import React from "react";
+import { Users, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-const statusStyles = {
-  Active: "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-400/20",
-  Inactive: "bg-rose-500/10 text-rose-300 ring-1 ring-rose-400/20",
-};
+export default function DashboardView({ employees = [], onOpenForm }) {
+  const navigate = useNavigate();
 
-export default function DashboardView({ employees }) {
-  const activeCount = employees.filter((employee) => employee.status === "Active").length;
-  const inactiveCount = employees.filter((employee) => employee.status === "Inactive").length;
-  const recentEmployees = [...employees].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5);
+  const stats = {
+    total: employees.length,
+    active: employees.filter((e) => e.status === "Active").length,
+    inactive: employees.filter((e) => e.status === "Inactive").length,
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 rounded-[28px] border border-white/10 bg-slate-900/70 p-6 shadow-2xl shadow-slate-950/30 lg:flex-row lg:items-end lg:justify-between">
+      {/* Banner */}
+      <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 border-l-8 border-l-[#0a2540]">
         <div>
-          <p className="text-sm font-medium uppercase tracking-[0.26em] text-indigo-300">Overview</p>
-          <h2 className="mt-2 text-2xl font-semibold text-white">Welcome back, Super Admin</h2>
-          <p className="mt-2 max-w-2xl text-sm text-slate-400">
-            Monitor your employee network, add new hires, and keep every department aligned from one premium workspace.
+          <p className="text-xs font-extrabold uppercase tracking-widest text-[#d4af37]">
+            Executive Overview
           </p>
+          <h1 className="text-2xl font-black text-[#0a2540] mt-0.5">Super Admin Dashboard</h1>
+          <p className="text-slate-500 text-xs mt-0.5">Overview & Employee Management System</p>
         </div>
-        <Link
-          to="/employees/add"
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500"
+        <button
+          onClick={onOpenForm}
+          className="bg-[#d4af37] hover:bg-[#c39e2d] text-[#0a2540] px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition shadow-md"
         >
-          <PlusCircle className="h-4 w-4" />
           Add New Employee
-        </Link>
+        </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-[24px] border border-white/10 bg-slate-900/70 p-5 shadow-xl shadow-slate-950/20">
-          <p className="text-sm text-slate-400">Total Employees</p>
-          <p className="mt-3 text-3xl font-semibold text-white">{employees.length}</p>
+      {/* Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-[#0a2540] flex items-center justify-between">
+          <div>
+            <p className="text-slate-400 text-[10px] font-extrabold uppercase tracking-widest">
+              TOTAL EMPLOYEES
+            </p>
+            <h2 className="text-3xl font-black text-[#0a2540] mt-1">{stats.total}</h2>
+          </div>
+          <div className="w-12 h-12 bg-[#0a2540] text-[#d4af37] rounded-2xl flex items-center justify-center shadow-md">
+            <Users size={22} />
+          </div>
         </div>
-        <div className="rounded-[24px] border border-white/10 bg-slate-900/70 p-5 shadow-xl shadow-slate-950/20">
-          <p className="text-sm text-slate-400">Active Employees</p>
-          <p className="mt-3 text-3xl font-semibold text-white">{activeCount}</p>
+
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-[#d4af37] flex items-center justify-between">
+          <div>
+            <p className="text-slate-400 text-[10px] font-extrabold uppercase tracking-widest">
+              ACTIVE EMPLOYEES
+            </p>
+            <h2 className="text-3xl font-black text-emerald-600 mt-1">{stats.active}</h2>
+          </div>
+          <div className="w-12 h-12 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-2xl flex items-center justify-center shadow-sm">
+            <Users size={22} />
+          </div>
         </div>
-        <div className="rounded-[24px] border border-white/10 bg-slate-900/70 p-5 shadow-xl shadow-slate-950/20">
-          <p className="text-sm text-slate-400">Inactive Employees</p>
-          <p className="mt-3 text-3xl font-semibold text-white">{inactiveCount}</p>
+
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-rose-500 flex items-center justify-between">
+          <div>
+            <p className="text-slate-400 text-[10px] font-extrabold uppercase tracking-widest">
+              INACTIVE EMPLOYEES
+            </p>
+            <h2 className="text-3xl font-black text-rose-600 mt-1">{stats.inactive}</h2>
+          </div>
+          <div className="w-12 h-12 bg-rose-50 text-rose-600 border border-rose-200 rounded-2xl flex items-center justify-center shadow-sm">
+            <Users size={22} />
+          </div>
         </div>
+      </div>
+
+        <div className="flex items-center justify-between mb-6">
+         
+
+      
       </div>
     </div>
   );

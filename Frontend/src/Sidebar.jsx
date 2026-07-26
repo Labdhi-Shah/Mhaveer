@@ -1,64 +1,72 @@
-import { LayoutDashboard, ShieldCheck, UserPlus, Users } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import React from "react";
+import { LayoutDashboard, Users, UserPlus, LogOut } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 
-const navigation = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/employees/list", label: "Employee List", icon: Users },
-  { to: "/employees/add", label: "Add Employee", icon: UserPlus },
-];
+export default function Sidebar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { logout } = useAuth();
 
-export default function Sidebar({ currentPath }) {
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
+
   return (
-    <aside className="hidden w-72 flex-col border-r border-white/10 bg-[#07132b] px-6 py-10 lg:flex">
-      <div className="rounded-[28px] bg-[#0b2e5d] p-5 text-white shadow-xl ring-1 ring-white/10">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-white text-[#08245b] text-lg font-black">
-            M
-          </div>
-          <div>
-            <p className="text-xl font-bold tracking-tight">MHAVEER</p>
-            <p className="text-xs uppercase tracking-[0.28em] text-[#d4af37]">FINCAP</p>
-          </div>
+    <aside className="w-64 bg-white border-r border-slate-200 fixed top-16 bottom-0 left-0 z-40 flex flex-col justify-between p-4 shadow-sm">
+      <div>
+        <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest px-3 my-3">
+          NAVIGATION
+        </p>
+
+        <div className="space-y-1.5">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition ${
+              location.pathname === "/dashboard"
+                ? "bg-[#0a2540] text-[#d4af37] shadow-md"
+                : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+            }`}
+          >
+            <LayoutDashboard size={18} />
+            Dashboard
+          </button>
+
+          <button
+            onClick={() => navigate("/employees")}
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+              location.pathname === "/employees"
+                ? "bg-[#0a2540] text-[#d4af37] shadow-md"
+                : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+            }`}
+          >
+            <Users size={18} />
+            Employee List
+          </button>
+
+          <button
+            onClick={() => navigate("/add-employee")}
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+              location.pathname === "/add-employee"
+                ? "bg-[#0a2540] text-[#d4af37] shadow-md"
+                : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+            }`}
+          >
+            <UserPlus size={18} />
+            Add Employee
+          </button>
         </div>
-        <p className="mt-4 text-sm text-slate-300">Finance today, secure tomorrow.</p>
       </div>
 
-      <nav className="mt-8 space-y-2">
-        {navigation.map((item) => {
-          const Icon = item.icon;
-          const isActive = currentPath === item.to;
-
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive: linkActive }) =>
-                  `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                    linkActive || isActive
-                      ? "bg-[#0b2746] text-white ring-1 ring-[#d4af37]/20"
-                      : "text-slate-300 hover:bg-[#071a2b] hover:text-white"
-                  }`
-                }
-            >
-              <Icon className="h-4 w-4" />
-              {item.label}
-            </NavLink>
-          );
-        })}
-      </nav>
-
-      <div className="mt-auto rounded-[24px] border border-white/10 bg-[#071a2b] p-5 text-white shadow-lg">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#d4af37] text-[#07132b]">
-            <ShieldCheck className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="font-semibold">Secure Your Financial Future</p>
-          </div>
-        </div>
-        <p className="mt-3 text-sm text-slate-300">We are here to help you achieve your goals.</p>
-        <button className="mt-4 w-full rounded-2xl bg-[#d4af37] px-3 py-3 text-sm font-semibold text-[#07132b] transition hover:bg-[#bea34d]">
-          Get Started
+      {/* FIXED GOLDEN LOGOUT AT BOTTOM LEFT */}
+      <div className="pt-3 border-t border-slate-200">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 bg-[#d4af37] hover:bg-[#c39e2d] text-[#0a2540] font-black py-3 px-4 rounded-xl shadow-md transition-all text-xs uppercase tracking-wider cursor-pointer"
+        >
+          <LogOut size={16} />
+          Logout
         </button>
       </div>
     </aside>

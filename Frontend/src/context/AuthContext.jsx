@@ -1,58 +1,40 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
-function getStoredUser() {
-  if (typeof window === "undefined") return null;
-  try {
-    return JSON.parse(localStorage.getItem("mhaveerUser"));
-  } catch {
-    return null;
-  }
-}
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => getStoredUser());
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    const token = localStorage.getItem("token");
+    if (storedUser && token) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   const login = (email, password) => {
     if (email === "admin@example.com" && password === "123456") {
-      const userData = {
-        name: "Super Admin",
-        email,
-        role: "Super Admin",
-      };
+      const userData = { email, name: "Super Admin", role: "Admin" };
+      localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("token", "mock-jwt-token-123456");
       setUser(userData);
-      localStorage.setItem("mhaveerUser", JSON.stringify(userData));
       return true;
     }
-
     return false;
   };
 
   const logout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
     setUser(null);
-    localStorage.removeItem("mhaveerUser");
   };
 
-  const value = useMemo(
-    () => ({
-      user,
-      login,
-      logout,
-      isAuthenticated: Boolean(user),
-    }),
-    [user]
+  return (
+    <AuthContext.Provider value={{ user, login, logout }}>
+      {children}
+    </AuthContext.Provider>
   );
+};
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-
-  return context;
-}
+export const useAuth = () => useContext(AuthContext);

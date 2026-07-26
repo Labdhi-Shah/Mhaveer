@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import logoSvg from '../assets/logo.svg';
 
 const API = import.meta.env.VITE_API_URL;
 
 function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -37,7 +39,7 @@ function Login() {
 
       if (response.ok && data.success) {
         localStorage.setItem("token", data.token);
-        setMessage("✅ Login Successful");
+        navigate("/dashboard", { replace: true });
       } else {
         setMessage(data.message || "Invalid Email or Password");
       }
@@ -70,14 +72,11 @@ function Login() {
           overflow: "hidden",
         }}
       >
-        {/* Top Golden Border */}
-        <div style={{ height: "6px", background: "#d4af37" }}></div>
+       <div style={{ height: "6px", background: "#d4af37" }}></div>
 
         <div style={{ padding: "40px 30px" }}>
-          {/* Logo Area */}
           <div style={{ textAlign: "center", marginBottom: "35px" }}>
             <div style={{ marginBottom: "15px", display: "flex", justifyContent: "center" }}>
-              {/* Imported Logo SVG */}
               <img
                 src={logoSvg}
                 alt="Mhaveer Fincap Logo"
@@ -96,28 +95,6 @@ function Login() {
              
             </div>
 
-            <h1
-              style={{
-                fontSize: "24px",
-                fontWeight: "900",
-                color: "#0b2746",
-                margin: "0 0 10px 0",
-                letterSpacing: "1px",
-              }}
-            >
-              MHAVEER FINCAP
-            </h1>
-            <div
-              style={{
-                fontSize: "11px",
-                fontWeight: "700",
-                color: "#d4af37",
-                letterSpacing: "1px",
-                textTransform: "uppercase",
-              }}
-            >
-              Finance Today, Secure Tomorrow
-            </div>
           </div>
 
           <form onSubmit={handleLogin}>

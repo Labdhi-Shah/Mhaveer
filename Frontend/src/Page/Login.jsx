@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logoSvg from '../assets/logo.svg';
 
-const API = import.meta.env.VITE_API_URL;
+const rawAPI = import.meta.env.VITE_API_URL || "https://mhaveer.onrender.com";
+const API = rawAPI.endsWith("/") ? rawAPI.slice(0, -1) : rawAPI;
 
 function Login() {
   const navigate = useNavigate();

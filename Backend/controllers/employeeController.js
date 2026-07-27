@@ -14,6 +14,11 @@ exports.createEmployee = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please provide all required fields" });
     }
 
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({ success: false, message: "Please enter a valid 10-digit Indian mobile number." });
+    }
+
     // Auto-generate email based on first name
     const firstName = fullName.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
     let generatedEmail = `${firstName}@mhaveer.com`;
@@ -127,6 +132,13 @@ exports.updateEmployee = async (req, res) => {
   try {
     // Fields that are allowed to be updated
     const { fullName, email, phone, role, address, joiningDate, dateOfBirth, status } = req.body;
+
+    if (phone) {
+      const phoneRegex = /^[6-9]\d{9}$/;
+      if (!phoneRegex.test(phone)) {
+        return res.status(400).json({ success: false, message: "Please enter a valid 10-digit Indian mobile number." });
+      }
+    }
 
     let employee = await Employee.findById(req.params.id);
     if (!employee) {

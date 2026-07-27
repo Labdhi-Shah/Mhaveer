@@ -131,7 +131,7 @@ exports.getEmployeeById = async (req, res) => {
 exports.updateEmployee = async (req, res) => {
   try {
     // Fields that are allowed to be updated
-    const { fullName, email, phone, role, address, joiningDate, dateOfBirth, status } = req.body;
+    const { fullName, email, personalEmail, phone, role, address, joiningDate, dateOfBirth, status } = req.body;
 
     if (phone) {
       const phoneRegex = /^[6-9]\d{9}$/;
@@ -155,6 +155,7 @@ exports.updateEmployee = async (req, res) => {
 
     employee.fullName = fullName || employee.fullName;
     employee.email = email || employee.email;
+    employee.personalEmail = personalEmail || employee.personalEmail;
     employee.phone = phone || employee.phone;
     employee.role = role || employee.role;
     employee.address = address || employee.address;

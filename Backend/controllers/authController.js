@@ -22,7 +22,7 @@ exports.login = async (req, res) => {
 
   // Employee Check
   try {
-    const employee = await Employee.findOne({ email });
+    const employee = await Employee.findOne({ officialEmail: email });
     if (!employee) {
       return res.status(401).json({ success: false, message: "Invalid Email or Password" });
     }
@@ -47,7 +47,8 @@ exports.login = async (req, res) => {
       token,
       message: "Login Success",
       employee: {
-        fullName: employee.fullName,
+        fullName: employee.name, // keep fullName for frontend compatibility
+        name: employee.name,
         role: employee.role
       }
     });

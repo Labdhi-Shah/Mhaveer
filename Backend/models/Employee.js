@@ -7,7 +7,7 @@ const employeeSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    fullName: {
+    name: {
       type: String,
       required: true,
       trim: true,
@@ -17,7 +17,7 @@ const employeeSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    email: {
+    officialEmail: {
       type: String,
       required: true,
       unique: true,
@@ -41,7 +41,7 @@ const employeeSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    dateOfBirth: {
+    dob: {
       type: Date,
     },
     password: {

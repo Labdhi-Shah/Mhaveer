@@ -1,9 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from "./Page/Login";
+import { AuthProvider } from "./context/AuthContext";
 import DashboardLayout from "./components/DashboardLayout";
-import Dashboard from "./Page/Dashboard";
-import EmployeeList from "./Page/EmployeeList";
-import AddEmployee from "./Page/AddEmployee";
+import DashboardView from "./DashboardView";
+import EmployeeList from "./EmployeeList";
+import AddEmployee from "./AddEmployee";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -15,24 +16,26 @@ const ProtectedRoute = ({ children }) => {
 
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<Login />} />
-        
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="employees" element={<EmployeeList />} />
-          <Route path="employees/add" element={<AddEmployee />} />
-        </Route>
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login />} />
+          
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="dashboard" element={<DashboardView />} />
+            <Route path="employees" element={<EmployeeList />} />
+            <Route path="add-employee" element={<AddEmployee />} />
+          </Route>
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }

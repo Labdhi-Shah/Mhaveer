@@ -23,8 +23,7 @@ function Login() {
       setLoading(true);
       setMessage("");
 
-      const baseUrl = (API || "").replace(/\/+$/, "");
-      const response = await fetch(`${baseUrl}/api/auth/login`, {
+      const response = await fetch(`${API}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -39,10 +38,17 @@ function Login() {
 
       if (response.ok && data.success) {
         localStorage.setItem("token", data.token);
-        setMessage("✅ Login Successful");
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 1000);
+        
+        if (data.employee) {
+          // Employee Login
+          setMessage("✅ Login Successful (Employee Portal Coming Soon)");
+        } else {
+          // Super Admin Login
+          setMessage("✅ Login Successful");
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 1000);
+        }
       } else {
         setMessage(data.message || "Invalid Email or Password");
       }

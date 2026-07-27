@@ -183,7 +183,7 @@ export default function EmployeeList() {
               <X size={20} />
             </button>
             <h3 className="text-lg font-black text-[#0a2540] mb-4">Employee Details</h3>
-            
+
             <div className="space-y-3 text-xs text-slate-700 bg-slate-50 p-4 rounded-2xl border border-slate-200">
               <div className="flex justify-between border-b pb-2">
                 <span className="font-bold text-slate-400">Employee ID</span>

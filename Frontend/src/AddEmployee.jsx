@@ -109,7 +109,7 @@ const ROLES = Object.keys(ROLE_DATA);
 export default function AddEmployee() {
   const [form, setForm] = useState({
     fullName: "",
-    email: "",
+    personalEmail: "",
     phone: "",
     dob: "", // Date of Birth Added
     role: "", // Empty initially so responsibilities stay hidden
@@ -142,7 +142,7 @@ export default function AddEmployee() {
         setCreatedData(response.data.data);
         setForm({
           fullName: "",
-          email: "",
+          personalEmail: "",
           phone: "",
           dob: "",
           role: "",
@@ -193,18 +193,18 @@ export default function AddEmployee() {
           />
         </div>
 
-        {/* Email Address */}
+        {/* Personal Email Address */}
         <div>
           <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">
-            Email Address *
+            Personal Email *
           </label>
           <input
             type="email"
-            name="email"
+            name="personalEmail"
             required
-            value={form.email}
+            value={form.personalEmail}
             onChange={handleChange}
-            placeholder="rahul@mhaveerfincap.com"
+            placeholder="rahul@gmail.com"
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]"
           />
         </div>
@@ -353,17 +353,23 @@ export default function AddEmployee() {
               </div>
               <h3 className="text-lg font-black text-[#0a2540]">Employee Created Successfully!</h3>
               <p className="text-xs text-slate-500">
-                Generated credentials below for the new employee. Please copy and share the password now.
+                Generated credentials below for the new employee. Please copy and share them securely.
               </p>
 
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left space-y-2 mt-4">
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left space-y-3 mt-4">
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Employee ID (Generated)</span>
                   <p className="text-sm font-mono font-black text-[#0a2540]">
                     {createdData.employeeId}
                   </p>
                 </div>
-                <div> 
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Official Email (Generated)</span>
+                  <p className="text-sm font-mono font-black text-[#0a2540]">
+                    {createdData.email}
+                  </p>
+                </div>
+                <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase">
                     Temporary Password (Generated)
                   </span>

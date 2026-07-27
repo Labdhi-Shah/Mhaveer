@@ -7,18 +7,26 @@ const generatePassword = require("../utils/generatePassword");
 // @route   POST /api/employees
 exports.createEmployee = async (req, res) => {
   try {
-    const { fullName, email, phone, role, address, joiningDate, dateOfBirth } = req.body;
+    const { fullName, personalEmail, phone, role, address, joiningDate, dateOfBirth } = req.body;
 
     // Validation
-    if (!fullName || !email || !phone || !role) {
+    if (!fullName || !personalEmail || !phone || !role) {
       return res.status(400).json({ success: false, message: "Please provide all required fields" });
     }
 
-    // Check if employee email already exists
-    let existingEmployee = await Employee.findOne({ email });
-    if (existingEmployee) {
-      return res.status(400).json({ success: false, message: "Email already in use" });
+    // Auto-generate email based on first name
+    const firstName = fullName.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    let generatedEmail = `${firstName}@mhaveer.com`;
+    let emailExists = await Employee.findOne({ email: generatedEmail });
+    let counter = 1;
+    
+    while (emailExists) {
+      generatedEmail = `${firstName}${counter}@mhaveer.com`;
+      emailExists = await Employee.findOne({ email: generatedEmail });
+      counter++;
     }
+
+    const email = generatedEmail;
 
     // Auto-generate employeeId and password
     const employeeId = await generateEmployeeId();
@@ -32,6 +40,7 @@ exports.createEmployee = async (req, res) => {
     const newEmployee = new Employee({
       employeeId,
       fullName,
+      personalEmail,
       email,
       phone,
       role,
@@ -48,12 +57,13 @@ exports.createEmployee = async (req, res) => {
       message: "Employee created successfully",
       data: {
         employeeId: newEmployee.employeeId,
+        email: newEmployee.email, // Return generated email to frontend
         temporaryPassword, // Required by instructions to show to admin once
       },
     });
   } catch (error) {
     console.error("Error creating employee:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
+    res.status(500).json({ success: false, message: error.message || "Server Error" });
   }
 };
 

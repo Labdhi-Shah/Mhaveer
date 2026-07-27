@@ -7,10 +7,13 @@ const generatePassword = require("../utils/generatePassword");
 // @route   POST /api/employees
 exports.createEmployee = async (req, res) => {
   try {
-    const { fullName, personalEmail, phone, role, address, joiningDate, dateOfBirth } = req.body;
+    const { fullName, name, personalEmail, phone, role, address, joiningDate, dateOfBirth, dob } = req.body;
+
+    const empName = fullName || name;
+    const empDob = dateOfBirth || dob;
 
     // Validation
-    if (!fullName || !personalEmail || !phone || !role) {
+    if (!empName || !personalEmail || !phone || !role) {
       return res.status(400).json({ success: false, message: "Please provide all required fields" });
     }
 
@@ -19,19 +22,19 @@ exports.createEmployee = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please enter a valid 10-digit Indian mobile number." });
     }
 
-    // Auto-generate email based on first name
-    const firstName = fullName.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    // Auto-generate official login email based on first name
+    const firstName = empName.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
     let generatedEmail = `${firstName}@mhaveer.com`;
-    let emailExists = await Employee.findOne({ email: generatedEmail });
+    let emailExists = await Employee.findOne({ officialEmail: generatedEmail });
     let counter = 1;
     
     while (emailExists) {
       generatedEmail = `${firstName}${counter}@mhaveer.com`;
-      emailExists = await Employee.findOne({ email: generatedEmail });
+      emailExists = await Employee.findOne({ officialEmail: generatedEmail });
       counter++;
     }
 
-    const email = generatedEmail;
+    const officialEmail = generatedEmail;
 
     // Auto-generate employeeId and password
     const employeeId = await generateEmployeeId();
@@ -44,14 +47,14 @@ exports.createEmployee = async (req, res) => {
     // Create Employee
     const newEmployee = new Employee({
       employeeId,
-      fullName,
+      name: empName,
       personalEmail,
-      email,
+      officialEmail,
       phone,
       role,
       address,
       joiningDate,
-      dateOfBirth,
+      dob: empDob,
       password: hashedPassword,
     });
 
@@ -62,7 +65,8 @@ exports.createEmployee = async (req, res) => {
       message: "Employee created successfully",
       data: {
         employeeId: newEmployee.employeeId,
-        email: newEmployee.email, // Return generated email to frontend
+        email: newEmployee.officialEmail, // Return generated email to frontend as 'email'
+        officialEmail: newEmployee.officialEmail,
         temporaryPassword, // Required by instructions to show to admin once
       },
     });
@@ -81,8 +85,9 @@ exports.getEmployees = async (req, res) => {
     const query = {};
     if (search) {
       query.$or = [
-        { fullName: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
+        { name: { $regex: search, $options: "i" } },
+        { officialEmail: { $regex: search, $options: "i" } },
+        { personalEmail: { $regex: search, $options: "i" } },
         { employeeId: { $regex: search, $options: "i" } },
       ];
     }
@@ -90,12 +95,25 @@ exports.getEmployees = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const employees = await Employee.find(query)
-      .select("-password")
+      .select("-password") // Do not return password
       .sort(sort)
       .skip(skip)
       .limit(parseInt(limit));
 
     const total = await Employee.countDocuments(query);
+
+    // Map to required output, keeping legacy fields for frontend
+    const formattedData = employees.map(emp => ({
+      _id: emp._id,
+      employeeId: emp.employeeId,
+      name: emp.name,
+      fullName: emp.name,
+      personalEmail: emp.personalEmail,
+      email: emp.personalEmail, // API requirement: Do not return officialEmail here, send personalEmail to frontend table
+      phone: emp.phone,
+      role: emp.role,
+      status: emp.status
+    }));
 
     res.json({
       success: true,
@@ -103,7 +121,7 @@ exports.getEmployees = async (req, res) => {
       total,
       page: parseInt(page),
       pages: Math.ceil(total / limit),
-      data: employees,
+      data: formattedData,
     });
   } catch (error) {
     console.error("Error fetching employees:", error);
@@ -119,7 +137,25 @@ exports.getEmployeeById = async (req, res) => {
     if (!employee) {
       return res.status(404).json({ success: false, message: "Employee not found" });
     }
-    res.json({ success: true, data: employee });
+
+    const formattedData = {
+      _id: employee._id,
+      employeeId: employee.employeeId,
+      name: employee.name,
+      fullName: employee.name,
+      personalEmail: employee.personalEmail,
+      officialEmail: employee.officialEmail,
+      email: employee.officialEmail, // map for existing frontend that uses email field
+      phone: employee.phone,
+      role: employee.role,
+      address: employee.address,
+      dob: employee.dob,
+      dateOfBirth: employee.dob,
+      joiningDate: employee.joiningDate,
+      status: employee.status
+    };
+
+    res.json({ success: true, data: formattedData });
   } catch (error) {
     console.error("Error fetching employee:", error);
     res.status(500).json({ success: false, message: "Server Error" });
@@ -130,8 +166,16 @@ exports.getEmployeeById = async (req, res) => {
 // @route   PUT /api/employees/:id
 exports.updateEmployee = async (req, res) => {
   try {
+<<<<<<< HEAD
     // Fields that are allowed to be updated
     const { fullName, email, personalEmail, phone, role, address, joiningDate, dateOfBirth, status } = req.body;
+=======
+    const { fullName, name, email, officialEmail, personalEmail, phone, role, address, joiningDate, dateOfBirth, dob, status } = req.body;
+    
+    const empName = fullName || name;
+    const empDob = dateOfBirth || dob;
+    const offEmail = officialEmail || email;
+>>>>>>> 02452e3415ecb55a5900e68b8fc8b325928c2b45
 
     if (phone) {
       const phoneRegex = /^[6-9]\d{9}$/;
@@ -145,22 +189,27 @@ exports.updateEmployee = async (req, res) => {
       return res.status(404).json({ success: false, message: "Employee not found" });
     }
 
-    // Check if new email is already in use by another employee
-    if (email && email !== employee.email) {
-      const existingEmail = await Employee.findOne({ email });
+    // Check if new official email is already in use
+    if (offEmail && offEmail !== employee.officialEmail) {
+      const existingEmail = await Employee.findOne({ officialEmail: offEmail });
       if (existingEmail) {
-        return res.status(400).json({ success: false, message: "Email already in use" });
+        return res.status(400).json({ success: false, message: "Official Email already in use" });
       }
     }
 
+<<<<<<< HEAD
     employee.fullName = fullName || employee.fullName;
     employee.email = email || employee.email;
+=======
+    employee.name = empName || employee.name;
+    employee.officialEmail = offEmail || employee.officialEmail;
+>>>>>>> 02452e3415ecb55a5900e68b8fc8b325928c2b45
     employee.personalEmail = personalEmail || employee.personalEmail;
     employee.phone = phone || employee.phone;
     employee.role = role || employee.role;
     employee.address = address || employee.address;
     employee.joiningDate = joiningDate || employee.joiningDate;
-    employee.dateOfBirth = dateOfBirth || employee.dateOfBirth;
+    employee.dob = empDob || employee.dob;
     if (status) employee.status = status;
 
     await employee.save();
@@ -171,8 +220,11 @@ exports.updateEmployee = async (req, res) => {
       data: {
         _id: employee._id,
         employeeId: employee.employeeId,
-        fullName: employee.fullName,
-        email: employee.email,
+        name: employee.name,
+        fullName: employee.name,
+        personalEmail: employee.personalEmail,
+        officialEmail: employee.officialEmail,
+        email: employee.officialEmail,
         role: employee.role,
         status: employee.status,
       }

@@ -111,11 +111,11 @@ export default function AddEmployee() {
     fullName: "",
     email: "",
     phone: "",
-    dob: "", // Date of Birth Added
-    role: "", // Empty initially so responsibilities stay hidden
+    dob: "", // Date of Birth
+    joiningDate: "", // Joining Date
+    role: "", 
     address: "",
     status: "Active",
-    joiningDate: new Date().toISOString().split("T")[0],
   });
 
   const [loading, setLoading] = useState(false);
@@ -125,6 +125,12 @@ export default function AddEmployee() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleDateClick = (e) => {
+    if (e.target.showPicker) {
+      e.target.showPicker();
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -145,10 +151,10 @@ export default function AddEmployee() {
           email: "",
           phone: "",
           dob: "",
+          joiningDate: "",
           role: "",
           address: "",
           status: "Active",
-          joiningDate: new Date().toISOString().split("T")[0],
         });
       }
     } catch (err) {
@@ -189,7 +195,7 @@ export default function AddEmployee() {
             value={form.fullName}
             onChange={handleChange}
             placeholder="e.g. Rahul Sharma"
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]"
+            className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]"
           />
         </div>
 
@@ -205,7 +211,7 @@ export default function AddEmployee() {
             value={form.email}
             onChange={handleChange}
             placeholder="rahul@mhaveerfincap.com"
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]"
+            className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]"
           />
         </div>
 
@@ -221,22 +227,7 @@ export default function AddEmployee() {
             value={form.phone}
             onChange={handleChange}
             placeholder="9876543210"
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]"
-          />
-        </div>
-
-        {/* Date of Birth */}
-        <div>
-          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">
-            Date of Birth *
-          </label>
-          <input
-            type="date"
-            name="dob"
-            required
-            value={form.dob}
-            onChange={handleChange}
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]"
+            className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]"
           />
         </div>
 
@@ -249,11 +240,27 @@ export default function AddEmployee() {
             name="status"
             value={form.status}
             onChange={handleChange}
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]"
+            className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] cursor-pointer"
           >
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
           </select>
+        </div>
+
+        {/* Date of Birth (DOB) */}
+        <div>
+          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">
+            Date of Birth (DOB) *
+          </label>
+          <input
+            type="date"
+            name="dob"
+            required
+            value={form.dob}
+            onChange={handleChange}
+            onClick={handleDateClick}
+            className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] cursor-pointer"
+          />
         </div>
 
         {/* Joining Date */}
@@ -267,7 +274,8 @@ export default function AddEmployee() {
             required
             value={form.joiningDate}
             onChange={handleChange}
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]"
+            onClick={handleDateClick}
+            className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] cursor-pointer"
           />
         </div>
 
@@ -282,7 +290,7 @@ export default function AddEmployee() {
             value={form.address}
             onChange={handleChange}
             placeholder="123 Main St, City"
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]"
+            className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]"
           />
         </div>
 
@@ -296,7 +304,7 @@ export default function AddEmployee() {
             value={form.role}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold"
+            className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer"
           >
             <option value="" disabled>-- Select Role / Department --</option>
             {ROLES.map((r, idx) => (
@@ -329,14 +337,14 @@ export default function AddEmployee() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-[#0a2540] hover:bg-[#12385c] text-[#d4af37] font-black rounded-xl shadow-md text-xs uppercase tracking-wider transition flex items-center justify-center gap-2"
+            className="w-full py-3 bg-[#0a2540] hover:bg-[#12385c] text-[#d4af37] font-black rounded-xl shadow-md text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer"
           >
             {loading ? <Loader2 className="animate-spin" size={16} /> : "Save Employee Profile"}
           </button>
         </div>
       </form>
 
-      {/* SUCCESS MODAL (Shows Auto-generated ID & Password) */}
+      {/* SUCCESS MODAL */}
       {createdData && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-t-8 border-t-emerald-500 relative">
@@ -363,7 +371,7 @@ export default function AddEmployee() {
                     {createdData.employeeId}
                   </p>
                 </div>
-                <div> 
+                <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase">
                     Temporary Password (Generated)
                   </span>
@@ -373,7 +381,7 @@ export default function AddEmployee() {
                     </p>
                     <button
                       onClick={copyToClipboard}
-                      className="p-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-slate-700 transition flex items-center gap-1 text-[10px] font-bold"
+                      className="p-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-slate-700 transition flex items-center gap-1 text-[10px] font-bold cursor-pointer"
                     >
                       <Copy size={12} /> {copied ? "Copied!" : "Copy"}
                     </button>
@@ -383,7 +391,7 @@ export default function AddEmployee() {
 
               <button
                 onClick={() => setCreatedData(null)}
-                className="w-full mt-4 py-2.5 bg-[#0a2540] text-white font-bold rounded-xl text-xs uppercase"
+                className="w-full mt-4 py-2.5 bg-[#0a2540] text-white font-bold rounded-xl text-xs uppercase cursor-pointer"
               >
                 Done
               </button>

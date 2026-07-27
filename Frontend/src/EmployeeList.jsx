@@ -227,7 +227,8 @@ export default function EmployeeList() {
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="font-bold text-slate-400">Generated Login Password</span>
-                <span className="font-mono font-bold text-amber-600">{viewEmp.temporaryPassword || "••••••••"}</span>
+                {/* <span className="font-mono font-bold text-amber-600">{viewEmp.temporaryPassword || "••••••••"}</span> */}
+                <span className="font-mono font-bold text-amber-600">{viewEmp.passworsd}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="font-bold text-slate-400">Phone</span>

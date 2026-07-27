@@ -42,12 +42,29 @@ function Login() {
         
         if (data.employee) {
           // Employee Login
-          setMessage("✅ Login Successful (Employee Portal Coming Soon)");
-        } else {
-          // Super Admin Login
+          const employeeData = {
+            fullName: data.employee.fullName,
+            role: data.employee.role,
+            email: email, // use logged in email as official email fallback
+            employeeId: "EMP-" + Math.floor(100000 + Math.random() * 900000) // unique mock ID
+          };
+          localStorage.setItem("user", JSON.stringify(employeeData));
+          
+          // Start the working timer
+          if (!localStorage.getItem("loginTime")) {
+            localStorage.setItem("loginTime", new Date().toISOString());
+          }
+          
           setMessage("✅ Login Successful");
           setTimeout(() => {
-            navigate("/dashboard");
+            window.location.href = "/dashboard";
+          }, 1000);
+        } else {
+          // Super Admin Login
+          localStorage.setItem("user", JSON.stringify({ email, name: "Super Admin", role: "SuperAdmin" }));
+          setMessage("✅ Login Successful");
+          setTimeout(() => {
+            window.location.href = "/dashboard";
           }, 1000);
         }
       } else {

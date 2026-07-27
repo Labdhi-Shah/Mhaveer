@@ -5,6 +5,8 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const leadRoutes = require("./routes/leadRoutes");
+const attendanceRoutes = require("./routes/attendanceRoutes");
 dotenv.config();
 
 const app = express();
@@ -25,6 +27,8 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/leads", leadRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

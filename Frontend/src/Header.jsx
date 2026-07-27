@@ -1,6 +1,5 @@
 import { Bell, Settings, Menu } from "lucide-react";
-// જો તમે લોગો ઈમેજને src/assets/logo.png તરીકે રાખેલી હોય:
-// import logoImg from "./assets/logo.png"; 
+import logoSvg from "./assets/logo.svg";
 
 export default function Header({ onToggleSidebar }) {
   return (
@@ -17,9 +16,9 @@ export default function Header({ onToggleSidebar }) {
         </button>
 
         {/* Logo Image */}
-        <div className="w-10 h-10 bg-white p-1 rounded-xl hidden sm:flex items-center justify-center shadow-md overflow-hidden">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white p-1 rounded-xl flex items-center justify-center shadow-md overflow-hidden shrink-0">
           <img 
-            src="/src/assets/logo.svg" 
+            src={logoSvg} 
             alt="MHAVEER FINCAP Logo" 
             className="w-full h-full object-contain"
             onError={(e) => {

@@ -227,7 +227,7 @@ export default function EmployeeList() {
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="font-bold text-slate-400">Generated Login Password</span>
-                <span className="font-mono font-bold text-amber-600">{viewEmp.temporaryPassword || "••••••••"}</span> 
+                <span className="font-mono font-bold text-amber-600">{viewEmp.temporaryPassword || "••••••••"}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="font-bold text-slate-400">Phone</span>
@@ -275,7 +275,7 @@ export default function EmployeeList() {
             </button>
             <h3 className="text-lg font-black text-[#0a2540] mb-4">Edit Employee Record</h3>
             <form onSubmit={handleSaveEdit} className="space-y-4 text-xs">
-              
+
               {/* Readonly Section */}
               <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
                 <div>
@@ -296,69 +296,69 @@ export default function EmployeeList() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-extrabold text-slate-700 uppercase mb-1">Full Name *</label>
-                  <input 
-                    type="text" 
-                    required 
-                    value={editForm.fullName} 
-                    onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })} 
-                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]" 
+                  <input
+                    type="text"
+                    required
+                    value={editForm.fullName}
+                    onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
                   />
                 </div>
                 <div>
                   <label className="block font-extrabold text-slate-700 uppercase mb-1">Personal Email *</label>
-                  <input 
-                    type="email" 
-                    required 
-                    value={editForm.personalEmail} 
-                    onChange={(e) => setEditForm({ ...editForm, personalEmail: e.target.value })} 
-                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]" 
+                  <input
+                    type="email"
+                    required
+                    value={editForm.personalEmail}
+                    onChange={(e) => setEditForm({ ...editForm, personalEmail: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
                   />
                 </div>
                 <div>
                   <label className="block font-extrabold text-slate-700 uppercase mb-1">Phone Number *</label>
-                  <input 
-                    type="tel" 
-                    required 
-                    value={editForm.phone} 
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} 
-                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]" 
+                  <input
+                    type="tel"
+                    required
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
                   />
                 </div>
                 <div>
                   <label className="block font-extrabold text-slate-700 uppercase mb-1">Role / Dept *</label>
-                  <input 
-                    type="text" 
-                    required 
-                    value={editForm.role} 
-                    onChange={(e) => setEditForm({ ...editForm, role: e.target.value })} 
-                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]" 
+                  <input
+                    type="text"
+                    required
+                    value={editForm.role}
+                    onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
                   />
                 </div>
                 <div>
                   <label className="block font-extrabold text-slate-700 uppercase mb-1">Date of Birth (DOB) *</label>
-                  <input 
-                    type="date" 
-                    required 
-                    value={editForm.dateOfBirth} 
-                    onChange={(e) => setEditForm({ ...editForm, dateOfBirth: e.target.value })} 
-                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]" 
+                  <input
+                    type="date"
+                    required
+                    value={editForm.dateOfBirth}
+                    onChange={(e) => setEditForm({ ...editForm, dateOfBirth: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
                   />
                 </div>
                 <div>
                   <label className="block font-extrabold text-slate-700 uppercase mb-1">Joining Date *</label>
-                  <input 
-                    type="date" 
-                    required 
-                    value={editForm.joiningDate} 
-                    onChange={(e) => setEditForm({ ...editForm, joiningDate: e.target.value })} 
-                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]" 
+                  <input
+                    type="date"
+                    required
+                    value={editForm.joiningDate}
+                    onChange={(e) => setEditForm({ ...editForm, joiningDate: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
                   />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block font-extrabold text-slate-700 uppercase mb-1">Status *</label>
-                  <select 
-                    value={editForm.status} 
-                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })} 
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
                     className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
                   >
                     <option value="Active">Active</option>
@@ -367,11 +367,11 @@ export default function EmployeeList() {
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block font-extrabold text-slate-700 uppercase mb-1">Address</label>
-                  <textarea 
-                    value={editForm.address} 
-                    onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} 
+                  <textarea
+                    value={editForm.address}
+                    onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
                     rows={2}
-                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37] resize-none" 
+                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37] resize-none"
                   />
                 </div>
               </div>

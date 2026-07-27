@@ -1,14 +1,18 @@
-import { LayoutDashboard, Users, UserPlus, LogOut } from "lucide-react";
+import { 
+  LayoutDashboard, Users, UserPlus, LogOut, 
+  PlusCircle, FolderHeart, Clock, Calendar, User, Settings 
+} from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 
 export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
     logout();
+    localStorage.removeItem("loginTime");
     navigate("/login", { replace: true });
   };
 
@@ -18,6 +22,8 @@ export default function Sidebar({ isOpen, onClose }) {
       onClose();
     }
   };
+
+  const isSuperAdmin = user?.role === "SuperAdmin";
 
   return (
     <>
@@ -34,45 +40,137 @@ export default function Sidebar({ isOpen, onClose }) {
       } md:translate-x-0`}>
         <div>
           <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest px-3 my-3">
-            NAVIGATION
+            {isSuperAdmin ? "ADMIN PANEL" : "EMPLOYEE PORTAL"}
           </p>
 
           <div className="space-y-1.5">
-            <button
-              onClick={() => handleNavigation("/dashboard")}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition ${
-                location.pathname === "/dashboard"
-                  ? "bg-[#0a2540] text-[#d4af37] shadow-md"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-              }`}
-            >
-              <LayoutDashboard size={18} />
-              Dashboard
-            </button>
+            {isSuperAdmin ? (
+              // Super Admin Sidebar Options
+              <>
+                <button
+                  onClick={() => handleNavigation("/dashboard")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    location.pathname === "/dashboard"
+                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                  }`}
+                >
+                  <LayoutDashboard size={18} />
+                  Dashboard
+                </button>
 
-            <button
-              onClick={() => handleNavigation("/employees")}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                location.pathname === "/employees"
-                  ? "bg-[#0a2540] text-[#d4af37] shadow-md"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-              }`}
-            >
-              <Users size={18} />
-              Employee List
-            </button>
+                <button
+                  onClick={() => handleNavigation("/employees")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    location.pathname === "/employees"
+                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                  }`}
+                >
+                  <Users size={18} />
+                  Employee List
+                </button>
 
-            <button
-              onClick={() => handleNavigation("/add-employee")}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                location.pathname === "/add-employee"
-                  ? "bg-[#0a2540] text-[#d4af37] shadow-md"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-              }`}
-            >
-              <UserPlus size={18} />
-              Add Employee
-            </button>
+                <button
+                  onClick={() => handleNavigation("/add-employee")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    location.pathname === "/add-employee"
+                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                  }`}
+                >
+                  <UserPlus size={18} />
+                  Add Employee
+                </button>
+              </>
+            ) : (
+              // Employee (Reception / Front Desk) Sidebar Options
+              <>
+                <button
+                  onClick={() => handleNavigation("/dashboard")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    location.pathname === "/dashboard"
+                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                  }`}
+                >
+                  <LayoutDashboard size={18} />
+                  Dashboard
+                </button>
+
+                <button
+                  onClick={() => handleNavigation("/new-lead")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    location.pathname === "/new-lead"
+                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                  }`}
+                >
+                  <PlusCircle size={18} />
+                  New Lead
+                </button>
+
+                <button
+                  onClick={() => handleNavigation("/my-leads")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    location.pathname === "/my-leads"
+                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                  }`}
+                >
+                  <FolderHeart size={18} />
+                  My Leads
+                </button>
+
+                <button
+                  onClick={() => handleNavigation("/follow-up")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    location.pathname === "/follow-up"
+                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                  }`}
+                >
+                  <Clock size={18} />
+                  Follow-up
+                </button>
+
+                <button
+                  onClick={() => handleNavigation("/meetings")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    location.pathname === "/meetings"
+                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                  }`}
+                >
+                  <Calendar size={18} />
+                  Meetings
+                </button>
+
+                <button
+                  onClick={() => handleNavigation("/profile")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    location.pathname === "/profile"
+                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                  }`}
+                >
+                  <User size={18} />
+                  Profile
+                </button>
+
+                <button
+                  onClick={() => handleNavigation("/settings")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    location.pathname === "/settings"
+                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                  }`}
+                >
+                  <Settings size={18} />
+                  Settings
+                </button>
+              </>
+            )}
           </div>
         </div>
 

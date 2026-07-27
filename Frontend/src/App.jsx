@@ -2,9 +2,15 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from "./Page/Login";
 import { AuthProvider } from "./context/AuthContext";
 import DashboardLayout from "./components/DashboardLayout";
-import DashboardView from "./DashboardView";
+import DashboardSelector from "./components/DashboardSelector";
 import EmployeeList from "./EmployeeList";
 import AddEmployee from "./AddEmployee";
+import MyLeadsView from "./components/MyLeadsView";
+import FollowUpView from "./components/FollowUpView";
+import MeetingsView from "./components/MeetingsView";
+import ProfileView from "./components/ProfileView";
+import SettingsView from "./components/SettingsView";
+import EmployeeDashboard from "./components/EmployeeDashboard";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -30,7 +36,13 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="dashboard" element={<DashboardView />} />
+            <Route path="dashboard" element={<DashboardSelector />} />
+            <Route path="new-lead" element={<EmployeeDashboard />} />
+            <Route path="my-leads" element={<MyLeadsView />} />
+            <Route path="follow-up" element={<FollowUpView />} />
+            <Route path="meetings" element={<MeetingsView />} />
+            <Route path="profile" element={<ProfileView />} />
+            <Route path="settings" element={<SettingsView />} />
             <Route path="employees" element={<EmployeeList />} />
             <Route path="add-employee" element={<AddEmployee />} />
           </Route>

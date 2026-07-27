@@ -36,11 +36,11 @@ export default function Header({ onToggleSidebar }) {
 
       {/* RIGHT SIDE CONTROLS */}
       <div className="flex items-center gap-2 sm:gap-4">
-        <button className="p-2 text-slate-300 hover:text-[#d4af37] rounded-lg transition relative">
+        <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#d4af37] rounded-lg transition relative" title="Notifications">
           <Bell size={18} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#d4af37] rounded-full" />
         </button>
-        <button className="p-2 text-slate-300 hover:text-[#d4af37] rounded-lg transition hidden sm:block">
+        <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#d4af37] rounded-lg transition" title="Settings">
           <Settings size={18} />
         </button>
 

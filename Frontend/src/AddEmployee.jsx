@@ -122,9 +122,51 @@ export default function AddEmployee() {
   const [error, setError] = useState("");
   const [createdData, setCreatedData] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const validatePhone = (val) => {
+    if (!val) {
+      setPhoneError("Phone number is required.");
+      return false;
+    }
+    const firstDigit = val[0];
+    if (firstDigit && !["6", "7", "8", "9"].includes(firstDigit)) {
+      setPhoneError("Phone number must start with 6, 7, 8, or 9.");
+      return false;
+    }
+    if (val.length !== 10) {
+      setPhoneError("Phone number must be exactly 10 digits.");
+      return false;
+    }
+    setPhoneError("");
+    return true;
+  };
+
+  const handlePhoneChange = (e) => {
+    let val = e.target.value;
+    
+    // Automatically prevent country codes like +91 when pasted/typed
+    let cleanVal = val.replace(/\s+/g, "").replace(/-/g, ""); 
+    if (cleanVal.startsWith("+91")) {
+      cleanVal = cleanVal.slice(3);
+    } else if (cleanVal.startsWith("91") && cleanVal.length > 10) {
+      cleanVal = cleanVal.slice(2);
+    }
+    
+    // Accept only digits & automatically prevent alphabets/special characters/spaces
+    cleanVal = cleanVal.replace(/\D/g, "");
+    
+    // Stop accepting input after 10 digits
+    if (cleanVal.length > 10) {
+      cleanVal = cleanVal.slice(0, 10);
+    }
+    
+    setForm(prev => ({ ...prev, phone: cleanVal }));
+    validatePhone(cleanVal);
   };
 
   const handleDateClick = (e) => {
@@ -139,6 +181,14 @@ export default function AddEmployee() {
       setError("Please select a role / department.");
       return;
     }
+
+    // Prevent submission if phone validation fails
+    const isPhoneValid = validatePhone(form.phone);
+    if (!isPhoneValid) {
+      setError("Please correct the phone number error before submitting.");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -160,6 +210,7 @@ export default function AddEmployee() {
           address: "",
           status: "Active",
         });
+        setPhoneError("");
       }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create employee.");
@@ -229,10 +280,19 @@ export default function AddEmployee() {
             name="phone"
             required
             value={form.phone}
-            onChange={handleChange}
+            onChange={handlePhoneChange}
             placeholder="9876543210"
-            className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]"
+            className={`w-full px-4 py-2.5 bg-slate-100/70 border rounded-xl text-[#0a2540] outline-none transition ${
+              phoneError 
+                ? "border-rose-500 focus:border-rose-500" 
+                : "border-slate-300 focus:border-[#d4af37]"
+            }`}
           />
+          {phoneError && (
+            <p className="mt-1 text-[10px] font-extrabold text-rose-600 uppercase tracking-wider">
+              {phoneError}
+            </p>
+          )}
         </div>
 
         {/* Status */}

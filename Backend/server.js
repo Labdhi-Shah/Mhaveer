@@ -3,6 +3,8 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
+const employeeRoutes = require("./routes/employeeRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 dotenv.config();
 
 const app = express();
@@ -20,14 +22,9 @@ app.use(cors({
 }));
 app.use(express.json());
 
-app.post("/api/auth/login", (req, res) => {
-  res.json({
-    success: true,
-    message: "Direct Login Working"
-  });
-});
-
 app.use("/api/auth", authRoutes);
+app.use("/api/employees", employeeRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

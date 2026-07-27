@@ -1,17 +1,21 @@
+const jwt = require("jsonwebtoken");
+
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
-  if (
-    email === "admin@example.com" &&
-    password === "123456"
-  ) {
+  if (email === "fix this " && password === "123456") {
+    const token = jwt.sign(
+      { email, role: "SuperAdmin" },
+      process.env.JWT_SECRET || "supersecretkey",
+      { expiresIn: "1d" }
+    );
+
     return res.json({
       success: true,
-      token: "jwt-token",
+      token,
       message: "Login Success",
     });
   }
-
 
   console.log("Invalid Email or Password");
   return res.status(401).json({

@@ -4,10 +4,6 @@ function App() {
   return (
     <>
       <Login />
-
-
-      console.log("Update code");
-
     </>
   );
 }

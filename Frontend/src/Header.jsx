@@ -17,7 +17,7 @@ export default function Header({ onToggleSidebar }) {
         </button>
 
         {/* Logo Image */}
-        <div className="w-10 h-10 bg-white p-1 rounded-xl flex items-center justify-center shadow-md overflow-hidden">
+        <div className="w-10 h-10 bg-white p-1 rounded-xl hidden sm:flex items-center justify-center shadow-md overflow-hidden">
           <img 
             src="/src/assets/logo.svg" 
             alt="MHAVEER FINCAP Logo" 

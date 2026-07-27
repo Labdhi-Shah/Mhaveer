@@ -32,7 +32,7 @@ export default function DashboardView() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 border-l-8 border-l-[#0a2540] text-center md:text-left">
+      <div className="mt-[100px] bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 border-l-8 border-l-[#0a2540] text-center md:text-left">
         <div>
           <p className="text-xs font-extrabold uppercase tracking-widest text-[#d4af37]">Executive Overview</p>
           <h1 className="text-xl sm:text-2xl font-black text-[#0a2540]">Super Admin Dashboard</h1>

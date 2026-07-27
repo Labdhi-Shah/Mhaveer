@@ -46,16 +46,39 @@ exports.createLead = async (req, res) => {
 exports.getLeads = async (req, res) => {
   try {
     let query = {};
-    // If it's a regular employee (not SuperAdmin/Manager), maybe only show their leads?
-    // Based on requirements, keeping it simple: return all leads or role based.
-    // If strictly role based, we can filter here, but we will return all for now.
     
-    const leads = await Lead.find(query).sort({ createdAt: -1 });
+    // Filtering
+    const search = req.query.search;
+    if (search) {
+      query.$or = [
+        { companyName: { $regex: search, $options: "i" } },
+        { contactPerson: { $regex: search, $options: "i" } },
+        { leadId: { $regex: search, $options: "i" } }
+      ];
+    }
+    
+    if (req.query.loanType) query.loanType = req.query.loanType;
+    if (req.query.interested) query.interested = req.query.interested;
+    
+    // If not super admin, optionally restrict to their own leads (or leave open if FrontDesk sees all)
+    // Uncomment next line if employees should only see their own leads
+    // if (req.user.role !== "SuperAdmin") query.employeeId = req.user.id;
+
+    // Pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const leads = await Lead.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit);
+    const total = await Lead.countDocuments(query);
+    const pages = Math.ceil(total / limit);
     
     res.status(200).json({
       success: true,
       message: "Leads fetched successfully",
       data: leads,
+      total,
+      pages: pages || 1
     });
   } catch (error) {
     console.error("Get Leads Error:", error);

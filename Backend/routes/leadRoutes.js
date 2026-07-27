@@ -8,9 +8,11 @@ const {
   updateLead,
   deleteLead
 } = require("../controllers/leadController");
+const { getDashboardStats } = require("../controllers/dashboardController");
 
 router.use(authMiddleware);
 
+router.get("/stats", getDashboardStats);
 router.post("/", createLead);
 router.get("/", getLeads);
 router.get("/:id", getLeadById);

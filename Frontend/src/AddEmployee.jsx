@@ -210,8 +210,13 @@ export default function AddEmployee() {
             required
             value={form.personalEmail}
             onChange={handleChange}
+<<<<<<< HEAD
             placeholder="rahul@gmail.com"
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]"
+=======
+            placeholder="rahul@mhaveerfincap.com"
+            className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]"
+>>>>>>> 9031da5 (changes name)
           />
         </div>
 
@@ -372,12 +377,15 @@ export default function AddEmployee() {
                   </p>
                 </div>
                 <div>
+<<<<<<< HEAD
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Official Email (Generated)</span>
                   <p className="text-sm font-mono font-black text-[#0a2540]">
                     {createdData.email}
                   </p>
                 </div>
                 <div>
+=======
+>>>>>>> 9031da5 (changes name)
                   <span className="text-[10px] font-bold text-slate-400 uppercase">
                     Temporary Password (Generated)
                   </span>

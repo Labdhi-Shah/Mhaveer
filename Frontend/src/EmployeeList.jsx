@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import api from "./api"; // જો તમારી api.js src/ માં હોય તો ./api રાખો
 import { Search, Edit, Trash2, Eye, Loader2, ChevronLeft, ChevronRight, X } from "lucide-react";
 
@@ -14,12 +14,7 @@ export default function EmployeeList() {
   const [editingEmp, setEditingEmp] = useState(null); // Edit Modal State
   const [editForm, setEditForm] = useState({ role: "", status: "Active" });
 
-  useEffect(() => {
-    const timer = setTimeout(() => fetchEmployees(), 400); // Debouncing
-    return () => clearTimeout(timer);
-  }, [search, page]);
-
-  const fetchEmployees = async () => {
+  const fetchEmployees = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get(`/employees?page=${page}&limit=10&search=${search}`);
@@ -32,7 +27,12 @@ export default function EmployeeList() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, search]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => fetchEmployees(), 400); // Debouncing
+    return () => clearTimeout(timer);
+  }, [fetchEmployees]);
 
   // View Details API / Handler
   const handleViewClick = async (empId) => {
@@ -42,6 +42,7 @@ export default function EmployeeList() {
         setViewEmp(res.data.data);
       }
     } catch (err) {
+      console.error(err);
       alert("Failed to fetch employee details");
     }
   };
@@ -55,6 +56,7 @@ export default function EmployeeList() {
         fetchEmployees();
       }
     } catch (err) {
+      console.error(err);
       alert("Failed to update employee");
     }
   };
@@ -65,6 +67,7 @@ export default function EmployeeList() {
         await api.delete(`/employees/${id}`);
         fetchEmployees();
       } catch (err) {
+        console.error(err);
         alert("Failed to delete employee");
       }
     }

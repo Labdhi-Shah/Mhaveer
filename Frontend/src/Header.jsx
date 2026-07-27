@@ -1,4 +1,3 @@
-import React from "react";
 import { Bell, Settings } from "lucide-react";
 // જો તમે લોગો ઈમેજને src/assets/logo.png તરીકે રાખેલી હોય:
 // import logoImg from "./assets/logo.png"; 

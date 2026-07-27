@@ -11,18 +11,18 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
 
-    const success = login(form.email, form.password);
+    const result = await login(form.email, form.password);
 
-    if (success) {
+    if (result.success) {
       navigate("/dashboard", { replace: true });
       return;
     }
 
-    setError("Invalid credentials. Use admin@example.com with password 123456.");
+    setError(result.message || "Invalid credentials. Use admin@mhaveerfincap.com with password 123456.");
   };
 
   return (

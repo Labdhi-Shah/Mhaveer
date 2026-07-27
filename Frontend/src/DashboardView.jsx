@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Users, ArrowRight, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "./api";
@@ -8,11 +8,7 @@ export default function DashboardView({ onOpenForm }) {
   const [recentEmployees, setRecentEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       const [statsRes, empRes] = await Promise.all([
@@ -27,7 +23,12 @@ export default function DashboardView({ onOpenForm }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   return (
     <div className="space-y-6">

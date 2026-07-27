@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
-  if (email === "fix this " && password === "123456") {
+  if (email === "shahkevin1@gmail.com" && password === "123456") {
     const token = jwt.sign(
       { email, role: "SuperAdmin" },
       process.env.JWT_SECRET || "supersecretkey",

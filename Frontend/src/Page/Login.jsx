@@ -145,11 +145,11 @@ function Login() {
                   marginBottom: "8px",
                 }}
               >
-                Email Address
+                Official Login Email
               </label>
               <input
                 type="email"
-                placeholder="Enter email address"
+                placeholder="Enter official login email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={{

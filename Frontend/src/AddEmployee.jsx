@@ -265,7 +265,7 @@ export default function AddEmployee() {
             required
             value={form.personalEmail}
             onChange={handleChange}
-            placeholder="rahul@gmail.com"
+            placeholder="Enter Employee Personal Email"
             className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]"
           />
         </div>

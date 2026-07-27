@@ -98,7 +98,7 @@ export default function EmployeeList() {
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#0a2540] text-[#d4af37] font-extrabold uppercase tracking-wider">
+            <thead className="bg-[#0a2540] text-[#d4af37] font-extrabold uppercase tracking-wider whitespace-nowrap">
               <tr>
                 <th className="py-3.5 px-4 rounded-l-xl">EMP ID</th>
                 <th className="py-3.5 px-4">NAME</th>
@@ -109,7 +109,7 @@ export default function EmployeeList() {
                 <th className="py-3.5 px-4 text-right rounded-r-xl">ACTIONS</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
+            <tbody className="divide-y divide-slate-100 text-slate-700 whitespace-nowrap">
               {employees.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="text-center py-8 text-slate-400">

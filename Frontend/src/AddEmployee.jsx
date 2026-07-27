@@ -177,7 +177,7 @@ export default function AddEmployee() {
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm border-t-8 border-t-[#d4af37]">
+    <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-8 shadow-sm border-t-8 border-t-[#d4af37]">
       <h3 className="text-xl font-black text-[#0a2540] mb-6">Register New Employee</h3>
 
       {error && (

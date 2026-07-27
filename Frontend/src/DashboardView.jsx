@@ -32,43 +32,43 @@ export default function DashboardView({ onOpenForm }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 border-l-8 border-l-[#0a2540]">
+      <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 border-l-8 border-l-[#0a2540] text-center md:text-left">
         <div>
           <p className="text-xs font-extrabold uppercase tracking-widest text-[#d4af37]">Executive Overview</p>
-          <h1 className="text-2xl font-black text-[#0a2540]">Super Admin Dashboard</h1>
+          <h1 className="text-xl sm:text-2xl font-black text-[#0a2540]">Super Admin Dashboard</h1>
         </div>
-        <button onClick={onOpenForm} className="bg-[#d4af37] hover:bg-[#c39e2d] text-[#0a2540] px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider">
+        <button onClick={onOpenForm} className="w-full md:w-auto bg-[#d4af37] hover:bg-[#c39e2d] text-[#0a2540] px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider cursor-pointer">
           Add New Employee
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-[#0a2540] flex items-center justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-[#0a2540] flex items-center justify-between">
           <div>
             <p className="text-slate-400 text-[10px] font-extrabold uppercase">TOTAL EMPLOYEES</p>
-            <h2 className="text-3xl font-black text-[#0a2540] mt-1">{loading ? "..." : stats.totalEmployees}</h2>
+            <h2 className="text-2xl sm:text-3xl font-black text-[#0a2540] mt-1">{loading ? "..." : stats.totalEmployees}</h2>
           </div>
-          <div className="w-12 h-12 bg-[#0a2540] text-[#d4af37] rounded-2xl flex items-center justify-center"><Users size={22} /></div>
+          <div className="w-12 h-12 bg-[#0a2540] text-[#d4af37] rounded-2xl flex items-center justify-center shrink-0"><Users size={22} /></div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-[#d4af37] flex items-center justify-between">
+        <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-[#d4af37] flex items-center justify-between">
           <div>
             <p className="text-slate-400 text-[10px] font-extrabold uppercase">ACTIVE EMPLOYEES</p>
-            <h2 className="text-3xl font-black text-emerald-600 mt-1">{loading ? "..." : stats.activeEmployees}</h2>
+            <h2 className="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">{loading ? "..." : stats.activeEmployees}</h2>
           </div>
-          <div className="w-12 h-12 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-2xl flex items-center justify-center"><Users size={22} /></div>
+          <div className="w-12 h-12 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-2xl flex items-center justify-center shrink-0"><Users size={22} /></div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-rose-500 flex items-center justify-between">
+        <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-rose-500 flex items-center justify-between sm:col-span-2 lg:col-span-1">
           <div>
             <p className="text-slate-400 text-[10px] font-extrabold uppercase">INACTIVE EMPLOYEES</p>
-            <h2 className="text-3xl font-black text-rose-600 mt-1">{loading ? "..." : stats.inactiveEmployees}</h2>
+            <h2 className="text-2xl sm:text-3xl font-black text-rose-600 mt-1">{loading ? "..." : stats.inactiveEmployees}</h2>
           </div>
-          <div className="w-12 h-12 bg-rose-50 text-rose-600 border border-rose-200 rounded-2xl flex items-center justify-center"><Users size={22} /></div>
+          <div className="w-12 h-12 bg-rose-50 text-rose-600 border border-rose-200 rounded-2xl flex items-center justify-center shrink-0"><Users size={22} /></div>
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+      <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-6 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-black text-[#0a2540]">Recently Joined Employees</h3>
           <button onClick={() => navigate("/employees")} className="text-xs text-[#0a2540] hover:text-[#d4af37] font-black flex items-center gap-1">
@@ -81,7 +81,7 @@ export default function DashboardView({ onOpenForm }) {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#0a2540] text-[#d4af37] font-extrabold uppercase">
+              <thead className="bg-[#0a2540] text-[#d4af37] font-extrabold uppercase whitespace-nowrap">
                 <tr>
                   <th className="py-3.5 px-4 rounded-l-xl">EMP ID</th>
                   <th className="py-3.5 px-4">NAME</th>
@@ -89,7 +89,7 @@ export default function DashboardView({ onOpenForm }) {
                   <th className="py-3.5 px-4 text-center rounded-r-xl">STATUS</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
+              <tbody className="divide-y divide-slate-100 text-slate-700 whitespace-nowrap">
                 {recentEmployees.map((emp) => (
                   <tr key={emp._id || emp.employeeId} className="hover:bg-slate-50">
                     <td className="py-4 px-4 font-mono font-black text-[#0a2540]">{emp.employeeId}</td>

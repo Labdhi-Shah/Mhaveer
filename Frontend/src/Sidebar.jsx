@@ -1,30 +1,14 @@
 import { 
-  LayoutDashboard, Users, UserPlus, LogOut, 
+  LayoutDashboard, Users, UserPlus, 
   PlusCircle, FolderHeart, Clock, Calendar, ClipboardList 
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
-import api from "./api";
 
 export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
-
-  const handleLogout = async () => {
-    const attendanceId = localStorage.getItem("attendanceId");
-    if (attendanceId) {
-      try {
-        await api.post("/auth/logout", { attendanceId });
-      } catch (err) {
-        console.error("Logout API failed", err);
-      }
-    }
-    logout();
-    localStorage.removeItem("loginTime");
-    localStorage.removeItem("attendanceId");
-    navigate("/login", { replace: true });
-  };
+  const { user } = useAuth();
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -172,16 +156,7 @@ export default function Sidebar({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* FIXED GOLDEN LOGOUT AT BOTTOM LEFT */}
-        <div className="pt-3 border-t border-slate-200">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 bg-[#d4af37] hover:bg-[#c39e2d] text-[#0a2540] font-black py-3 px-4 rounded-xl shadow-md transition-all text-xs uppercase tracking-wider cursor-pointer"
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
-        </div>
+
       </aside>
     </>
   );

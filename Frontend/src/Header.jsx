@@ -162,15 +162,10 @@ export default function Header({ onToggleSidebar }) {
       {!isSuperAdmin && loginTimeStr && (
         <div className="flex items-center gap-3 md:gap-4">
           <div className="flex items-center gap-4 bg-slate-800/60 border border-slate-700/50 rounded-2xl py-1.5 px-3 md:px-5 shadow-inner">
-            <div className={`flex items-center gap-1.5 ${isOnBreak ? 'text-yellow-400' : 'text-[#d4af37]'}`}>
-              <Clock size={14} className={isOnBreak ? "" : "animate-pulse"} />
-              <span className="font-mono font-black text-xs md:text-sm tracking-widest">{isOnBreak ? "PAUSED" : elapsed}</span>
-            </div>
-            <div className="h-4 w-px bg-slate-700 hidden md:block" />
             <div className="text-[10px] text-slate-300 hidden md:block font-bold">
               Login: <span className="text-white">{formatLoginTime(loginTimeStr)}</span>
             </div>
-            <div className="h-4 w-px bg-slate-700" />
+            <div className="h-4 w-px bg-slate-700 hidden md:block" />
             <div className="flex items-center gap-1">
               <Circle size={8} className={isOnBreak ? "fill-yellow-500 text-yellow-500 animate-pulse" : "fill-emerald-500 text-emerald-500"} />
               <span className={`text-[10px] font-black uppercase tracking-wider ${isOnBreak ? "text-yellow-400" : "text-emerald-400"}`}>
@@ -193,8 +188,17 @@ export default function Header({ onToggleSidebar }) {
         </div>
       )}
 
-      {/* RIGHT SECTION */}
       <div className="flex items-center gap-2 sm:gap-4">
+        {!isSuperAdmin && loginTimeStr && (
+          <button 
+            className={`p-1.5 sm:p-2 rounded-lg transition relative ${
+              isOnBreak ? "text-yellow-400 hover:text-yellow-500" : "text-slate-300 hover:text-[#d4af37]"
+            }`} 
+            title={isOnBreak ? "Working Timer (PAUSED)" : `Working Timer: ${elapsed}`}
+          >
+            <Clock size={18} className={isOnBreak ? "" : "animate-pulse"} />
+          </button>
+        )}
         <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#d4af37] rounded-lg transition relative" title="Notifications">
           <Bell size={18} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#d4af37] rounded-full" />

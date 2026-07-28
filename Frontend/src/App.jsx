@@ -11,6 +11,8 @@ import MeetingsView from "./components/MeetingsView";
 import ProfileView from "./components/ProfileView";
 import SettingsView from "./components/SettingsView";
 import EmployeeDashboard from "./components/EmployeeDashboard";
+import NewLeadView from "./components/NewLeadView";
+import AttendanceView from "./components/AttendanceView";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -37,10 +39,11 @@ export default function App() {
             }
           >
             <Route path="dashboard" element={<DashboardSelector />} />
-            <Route path="new-lead" element={<EmployeeDashboard />} />
+            <Route path="new-lead" element={<NewLeadView />} />
             <Route path="my-leads" element={<MyLeadsView />} />
             <Route path="follow-up" element={<FollowUpView />} />
             <Route path="meetings" element={<MeetingsView />} />
+            <Route path="attendance" element={<AttendanceView />} />
             <Route path="profile" element={<ProfileView />} />
             <Route path="settings" element={<SettingsView />} />
             <Route path="employees" element={<EmployeeList />} />

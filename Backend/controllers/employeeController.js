@@ -166,16 +166,12 @@ exports.getEmployeeById = async (req, res) => {
 // @route   PUT /api/employees/:id
 exports.updateEmployee = async (req, res) => {
   try {
-<<<<<<< HEAD
     // Fields that are allowed to be updated
-    const { fullName, email, personalEmail, phone, role, address, joiningDate, dateOfBirth, status } = req.body;
-=======
     const { fullName, name, email, officialEmail, personalEmail, phone, role, address, joiningDate, dateOfBirth, dob, status } = req.body;
     
     const empName = fullName || name;
     const empDob = dateOfBirth || dob;
     const offEmail = officialEmail || email;
->>>>>>> 02452e3415ecb55a5900e68b8fc8b325928c2b45
 
     if (phone) {
       const phoneRegex = /^[6-9]\d{9}$/;
@@ -196,14 +192,10 @@ exports.updateEmployee = async (req, res) => {
         return res.status(400).json({ success: false, message: "Official Email already in use" });
       }
     }
-
-<<<<<<< HEAD
     employee.fullName = fullName || employee.fullName;
     employee.email = email || employee.email;
-=======
     employee.name = empName || employee.name;
     employee.officialEmail = offEmail || employee.officialEmail;
->>>>>>> 02452e3415ecb55a5900e68b8fc8b325928c2b45
     employee.personalEmail = personalEmail || employee.personalEmail;
     employee.phone = phone || employee.phone;
     employee.role = role || employee.role;

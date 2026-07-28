@@ -1,18 +1,28 @@
 import { 
   LayoutDashboard, Users, UserPlus, LogOut, 
-  PlusCircle, FolderHeart, Clock, Calendar, User, Settings 
+  PlusCircle, FolderHeart, Clock, Calendar, ClipboardList 
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
+import api from "./api";
 
 export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const attendanceId = localStorage.getItem("attendanceId");
+    if (attendanceId) {
+      try {
+        await api.post("/auth/logout", { attendanceId });
+      } catch (err) {
+        console.error("Logout API failed", err);
+      }
+    }
     logout();
     localStorage.removeItem("loginTime");
+    localStorage.removeItem("attendanceId");
     navigate("/login", { replace: true });
   };
 
@@ -147,27 +157,15 @@ export default function Sidebar({ isOpen, onClose }) {
                 </button>
 
                 <button
-                  onClick={() => handleNavigation("/profile")}
+                  onClick={() => handleNavigation("/attendance")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                    location.pathname === "/profile"
+                    location.pathname === "/attendance"
                       ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
                       : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
                   }`}
                 >
-                  <User size={18} />
-                  Profile
-                </button>
-
-                <button
-                  onClick={() => handleNavigation("/settings")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                    location.pathname === "/settings"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                  }`}
-                >
-                  <Settings size={18} />
-                  Settings
+                  <ClipboardList size={18} />
+                  Attendance
                 </button>
               </>
             )}

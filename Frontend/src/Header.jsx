@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Bell, Settings, Menu, ChevronDown, Clock, Circle, User, Key, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
+import api from "./api";
 import logoSvg from "./assets/logo.svg";
 
 export default function Header({ onToggleSidebar }) {
@@ -12,7 +13,32 @@ export default function Header({ onToggleSidebar }) {
   const [elapsed, setElapsed] = useState("00:00:00");
   const dropdownRef = useRef(null);
 
+  const [isOnBreak, setIsOnBreak] = useState(() => localStorage.getItem("isOnBreak") === "true");
+  const [isBreakLoading, setIsBreakLoading] = useState(false);
+
   const loginTimeStr = localStorage.getItem("loginTime");
+
+  const toggleBreak = async () => {
+    const attendanceId = localStorage.getItem("attendanceId");
+    if (!attendanceId) return;
+
+    setIsBreakLoading(true);
+    try {
+      if (isOnBreak) {
+        await api.put("/attendance/break/end", { attendanceId });
+        setIsOnBreak(false);
+        localStorage.removeItem("isOnBreak");
+      } else {
+        await api.put("/attendance/break/start", { attendanceId });
+        setIsOnBreak(true);
+        localStorage.setItem("isOnBreak", "true");
+      }
+    } catch (err) {
+      console.error("Error toggling break", err);
+    } finally {
+      setIsBreakLoading(false);
+    }
+  };
 
   // Format Page Title
   const getPageTitle = () => {
@@ -26,17 +52,19 @@ export default function Header({ onToggleSidebar }) {
     if (path.includes("settings")) return "Account Settings";
     if (path.includes("employees")) return "Employee Directory";
     if (path.includes("add-employee")) return "Register Employee";
+    if (path.includes("attendance")) return "Attendance Logs";
     return "CRM Portal";
   };
 
   // Live Timer Effect
   useEffect(() => {
-    if (!loginTimeStr) return;
+    if (!loginTimeStr || isOnBreak) return;
     
     // Initial run
     const updateTimer = () => {
       const start = new Date(loginTimeStr);
       const now = new Date();
+      // Need to adjust for total break time if they already took breaks, but simpler for now just to pause.
       const diffMs = now - start;
       if (diffMs < 0) return;
 
@@ -52,7 +80,7 @@ export default function Header({ onToggleSidebar }) {
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [loginTimeStr]);
+  }, [loginTimeStr, isOnBreak]);
 
   // Click outside dropdown handler
   useEffect(() => {
@@ -71,9 +99,19 @@ export default function Header({ onToggleSidebar }) {
     return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const attendanceId = localStorage.getItem("attendanceId");
+    if (attendanceId) {
+      try {
+        await api.post("/auth/logout", { attendanceId });
+      } catch (err) {
+        console.error("Logout API failed", err);
+      }
+    }
     logout();
     localStorage.removeItem("loginTime");
+    localStorage.removeItem("attendanceId");
+    localStorage.removeItem("isOnBreak");
     navigate("/login", { replace: true });
   };
 
@@ -122,20 +160,36 @@ export default function Header({ onToggleSidebar }) {
 
       {/* CENTER SECTION - WORKING TIMER FOR EMPLOYEES */}
       {!isSuperAdmin && loginTimeStr && (
-        <div className="flex items-center gap-4 bg-slate-800/60 border border-slate-700/50 rounded-2xl py-1.5 px-3 md:px-5 shadow-inner">
-          <div className="flex items-center gap-1.5 text-[#d4af37]">
-            <Clock size={14} className="animate-pulse" />
-            <span className="font-mono font-black text-xs md:text-sm tracking-widest">{elapsed}</span>
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="flex items-center gap-4 bg-slate-800/60 border border-slate-700/50 rounded-2xl py-1.5 px-3 md:px-5 shadow-inner">
+            <div className={`flex items-center gap-1.5 ${isOnBreak ? 'text-yellow-400' : 'text-[#d4af37]'}`}>
+              <Clock size={14} className={isOnBreak ? "" : "animate-pulse"} />
+              <span className="font-mono font-black text-xs md:text-sm tracking-widest">{isOnBreak ? "PAUSED" : elapsed}</span>
+            </div>
+            <div className="h-4 w-px bg-slate-700 hidden md:block" />
+            <div className="text-[10px] text-slate-300 hidden md:block font-bold">
+              Login: <span className="text-white">{formatLoginTime(loginTimeStr)}</span>
+            </div>
+            <div className="h-4 w-px bg-slate-700" />
+            <div className="flex items-center gap-1">
+              <Circle size={8} className={isOnBreak ? "fill-yellow-500 text-yellow-500 animate-pulse" : "fill-emerald-500 text-emerald-500"} />
+              <span className={`text-[10px] font-black uppercase tracking-wider ${isOnBreak ? "text-yellow-400" : "text-emerald-400"}`}>
+                {isOnBreak ? "On Break" : "Online"}
+              </span>
+            </div>
           </div>
-          <div className="h-4 w-px bg-slate-700 hidden md:block" />
-          <div className="text-[10px] text-slate-300 hidden md:block font-bold">
-            Login: <span className="text-white">{formatLoginTime(loginTimeStr)}</span>
-          </div>
-          <div className="h-4 w-px bg-slate-700" />
-          <div className="flex items-center gap-1">
-            <Circle size={8} className="fill-emerald-500 text-emerald-500" />
-            <span className="text-[10px] font-black uppercase text-emerald-400 tracking-wider">Online</span>
-          </div>
+          
+          <button 
+            onClick={toggleBreak}
+            disabled={isBreakLoading}
+            className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black shadow-md transition-all ${
+              isOnBreak 
+                ? "bg-emerald-500 hover:bg-emerald-600 text-white" 
+                : "bg-slate-700 hover:bg-slate-600 text-slate-100 border border-slate-600"
+            } disabled:opacity-50`}
+          >
+            {isOnBreak ? "▶ Resume Work" : "☕ Take Break"}
+          </button>
         </div>
       )}
 

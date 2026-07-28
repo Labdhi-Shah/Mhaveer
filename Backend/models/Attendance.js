@@ -38,6 +38,16 @@ const attendanceSchema = new mongoose.Schema(
       type: String,
       default: "Present",
     },
+    breaks: [
+      {
+        startTime: { type: Date },
+        endTime: { type: Date }
+      }
+    ],
+    totalBreakTime: {
+      type: String,
+      default: "00:00"
+    },
     date: {
       type: Date,
       default: Date.now,
@@ -49,12 +59,11 @@ const attendanceSchema = new mongoose.Schema(
 );
 
 // Pre-save hook to generate attendanceId automatically
-attendanceSchema.pre("save", function (next) {
+attendanceSchema.pre("save", function () {
   if (!this.attendanceId) {
     const randomNum = Math.floor(100000 + Math.random() * 900000); // 6-digit random number
     this.attendanceId = `ATT-${randomNum}`;
   }
-  next();
 });
 
 module.exports = mongoose.model("Attendance", attendanceSchema);

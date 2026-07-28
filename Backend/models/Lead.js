@@ -102,12 +102,11 @@ const leadSchema = new mongoose.Schema(
 );
 
 // Pre-save hook to generate leadId automatically
-leadSchema.pre("save", function (next) {
+leadSchema.pre("save", function () {
   if (!this.leadId) {
     const randomNum = Math.floor(100000 + Math.random() * 900000); // 6-digit random number
     this.leadId = `LD-${randomNum}`;
   }
-  next();
 });
 
 module.exports = mongoose.model("Lead", leadSchema);

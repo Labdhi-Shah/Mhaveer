@@ -50,9 +50,15 @@ function Login() {
           };
           localStorage.setItem("user", JSON.stringify(employeeData));
           
-          // Start the working timer
-          if (!localStorage.getItem("loginTime")) {
+          // Start the working timer using server time
+          if (data.loginTime) {
+            localStorage.setItem("loginTime", data.loginTime);
+          } else if (!localStorage.getItem("loginTime")) {
             localStorage.setItem("loginTime", new Date().toISOString());
+          }
+          
+          if (data.attendanceId) {
+            localStorage.setItem("attendanceId", data.attendanceId);
           }
           
           setMessage("✅ Login Successful");

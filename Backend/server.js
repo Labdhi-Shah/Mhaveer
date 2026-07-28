@@ -15,11 +15,15 @@ const app = express();
 connectDB();
 
 // Middleware
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(",") 
+  : [
+      "http://localhost:5173",
+      "https://mhaveer.vercel.app"
+    ];
+
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://mhaveer.vercel.app"
-  ],
+  origin: allowedOrigins,
   credentials: true,
 }));
 app.use(express.json());
@@ -37,6 +41,22 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+});
+
+// Handle unhandled promise rejections gracefully
+process.on("unhandledRejection", (err) => {
+  console.log("❌ Unhandled Rejection! Shutting down gracefully...");
+  console.log(err.name, err.message);
+  server.close(() => {
+    process.exit(1);
+  });
+});
+
+// Handle uncaught exceptions gracefully
+process.on("uncaughtException", (err) => {
+  console.log("❌ Uncaught Exception! Shutting down gracefully...");
+  console.log(err.name, err.message);
+  process.exit(1);
 });

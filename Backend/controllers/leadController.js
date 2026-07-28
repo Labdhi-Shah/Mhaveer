@@ -36,8 +36,11 @@ exports.createLead = async (req, res) => {
       const messages = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({ success: false, message: messages.join(", ") });
     }
+    if (error.name === "CastError") {
+      return res.status(400).json({ success: false, message: `Invalid value provided for ${error.path}` });
+    }
     console.error("Create Lead Error:", error);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.status(500).json({ success: false, message: "Internal Server Error", error: error.message, stack: error.stack });
   }
 };
 

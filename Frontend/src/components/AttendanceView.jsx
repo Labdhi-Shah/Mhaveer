@@ -9,13 +9,142 @@ import {
   AreaChart, Area
 } from "recharts";
 import * as XLSX from "xlsx";
-import api from "../api";
+import { useAuth } from "../context/AuthContext";
+
+const parseTimeToHours = (timeStr) => {
+  if (!timeStr) return 0;
+  const parts = timeStr.split(":").map(Number);
+  if (parts.length === 3) {
+    return parts[0] + parts[1] / 60 + parts[2] / 3600;
+  } else if (parts.length === 2) {
+    return parts[0] + parts[1] / 60;
+  }
+  return 0;
+};
+
+const formatHoursToHMS = (hoursFloat) => {
+  if (isNaN(hoursFloat) || hoursFloat < 0) return "00:00:00";
+  const totalSecs = Math.floor(hoursFloat * 3600);
+  const hours = Math.floor(totalSecs / 3600);
+  const minutes = Math.floor((totalSecs % 3600) / 60);
+  const seconds = totalSecs % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+};
+
+const initializeMockData = (currentUser) => {
+  const records = [];
+  const name = currentUser?.fullName || currentUser?.name || "Corporate Employee";
+  const email = currentUser?.email || "employee@mhaveerfincap.com";
+  const empId = currentUser?.employeeId || "EMP-1025";
+  const role = currentUser?.role || "Representative";
+
+  // Generate records for the last 15 days
+  const today = new Date();
+  for (let i = 1; i <= 15; i++) {
+    const d = new Date();
+    d.setDate(today.getDate() - i);
+    
+    // Skip weekends
+    const dayOfWeek = d.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+
+    // Generate check-in between 09:00 AM and 10:15 AM
+    const checkIn = new Date(d);
+    checkIn.setHours(9, Math.floor(Math.random() * 60), Math.floor(Math.random() * 60));
+
+    // Generate check-out between 05:30 PM and 07:00 PM
+    const checkOut = new Date(d);
+    checkOut.setHours(17 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 60), Math.floor(Math.random() * 60));
+
+    const diffMs = checkOut - checkIn;
+    const diffSecs = Math.floor(diffMs / 1000);
+    const hours = Math.floor(diffSecs / 3600);
+    const minutes = Math.floor((diffSecs % 3600) / 60);
+    const seconds = diffSecs % 60;
+    const totalWorkingHours = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+    // 10% chance of a Half Day
+    const isHalfDay = Math.random() < 0.1;
+    let workingHours = totalWorkingHours;
+    if (isHalfDay) {
+      workingHours = "04:15:00";
+    }
+
+    records.push({
+      _id: `MOCK-${d.getTime()}`,
+      date: d.toISOString().split("T")[0],
+      employeeName: name,
+      employeeId: empId,
+      officialEmail: email,
+      role: role,
+      branch: "Corporate Gujarat",
+      loginTime: checkIn.toISOString(),
+      logoutTime: checkOut.toISOString(),
+      workingHours: workingHours,
+      totalBreakTime: "00:35:00",
+      status: isHalfDay ? "Half Day" : "Present"
+    });
+  }
+
+  // Also add some records for other colleagues to make it look realistic if user is admin
+  if (currentUser?.role === "SuperAdmin") {
+    const colleagues = [
+      { name: "Labdhi Shah", email: "labdhi@mhaveerfincap.com", empId: "EMP-2034", role: "Manager" },
+      { name: "Amit Patel", email: "amit@mhaveerfincap.com", empId: "EMP-2098", role: "Associate" }
+    ];
+
+    colleagues.forEach(col => {
+      const today = new Date();
+      for (let i = 1; i <= 5; i++) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        if (d.getDay() === 0 || d.getDay() === 6) continue;
+
+        const checkIn = new Date(d);
+        checkIn.setHours(9, Math.floor(Math.random() * 30), 0);
+        const checkOut = new Date(d);
+        checkOut.setHours(18, Math.floor(Math.random() * 30), 0);
+
+        const diffMs = checkOut - checkIn;
+        const diffSecs = Math.floor(diffMs / 1000);
+        const hours = Math.floor(diffSecs / 3600);
+        const minutes = Math.floor((diffSecs % 3600) / 60);
+        const seconds = diffSecs % 60;
+        const totalWorkingHours = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+        records.push({
+          _id: `MOCK-${col.empId}-${d.getTime()}`,
+          date: d.toISOString().split("T")[0],
+          employeeName: col.name,
+          employeeId: col.empId,
+          officialEmail: col.email,
+          role: col.role,
+          branch: "Corporate Gujarat",
+          loginTime: checkIn.toISOString(),
+          logoutTime: checkOut.toISOString(),
+          workingHours: totalWorkingHours,
+          totalBreakTime: "00:45:00",
+          status: "Present"
+        });
+      }
+    });
+  }
+
+  localStorage.setItem("attendance_records", JSON.stringify(records));
+  return records;
+};
 
 export default function AttendanceView() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [history, setHistory] = useState([]);
   
+  // Active Timer state
+  const [attendanceStart, setAttendanceStart] = useState(() => localStorage.getItem("attendance_timer_start"));
+  const [elapsed, setElapsed] = useState("00:00:00");
+
   // Filtering
   const [dateRange, setDateRange] = useState("This Month");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -31,39 +160,92 @@ export default function AttendanceView() {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // Fetch Stats and History
-  const fetchAttendanceData = async (range, start, end) => {
+  // Sync Timer from localStorage & handle active ticking
+  useEffect(() => {
+    const handleUpdate = () => {
+      setAttendanceStart(localStorage.getItem("attendance_timer_start"));
+      fetchAttendanceData(dateRange, customStart, customEnd);
+    };
+    window.addEventListener("attendance-update", handleUpdate);
+    return () => window.removeEventListener("attendance-update", handleUpdate);
+  }, [dateRange, customStart, customEnd]);
+
+  useEffect(() => {
+    if (!attendanceStart) {
+      setElapsed("00:00:00");
+      return;
+    }
+
+    const updateTimer = () => {
+      const start = new Date(attendanceStart);
+      const now = new Date();
+      const diffMs = now - start;
+      if (diffMs < 0) return;
+
+      const diffSecs = Math.floor(diffMs / 1000);
+      const hours = Math.floor(diffSecs / 3600);
+      const minutes = Math.floor((diffSecs % 3600) / 60);
+      const seconds = diffSecs % 60;
+
+      const pad = (n) => String(n).padStart(2, "0");
+      setElapsed(`${pad(hours)}:${pad(minutes)}:${pad(seconds)}`);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [attendanceStart]);
+
+  // Fetch / Compute Stats and History
+  const fetchAttendanceData = (range, start, end) => {
     setLoading(true);
     try {
-      const statsRes = await api.get("/attendance/stats");
-      if (statsRes.data.success) {
-        setStats(statsRes.data.data);
+      let allRecords = JSON.parse(localStorage.getItem("attendance_records") || "[]");
+      if (allRecords.length === 0) {
+        allRecords = initializeMockData(user);
       }
 
-      let queryParams = "";
+      // Filter by user role (SuperAdmin sees all, employees see only their own)
+      let userRecords = allRecords;
+      if (user?.role !== "SuperAdmin") {
+        const name = user?.fullName || user?.name || "Corporate Employee";
+        userRecords = allRecords.filter(r => r.employeeName === name);
+      }
+
+      // Filter by Date Range
+      let filtered = [];
+      const today = new Date();
+
       if (range === "Custom" && start && end) {
-        queryParams = `?startDate=${start}&endDate=${end}`;
+        const sDate = new Date(start).setHours(0,0,0,0);
+        const eDate = new Date(end).setHours(23,59,59,999);
+        filtered = userRecords.filter(r => {
+          const time = new Date(r.date).getTime();
+          return time >= sDate && time <= eDate;
+        });
       } else {
-        const today = new Date();
         let s = new Date();
         let e = new Date();
-        
+
         switch (range) {
           case "Today":
             s.setHours(0,0,0,0);
-            queryParams = `?startDate=${s.toISOString()}&endDate=${e.toISOString()}`;
+            filtered = userRecords.filter(r => new Date(r.date).setHours(0,0,0,0) === s.getTime());
             break;
           case "Yesterday":
             s.setDate(s.getDate() - 1);
             s.setHours(0,0,0,0);
             e = new Date(s);
             e.setHours(23,59,59,999);
-            queryParams = `?startDate=${s.toISOString()}&endDate=${e.toISOString()}`;
+            filtered = userRecords.filter(r => {
+              const time = new Date(r.date).getTime();
+              return time >= s.getTime() && time <= e.getTime();
+            });
             break;
           case "This Week":
             s.setDate(s.getDate() - s.getDay() + 1);
             s.setHours(0,0,0,0);
-            queryParams = `?startDate=${s.toISOString()}&endDate=${e.toISOString()}`;
+            filtered = userRecords.filter(r => new Date(r.date).getTime() >= s.getTime());
             break;
           case "Last Week":
             s.setDate(s.getDate() - s.getDay() - 6);
@@ -71,30 +253,82 @@ export default function AttendanceView() {
             e = new Date(s);
             e.setDate(e.getDate() + 6);
             e.setHours(23,59,59,999);
-            queryParams = `?startDate=${s.toISOString()}&endDate=${e.toISOString()}`;
+            filtered = userRecords.filter(r => {
+              const time = new Date(r.date).getTime();
+              return time >= s.getTime() && time <= e.getTime();
+            });
             break;
           case "This Month":
             s = new Date(today.getFullYear(), today.getMonth(), 1);
-            queryParams = `?startDate=${s.toISOString()}&endDate=${e.toISOString()}`;
+            filtered = userRecords.filter(r => new Date(r.date).getTime() >= s.getTime());
             break;
           case "Last Month":
             s = new Date(today.getFullYear(), today.getMonth() - 1, 1);
             e = new Date(today.getFullYear(), today.getMonth(), 0, 23,59,59,999);
-            queryParams = `?startDate=${s.toISOString()}&endDate=${e.toISOString()}`;
+            filtered = userRecords.filter(r => {
+              const time = new Date(r.date).getTime();
+              return time >= s.getTime() && time <= e.getTime();
+            });
             break;
           default:
             s = new Date(today.getFullYear(), today.getMonth(), 1);
-            queryParams = `?startDate=${s.toISOString()}&endDate=${e.toISOString()}`;
+            filtered = userRecords.filter(r => new Date(r.date).getTime() >= s.getTime());
             break;
         }
       }
 
-      const historyRes = await api.get(`/attendance/history${queryParams}`);
-      if (historyRes.data.success) {
-        setHistory(historyRes.data.data);
-      }
+      // Sort by date newest first
+      filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+      setHistory(filtered);
+
+      // Compute Stats
+      const todayStr = today.toISOString().split("T")[0];
+      const todayRecords = userRecords.filter(r => r.date === todayStr);
+      const todayHours = todayRecords.reduce((acc, r) => acc + parseTimeToHours(r.workingHours), 0);
+
+      const thisWeekStart = new Date();
+      thisWeekStart.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
+      thisWeekStart.setHours(0,0,0,0);
+      const weeklyHours = userRecords
+        .filter(r => new Date(r.date).getTime() >= thisWeekStart.getTime())
+        .reduce((acc, r) => acc + parseTimeToHours(r.workingHours), 0);
+
+      const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const monthlyHours = userRecords
+        .filter(r => new Date(r.date).getTime() >= thisMonthStart.getTime())
+        .reduce((acc, r) => acc + parseTimeToHours(r.workingHours), 0);
+
+      const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0, 23,59,59,999);
+      const lastMonthHours = userRecords
+        .filter(r => {
+          const time = new Date(r.date).getTime();
+          return time >= lastMonthStart.getTime() && time <= lastMonthEnd.getTime();
+        })
+        .reduce((acc, r) => acc + parseTimeToHours(r.workingHours), 0);
+
+      const totalDays = userRecords.length;
+      const totalHours = userRecords.reduce((acc, r) => acc + parseTimeToHours(r.workingHours), 0);
+      const avgHours = totalDays > 0 ? totalHours / totalDays : 0;
+
+      const hoursArray = userRecords.map(r => parseTimeToHours(r.workingHours)).filter(h => h > 0);
+      const longestDay = hoursArray.length > 0 ? Math.max(...hoursArray) : 0;
+      const shortestDay = hoursArray.length > 0 ? Math.min(...hoursArray) : 0;
+
+      setStats({
+        todayWorkingTime: formatHoursToHMS(todayHours),
+        thisWeekWorkingTime: formatHoursToHMS(weeklyHours),
+        thisMonthWorkingTime: formatHoursToHMS(monthlyHours),
+        lastMonthWorkingTime: formatHoursToHMS(lastMonthHours),
+        totalLoginDays: String(totalDays),
+        totalWorkingHours: formatHoursToHMS(totalHours),
+        averageDailyHours: formatHoursToHMS(avgHours),
+        longestWorkingDay: formatHoursToHMS(longestDay),
+        shortestWorkingDay: formatHoursToHMS(shortestDay)
+      });
+
     } catch (error) {
-      console.error("Error fetching attendance data", error);
+      console.error("Error processing attendance local records", error);
       showToast("Failed to load attendance records", "error");
     } finally {
       setLoading(false);
@@ -112,12 +346,12 @@ export default function AttendanceView() {
 
   // Utility to determine status
   const getStatus = (record) => {
-    if (!record.workingHours) return "Present"; // Assuming punched in but not out
+    if (!record.workingHours) return "Present";
     const [h, m] = record.workingHours.split(":").map(Number);
     const totalMinutes = h * 60 + m;
     if (totalMinutes >= 480) return "Present"; // 8 hours
     if (totalMinutes >= 240) return "Half Day"; // 4 hours
-    return "Absent"; // Or Short Day
+    return "Absent";
   };
 
   const getStatusColor = (status) => {
@@ -150,7 +384,8 @@ export default function AttendanceView() {
   // Filter history for search
   const filteredHistory = history.filter(h => 
     new Date(h.date).toLocaleDateString('en-IN').includes(searchTerm) ||
-    (h.loginTime && new Date(h.loginTime).toLocaleTimeString('en-IN').includes(searchTerm))
+    h.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (h.workingHours && h.workingHours.includes(searchTerm))
   );
 
   // Pagination
@@ -162,8 +397,9 @@ export default function AttendanceView() {
   const handleExportExcel = () => {
     const exportData = history.map(r => ({
       Date: new Date(r.date).toLocaleDateString('en-IN'),
-      "Login Time": r.loginTime ? new Date(r.loginTime).toLocaleTimeString('en-IN') : "N/A",
-      "Logout Time": r.logoutTime ? new Date(r.logoutTime).toLocaleTimeString('en-IN') : "N/A",
+      "Employee Name": r.employeeName,
+      "Check-In Time": r.loginTime ? new Date(r.loginTime).toLocaleTimeString('en-IN') : "N/A",
+      "Check-Out Time": r.logoutTime ? new Date(r.logoutTime).toLocaleTimeString('en-IN') : "N/A",
       "Working Hours": r.workingHours || "N/A",
       Status: getStatus(r)
     }));
@@ -211,6 +447,25 @@ export default function AttendanceView() {
         </div>
       </div>
 
+      {/* Timer Running Banner */}
+      {attendanceStart && (
+        <div className="bg-gradient-to-r from-amber-500 to-[#d4af37] text-[#0a2540] p-6 rounded-3xl border border-[#d4af37]/30 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4 animate-pulse print:hidden">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-[#0a2540]">
+              <Clock size={24} className="animate-spin" style={{ animationDuration: '4s' }} />
+            </div>
+            <div>
+              <h3 className="text-sm font-black uppercase tracking-wider">Attendance Timer Running</h3>
+              <p className="text-xs font-bold text-[#0a2540]/80 mt-0.5">Currently checked in. Stop the timer in the header when checking out.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-2xl font-black tracking-widest bg-white/20 px-4 py-2 rounded-2xl border border-white/10">{elapsed}</span>
+            <span className="w-3 h-3 bg-emerald-500 rounded-full animate-ping" />
+          </div>
+        </div>
+      )}
+
       {loading && !stats ? (
         <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#0a2540]" size={40} /></div>
       ) : (
@@ -218,12 +473,12 @@ export default function AttendanceView() {
           {/* Summary Cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
-              { label: "Today's Time", value: stats?.todayWorkingTime || "00:00", color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
-              { label: "This Week", value: stats?.thisWeekWorkingTime || "00:00", color: "text-indigo-600", bg: "bg-indigo-50", border: "border-indigo-200" },
-              { label: "This Month", value: stats?.thisMonthWorkingTime || "00:00", color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200" },
-              { label: "Last Month", value: stats?.lastMonthWorkingTime || "00:00", color: "text-slate-600", bg: "bg-slate-50", border: "border-slate-200" },
+              { label: "Today's Time", value: stats?.todayWorkingTime || "00:00:00", color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
+              { label: "This Week", value: stats?.thisWeekWorkingTime || "00:00:00", color: "text-indigo-600", bg: "bg-indigo-50", border: "border-indigo-200" },
+              { label: "This Month", value: stats?.thisMonthWorkingTime || "00:00:00", color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200" },
+              { label: "Last Month", value: stats?.lastMonthWorkingTime || "00:00:00", color: "text-slate-600", bg: "bg-slate-50", border: "border-slate-200" },
               { label: "Total Login Days", value: stats?.totalLoginDays || "0", color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-200" },
-              { label: "Total Hours", value: stats?.totalWorkingHours || "00:00", color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200" }
+              { label: "Total Hours", value: stats?.totalWorkingHours || "00:00:00", color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200" }
             ].map((card, i) => (
               <div key={i} className={`p-4 rounded-3xl border shadow-sm flex flex-col justify-center items-center text-center ${card.bg} ${card.border} print:border-none print:shadow-none print:bg-transparent`}>
                 <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">{card.label}</p>
@@ -242,15 +497,15 @@ export default function AttendanceView() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center border-b border-white/10 pb-3">
                   <span className="text-xs font-bold text-slate-300">Avg. Daily Hours</span>
-                  <span className="text-lg font-black text-white">{stats?.averageDailyHours || "00:00"}</span>
+                  <span className="text-lg font-black text-white">{stats?.averageDailyHours || "00:00:00"}</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-white/10 pb-3">
                   <span className="text-xs font-bold text-slate-300">Longest Day</span>
-                  <span className="text-lg font-black text-emerald-400">{stats?.longestWorkingDay || "00:00"}</span>
+                  <span className="text-lg font-black text-emerald-400">{stats?.longestWorkingDay || "00:00:00"}</span>
                 </div>
                 <div className="flex justify-between items-center pb-1">
                   <span className="text-xs font-bold text-slate-300">Shortest Day</span>
-                  <span className="text-lg font-black text-rose-400">{stats?.shortestWorkingDay || "00:00"}</span>
+                  <span className="text-lg font-black text-rose-400">{stats?.shortestWorkingDay || "00:00:00"}</span>
                 </div>
               </div>
             </div>
@@ -341,7 +596,7 @@ export default function AttendanceView() {
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
                   type="text" 
-                  placeholder="Search date or time..." 
+                  placeholder="Search name, hours, or status..." 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   className="w-full bg-white border border-slate-200 pl-9 pr-4 py-2.5 rounded-xl text-xs font-semibold outline-none focus:border-[#0a2540] transition"
@@ -355,10 +610,10 @@ export default function AttendanceView() {
                 <thead>
                   <tr className="bg-white border-b border-slate-200 text-slate-400 font-black uppercase tracking-wider">
                     <th className="py-4 px-6 whitespace-nowrap">Date</th>
-                    <th className="py-4 px-6 whitespace-nowrap">Login Time</th>
-                    <th className="py-4 px-6 whitespace-nowrap">Logout Time</th>
-                    <th className="py-4 px-6 whitespace-nowrap">Working Hrs</th>
-                    <th className="py-4 px-6 whitespace-nowrap">Break Time</th>
+                    <th className="py-4 px-6 whitespace-nowrap">Employee Name</th>
+                    <th className="py-4 px-6 whitespace-nowrap">Check-In Time</th>
+                    <th className="py-4 px-6 whitespace-nowrap">Check-Out Time</th>
+                    <th className="py-4 px-6 whitespace-nowrap">Total Working Hours</th>
                     <th className="py-4 px-6 whitespace-nowrap text-center">Status</th>
                   </tr>
                 </thead>
@@ -378,16 +633,16 @@ export default function AttendanceView() {
                           {new Date(record.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </td>
                         <td className="py-4 px-6 font-bold whitespace-nowrap">
-                          {record.loginTime ? new Date(record.loginTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : "-"}
+                          {record.employeeName}
+                        </td>
+                        <td className="py-4 px-6 font-bold text-slate-600 whitespace-nowrap">
+                          {record.loginTime ? new Date(record.loginTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : "-"}
                         </td>
                         <td className="py-4 px-6 font-bold text-slate-500 whitespace-nowrap">
-                          {record.logoutTime ? new Date(record.logoutTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : "-"}
+                          {record.logoutTime ? new Date(record.logoutTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : "-"}
                         </td>
                         <td className="py-4 px-6 font-black text-emerald-600 whitespace-nowrap">
                           {record.workingHours || "-"}
-                        </td>
-                        <td className="py-4 px-6 font-bold text-slate-400 whitespace-nowrap">
-                          {record.totalBreakTime || "00:00"}
                         </td>
                         <td className="py-4 px-6 text-center whitespace-nowrap">
                           <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${getStatusColor(getStatus(record))}`}>
@@ -468,7 +723,7 @@ export default function AttendanceView() {
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Employee ID</p>
-                    <p className="font-mono font-bold text-slate-600">{selectedRecord.employeeId.substring(0, 8)}...</p>
+                    <p className="font-mono font-bold text-slate-600">{(selectedRecord.employeeId || "EMP-MOCK").substring(0, 8)}...</p>
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Official Email</p>
@@ -484,13 +739,13 @@ export default function AttendanceView() {
                   <div className="text-center">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Punch In</p>
                     <p className="font-black text-blue-600">
-                      {selectedRecord.loginTime ? new Date(selectedRecord.loginTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : "--:--"}
+                      {selectedRecord.loginTime ? new Date(selectedRecord.loginTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : "--:--"}
                     </p>
                   </div>
                   <div className="text-center border-x border-slate-200">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Punch Out</p>
                     <p className="font-black text-slate-600">
-                      {selectedRecord.logoutTime ? new Date(selectedRecord.logoutTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : "--:--"}
+                      {selectedRecord.logoutTime ? new Date(selectedRecord.logoutTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : "--:--"}
                     </p>
                   </div>
                   <div className="text-center">

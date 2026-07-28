@@ -15,6 +15,8 @@ export default function Header({ onToggleSidebar }) {
 
   const [isOnBreak, setIsOnBreak] = useState(() => localStorage.getItem("isOnBreak") === "true");
   const [isBreakLoading, setIsBreakLoading] = useState(false);
+  
+  const [attendanceStart, setAttendanceStart] = useState(() => localStorage.getItem("attendance_timer_start"));
 
   const loginTimeStr = localStorage.getItem("loginTime");
 
@@ -56,15 +58,24 @@ export default function Header({ onToggleSidebar }) {
     return "CRM Portal";
   };
 
-  // Live Timer Effect
+  // Live Timer & Synchronization Effect
   useEffect(() => {
-    if (!loginTimeStr || isOnBreak) return;
-    
-    // Initial run
+    const handleUpdate = () => {
+      setAttendanceStart(localStorage.getItem("attendance_timer_start"));
+    };
+    window.addEventListener("attendance-update", handleUpdate);
+    return () => window.removeEventListener("attendance-update", handleUpdate);
+  }, []);
+
+  useEffect(() => {
+    if (!attendanceStart) {
+      setElapsed("00:00:00");
+      return;
+    }
+
     const updateTimer = () => {
-      const start = new Date(loginTimeStr);
+      const start = new Date(attendanceStart);
       const now = new Date();
-      // Need to adjust for total break time if they already took breaks, but simpler for now just to pause.
       const diffMs = now - start;
       if (diffMs < 0) return;
 
@@ -80,7 +91,52 @@ export default function Header({ onToggleSidebar }) {
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [loginTimeStr, isOnBreak]);
+  }, [attendanceStart]);
+
+  const handleAttendanceClick = () => {
+    const start = localStorage.getItem("attendance_timer_start");
+    if (start) {
+      // Check Out
+      const checkInTime = new Date(start);
+      const checkOutTime = new Date();
+      const diffMs = checkOutTime - checkInTime;
+      
+      const diffSecs = Math.floor(diffMs / 1000);
+      const hours = Math.floor(diffSecs / 3600);
+      const minutes = Math.floor((diffSecs % 3600) / 60);
+      const seconds = diffSecs % 60;
+      const totalWorkingHours = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+      const newRecord = {
+        _id: Date.now().toString(),
+        date: new Date().toISOString().split("T")[0],
+        employeeName: user?.fullName || user?.name || "Corporate Employee",
+        employeeId: user?.employeeId || "EMP-MOCK-" + Math.floor(1000 + Math.random() * 9000),
+        officialEmail: user?.email || "employee@mhaveerfincap.com",
+        role: user?.role || "Representative",
+        branch: "Corporate Gujarat",
+        loginTime: checkInTime.toISOString(),
+        logoutTime: checkOutTime.toISOString(),
+        workingHours: totalWorkingHours,
+        totalBreakTime: "00:00:00",
+        status: "Present"
+      };
+
+      const existingRecords = JSON.parse(localStorage.getItem("attendance_records") || "[]");
+      existingRecords.unshift(newRecord);
+      localStorage.setItem("attendance_records", JSON.stringify(existingRecords));
+      
+      localStorage.removeItem("attendance_timer_start");
+      setAttendanceStart(null);
+    } else {
+      // Check In
+      const nowStr = new Date().toISOString();
+      localStorage.setItem("attendance_timer_start", nowStr);
+      setAttendanceStart(nowStr);
+    }
+    // Notify all listeners
+    window.dispatchEvent(new Event("attendance-update"));
+  };
 
   // Click outside dropdown handler
   useEffect(() => {
@@ -164,12 +220,13 @@ export default function Header({ onToggleSidebar }) {
 
           <button 
             onClick={toggleBreak}
-            disabled={isBreakLoading}
+            disabled={isBreakLoading || !attendanceStart}
             className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black shadow-md transition-all ${
               isOnBreak 
                 ? "bg-emerald-500 hover:bg-emerald-600 text-white" 
                 : "bg-slate-700 hover:bg-slate-600 text-slate-100 border border-slate-600"
             } disabled:opacity-50`}
+            title={!attendanceStart ? "Please check-in first" : ""}
           >
             {isOnBreak ? "▶ Resume Work" : "☕ Take Break"}
           </button>
@@ -177,15 +234,28 @@ export default function Header({ onToggleSidebar }) {
       )}
 
       <div className="flex items-center gap-2 sm:gap-4">
-        {!isSuperAdmin && loginTimeStr && (
-          <button 
-            className={`p-1.5 sm:p-2 rounded-lg transition relative ${
-              isOnBreak ? "text-yellow-400 hover:text-yellow-500" : "text-slate-300 hover:text-[#d4af37]"
-            }`} 
-            title={isOnBreak ? "Working Timer (PAUSED)" : `Working Timer: ${elapsed}`}
-          >
-            <Clock size={18} className={isOnBreak ? "" : "animate-pulse"} />
-          </button>
+        {user && (
+          <div className="flex items-center gap-2">
+            {attendanceStart ? (
+              <button 
+                onClick={handleAttendanceClick}
+                className="flex items-center gap-2 bg-[#d4af37]/20 border border-[#d4af37] text-[#d4af37] px-3.5 py-1.5 rounded-xl transition hover:bg-[#d4af37]/30 shadow-md font-bold text-xs cursor-pointer"
+                title="Checked In - Click to Check Out"
+              >
+                <Clock size={16} className="animate-pulse" />
+                <span className="font-mono tracking-widest">{elapsed}</span>
+                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
+              </button>
+            ) : (
+              <button 
+                onClick={handleAttendanceClick}
+                className="p-2 text-slate-300 hover:text-[#d4af37] hover:bg-slate-800/60 rounded-xl transition cursor-pointer"
+                title="Check In Attendance"
+              >
+                <Clock size={18} />
+              </button>
+            )}
+          </div>
         )}
         <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#d4af37] rounded-lg transition relative" title="Notifications">
           <Bell size={18} />

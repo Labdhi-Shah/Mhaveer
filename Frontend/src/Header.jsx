@@ -161,19 +161,7 @@ export default function Header({ onToggleSidebar }) {
       {/* CENTER SECTION - WORKING TIMER FOR EMPLOYEES */}
       {!isSuperAdmin && loginTimeStr && (
         <div className="flex items-center gap-3 md:gap-4">
-          <div className="flex items-center gap-4 bg-slate-800/60 border border-slate-700/50 rounded-2xl py-1.5 px-3 md:px-5 shadow-inner">
-            <div className="text-[10px] text-slate-300 hidden md:block font-bold">
-              Login: <span className="text-white">{formatLoginTime(loginTimeStr)}</span>
-            </div>
-            <div className="h-4 w-px bg-slate-700 hidden md:block" />
-            <div className="flex items-center gap-1">
-              <Circle size={8} className={isOnBreak ? "fill-yellow-500 text-yellow-500 animate-pulse" : "fill-emerald-500 text-emerald-500"} />
-              <span className={`text-[10px] font-black uppercase tracking-wider ${isOnBreak ? "text-yellow-400" : "text-emerald-400"}`}>
-                {isOnBreak ? "On Break" : "Online"}
-              </span>
-            </div>
-          </div>
-          
+
           <button 
             onClick={toggleBreak}
             disabled={isBreakLoading}

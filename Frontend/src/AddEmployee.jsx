@@ -359,7 +359,7 @@ export default function AddEmployee() {
         </div>
 
         {/* Role Selection Dropdown */}
-        <div className="md:col-span-2">
+        <div>
           <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">
             Role / Department *
           </label>
@@ -377,24 +377,24 @@ export default function AddEmployee() {
               </option>
             ))}
           </select>
-
-          {/* RESPONSIBILITIES - Appears ONLY AFTER selecting a role */}
-          {form.role && ROLE_DATA[form.role] && (
-            <div className="mt-3 bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 transition-all">
-              <p className="text-[11px] font-extrabold uppercase text-[#0a2540] mb-2.5">
-                Key Responsibilities ({form.role}):
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700 text-xs">
-                {ROLE_DATA[form.role].map((item, index) => (
-                  <div key={index} className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-2xs">
-                    <span className="w-2 h-2 rounded-full bg-[#d4af37] shrink-0" />
-                    <span className="font-semibold text-slate-800">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* RESPONSIBILITIES - Appears ONLY AFTER selecting a role */}
+        {form.role && ROLE_DATA[form.role] && (
+          <div className="md:col-span-2 bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 transition-all">
+            <p className="text-[11px] font-extrabold uppercase text-[#0a2540] mb-2.5">
+              Key Responsibilities ({form.role}):
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700 text-xs">
+              {ROLE_DATA[form.role].map((item, index) => (
+                <div key={index} className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-[#d4af37] shrink-0" />
+                  <span className="font-semibold text-slate-800">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Submit Button */}
         <div className="md:col-span-2 mt-2">

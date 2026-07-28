@@ -1,188 +1,168 @@
 const Attendance = require("../models/Attendance");
-const Employee = require("../models/Employee");
+const Employee = require("../models/Employee"); // Assume Employee model exists
 
-// @desc    Employee Punch In (Save Login Time)
-// @route   POST /api/attendance/login
-exports.punchIn = async (req, res) => {
-  try {
-    const employee = await Employee.findById(req.user.id);
-    if (!employee) {
-      return res.status(404).json({ success: false, message: "Employee not found" });
-    }
-
-    // Check if already punched in today
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const existingAttendance = await Attendance.findOne({
-      employeeId: employee._id.toString(),
-      date: { $gte: today },
-    });
-
-    if (existingAttendance) {
-      return res.status(400).json({ success: false, message: "Already punched in for today", data: { loginTime: existingAttendance.loginTime } });
-    }
-
-    const attendance = new Attendance({
-      employeeId: employee._id.toString(),
-      employeeName: employee.name,
-      officialEmail: employee.officialEmail,
-      role: employee.role,
-      branch: employee.branch || "",
-      loginTime: new Date(),
-    });
-
-    await attendance.save();
-
-    res.status(201).json({
-      success: true,
-      message: "Punched in successfully",
-      data: {
-        loginTime: attendance.loginTime,
-      },
-    });
-  } catch (error) {
-    console.error("Punch In Error:", error);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
-};
-
-// @desc    Employee Punch Out (Save Logout Time & Calculate Hours)
-// @route   PUT /api/attendance/logout
-exports.punchOut = async (req, res) => {
-  try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const attendance = await Attendance.findOne({
-      employeeId: req.user.id,
-      date: { $gte: today },
-    });
-
-    if (!attendance) {
-      return res.status(404).json({ success: false, message: "No attendance record found for today. Please punch in first." });
-    }
-
-    if (attendance.logoutTime) {
-      return res.status(400).json({ success: false, message: "Already punched out for today" });
-    }
-
-    attendance.logoutTime = new Date();
-
-    // Calculate working hours
-    const diffMs = attendance.logoutTime - attendance.loginTime;
-    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    
-    attendance.workingHours = `${diffHrs.toString().padStart(2, '0')}:${diffMins.toString().padStart(2, '0')}`;
-
-    await attendance.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Punched out successfully",
-      data: attendance,
-    });
-  } catch (error) {
-    console.error("Punch Out Error:", error);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
-};
-
-// @desc    Get Employee Attendance
-// @route   GET /api/attendance
-exports.getAttendance = async (req, res) => {
-  try {
-    let query = {};
-    
-    // If regular employee, only see own attendance
-    if (req.user.role !== "SuperAdmin") {
-      query.employeeId = req.user.id;
-    }
-
-    const records = await Attendance.find(query).sort({ date: -1 });
-
-    res.status(200).json({
-      success: true,
-      message: "Attendance fetched successfully",
-      data: records,
-    });
-  } catch (error) {
-    console.error("Get Attendance Error:", error);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
-};
-
-// Helper functions
-const parseTimeToMinutes = (timeStr) => {
-  if (!timeStr) return 0;
-  const [h, m] = timeStr.split(':').map(Number);
-  return (h || 0) * 60 + (m || 0);
-};
-
-const formatMinutesToTime = (totalMins) => {
-  const h = Math.floor(totalMins / 60);
-  const m = totalMins % 60;
-  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-};
-
+// Utility to get start of day
 const getStartOfDay = (date = new Date()) => {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
   return d;
 };
 
+// 1. Attendance Start API
+exports.startAttendance = async (req, res) => {
+  try {
+    const employeeId = req.user.id;
+    const employee = await Employee.findById(employeeId);
+    
+    if (!employee) {
+      return res.status(404).json({ success: false, message: "Employee not found." });
+    }
+
+    const today = getStartOfDay();
+
+    const existingRecord = await Attendance.findOne({
+      employeeId,
+      date: { $gte: today }
+    });
+
+    if (existingRecord) {
+      if (existingRecord.status === "Working") {
+        return res.status(400).json({ success: false, message: "Attendance already started." });
+      }
+      if (existingRecord.status === "Completed") {
+        return res.status(400).json({ success: false, message: "Attendance already completed for today." });
+      }
+    }
+
+    const newAttendance = new Attendance({
+      employeeId,
+      employeeName: employee.name || employee.firstName + " " + employee.lastName,
+      date: new Date(),
+      startTime: new Date(),
+      status: "Working",
+      endTime: null,
+      totalWorkingMinutes: 0,
+      totalWorkingHours: "00:00"
+    });
+
+    await newAttendance.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Attendance started successfully.",
+      data: newAttendance
+    });
+  } catch (error) {
+    console.error("Start Attendance Error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error.", error: error.message });
+  }
+};
+
+// 2. Attendance Stop API
+exports.stopAttendance = async (req, res) => {
+  try {
+    const employeeId = req.user.id;
+    const today = getStartOfDay();
+
+    const record = await Attendance.findOne({
+      employeeId,
+      date: { $gte: today }
+    });
+
+    if (!record) {
+      return res.status(404).json({ success: false, message: "No active attendance record found for today." });
+    }
+
+    if (record.status === "Completed") {
+      return res.status(400).json({ success: false, message: "Attendance already completed for today." });
+    }
+
+    const endTime = new Date();
+    record.endTime = endTime;
+    
+    const diffMs = endTime - record.startTime;
+    const diffMins = Math.floor(diffMs / 60000);
+    record.totalWorkingMinutes = diffMins;
+    
+    const hours = Math.floor(diffMins / 60);
+    const minutes = diffMins % 60;
+    record.totalWorkingHours = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    
+    record.status = "Completed";
+
+    await record.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Attendance stopped successfully.",
+      data: record
+    });
+  } catch (error) {
+    console.error("Stop Attendance Error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error.", error: error.message });
+  }
+};
+
+// 3. Today's Attendance API
 exports.getTodayAttendance = async (req, res) => {
   try {
+    const employeeId = req.user.id;
     const today = getStartOfDay();
-    const records = await Attendance.find({
-      employeeId: req.user.id,
+
+    const record = await Attendance.findOne({
+      employeeId,
       date: { $gte: today }
-    }).sort({ date: -1 });
+    });
 
-    res.status(200).json({ success: true, data: records });
+    if (!record) {
+      return res.status(200).json({
+        success: true,
+        message: "No attendance started for today.",
+        data: {
+          attendanceStarted: false,
+          status: null
+        }
+      });
+    }
+
+    let elapsedSeconds = 0;
+    if (record.status === "Working") {
+      elapsedSeconds = Math.floor((new Date() - record.startTime) / 1000);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Today's attendance fetched.",
+      data: {
+        attendanceStarted: true,
+        status: record.status,
+        startTime: record.startTime,
+        endTime: record.endTime,
+        totalWorkingHours: record.totalWorkingHours,
+        elapsedSeconds
+      }
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error" });
+    console.error("Get Today Attendance Error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error.", error: error.message });
   }
 };
 
-exports.getWeekAttendance = async (req, res) => {
+// 4. Attendance History API
+exports.getAttendanceHistory = async (req, res) => {
   try {
-    const today = new Date();
-    const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1))); // Monday
-    firstDayOfWeek.setHours(0, 0, 0, 0);
-
-    const records = await Attendance.find({
-      employeeId: req.user.id,
-      date: { $gte: firstDayOfWeek }
-    }).sort({ date: 1 });
-
-    res.status(200).json({ success: true, data: records });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error" });
-  }
-};
-
-exports.getMonthAttendance = async (req, res) => {
-  try {
-    const date = new Date();
-    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-
-    const records = await Attendance.find({
-      employeeId: req.user.id,
-      date: { $gte: firstDay }
-    }).sort({ date: 1 });
-
-    res.status(200).json({ success: true, data: records });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error" });
-  }
-};
-
-exports.getHistoryAttendance = async (req, res) => {
-  try {
-    const { startDate, endDate } = req.query;
-    let query = { employeeId: req.user.id };
+    const employeeId = req.user.id;
+    const { page = 1, limit = 10, employeeName, status, startDate, endDate } = req.query;
+    
+    const query = { employeeId };
+    
+    if (employeeName) {
+      query.employeeName = { $regex: employeeName, $options: "i" };
+    }
+    
+    if (status) {
+      query.status = status;
+    }
     
     if (startDate || endDate) {
       query.date = {};
@@ -194,140 +174,77 @@ exports.getHistoryAttendance = async (req, res) => {
       }
     }
 
-    const records = await Attendance.find(query).sort({ date: -1 });
+    const skip = (page - 1) * limit;
 
-    res.status(200).json({ success: true, data: records });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error" });
-  }
-};
+    const total = await Attendance.countDocuments(query);
+    const records = await Attendance.find(query)
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
 
-exports.getAttendanceStats = async (req, res) => {
-  try {
-    const allRecords = await Attendance.find({ employeeId: req.user.id }).sort({ date: 1 });
-    
-    let totalMinutes = 0;
-    let totalDays = allRecords.length;
-    let maxMinutes = 0;
-    let minMinutes = Infinity;
-
-    const today = getStartOfDay();
-    let todayMinutes = 0;
-
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (weekStart.getDay() === 0 ? -6 : 1));
-    weekStart.setHours(0,0,0,0);
-    let weekMinutes = 0;
-
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    let monthMinutes = 0;
-
-    const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59);
-    let lastMonthMinutes = 0;
-
-    allRecords.forEach(record => {
-      let mins = 0;
-      if (record.workingHours) {
-        mins = parseTimeToMinutes(record.workingHours);
-      } else if (record.loginTime) {
-        // Live session calculation
-        const elapsedMs = Date.now() - new Date(record.loginTime).getTime();
-        mins = Math.floor(elapsedMs / (1000 * 60));
-      }
-
-      totalMinutes += mins;
-
-      if (mins > maxMinutes) maxMinutes = mins;
-      if (mins < minMinutes && mins > 0) minMinutes = mins;
-
-      const recordDate = new Date(record.date);
-      
-      if (recordDate >= today) todayMinutes += mins;
-      if (recordDate >= weekStart) weekMinutes += mins;
-      if (recordDate >= monthStart) monthMinutes += mins;
-      if (recordDate >= lastMonthStart && recordDate <= lastMonthEnd) lastMonthMinutes += mins;
-    });
-
-    if (minMinutes === Infinity) minMinutes = 0;
-
-    const avgDailyMinutes = totalDays > 0 ? Math.floor(totalMinutes / totalDays) : 0;
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
+      message: "Attendance history fetched.",
       data: {
-        totalWorkingHours: formatMinutesToTime(totalMinutes),
-        todayWorkingTime: formatMinutesToTime(todayMinutes),
-        thisWeekWorkingTime: formatMinutesToTime(weekMinutes),
-        thisMonthWorkingTime: formatMinutesToTime(monthMinutes),
-        lastMonthWorkingTime: formatMinutesToTime(lastMonthMinutes),
-        averageDailyHours: formatMinutesToTime(avgDailyMinutes),
-        totalLoginDays: totalDays,
-        longestWorkingDay: formatMinutesToTime(maxMinutes),
-        shortestWorkingDay: formatMinutesToTime(minMinutes)
+        records,
+        total,
+        page: parseInt(page),
+        pages: Math.ceil(total / limit)
       }
     });
   } catch (error) {
-    console.error("Stats Error:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
+    console.error("Get Attendance History Error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error.", error: error.message });
   }
 };
 
-exports.startBreak = async (req, res) => {
+// 5. Admin Attendance API
+exports.getAdminAttendance = async (req, res) => {
   try {
-    const { attendanceId } = req.body;
-    if (!attendanceId) return res.status(400).json({ success: false, message: "Attendance ID required" });
-
-    const attendance = await Attendance.findById(attendanceId);
-    if (!attendance) return res.status(404).json({ success: false, message: "Attendance not found" });
-
-    // Check if already on break
-    if (attendance.breaks.length > 0 && !attendance.breaks[attendance.breaks.length - 1].endTime) {
-      return res.status(400).json({ success: false, message: "Already on break" });
+    const { page = 1, limit = 10, employeeName, employeeId, status, startDate, endDate } = req.query;
+    
+    const query = {};
+    
+    if (employeeName) {
+      query.employeeName = { $regex: employeeName, $options: "i" };
+    }
+    if (employeeId) {
+      query.employeeId = employeeId;
+    }
+    if (status) {
+      query.status = status;
+    }
+    
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) query.date.$gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.date.$lte = end;
+      }
     }
 
-    attendance.breaks.push({ startTime: new Date() });
-    await attendance.save();
+    const skip = (page - 1) * limit;
 
-    res.status(200).json({ success: true, message: "Break started" });
-  } catch (error) {
-    console.error("Start Break Error:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
-  }
-};
+    const total = await Attendance.countDocuments(query);
+    const records = await Attendance.find(query)
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
 
-exports.endBreak = async (req, res) => {
-  try {
-    const { attendanceId } = req.body;
-    if (!attendanceId) return res.status(400).json({ success: false, message: "Attendance ID required" });
-
-    const attendance = await Attendance.findById(attendanceId);
-    if (!attendance) return res.status(404).json({ success: false, message: "Attendance not found" });
-
-    if (attendance.breaks.length === 0 || attendance.breaks[attendance.breaks.length - 1].endTime) {
-      return res.status(400).json({ success: false, message: "Not on break" });
-    }
-
-    const currentBreak = attendance.breaks[attendance.breaks.length - 1];
-    currentBreak.endTime = new Date();
-
-    // Recalculate total break time
-    let totalMins = 0;
-    attendance.breaks.forEach(b => {
-      if (b.startTime && b.endTime) {
-        totalMins += Math.floor((b.endTime - b.startTime) / 60000);
+    return res.status(200).json({
+      success: true,
+      message: "All attendance records fetched.",
+      data: {
+        records,
+        total,
+        page: parseInt(page),
+        pages: Math.ceil(total / limit)
       }
     });
-
-    const h = Math.floor(totalMins / 60);
-    const m = totalMins % 60;
-    attendance.totalBreakTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-
-    await attendance.save();
-
-    res.status(200).json({ success: true, message: "Break ended", data: { totalBreakTime: attendance.totalBreakTime } });
   } catch (error) {
-    console.error("End Break Error:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
+    console.error("Admin Attendance Error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error.", error: error.message });
   }
 };

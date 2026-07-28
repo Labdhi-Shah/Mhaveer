@@ -33,6 +33,8 @@ app.use("/api/employees", employeeRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/leads", leadRoutes);
 app.use("/api/attendance", attendanceRoutes);
+const adminRoutes = require("./routes/adminRoutes");
+app.use("/api/admin", adminRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

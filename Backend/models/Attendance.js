@@ -2,55 +2,40 @@ const mongoose = require("mongoose");
 
 const attendanceSchema = new mongoose.Schema(
   {
-    attendanceId: {
-      type: String,
-      unique: true,
-    },
     employeeId: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee",
       required: true,
+      index: true
     },
     employeeName: {
       type: String,
       required: true,
     },
-    officialEmail: {
-      type: String,
+    date: {
+      type: Date,
       required: true,
     },
-    role: {
-      type: String,
+    startTime: {
+      type: Date,
       required: true,
     },
-    branch: {
-      type: String,
-    },
-    loginTime: {
+    endTime: {
       type: Date,
+      default: null,
     },
-    logoutTime: {
-      type: Date,
+    totalWorkingMinutes: {
+      type: Number,
+      default: 0,
     },
-    workingHours: {
+    totalWorkingHours: {
       type: String,
+      default: "00:00",
     },
     status: {
       type: String,
-      default: "Present",
-    },
-    breaks: [
-      {
-        startTime: { type: Date },
-        endTime: { type: Date }
-      }
-    ],
-    totalBreakTime: {
-      type: String,
-      default: "00:00"
-    },
-    date: {
-      type: Date,
-      default: Date.now,
+      enum: ["Working", "Completed"],
+      required: true,
     },
   },
   {
@@ -58,12 +43,7 @@ const attendanceSchema = new mongoose.Schema(
   }
 );
 
-// Pre-save hook to generate attendanceId automatically
-attendanceSchema.pre("save", function () {
-  if (!this.attendanceId) {
-    const randomNum = Math.floor(100000 + Math.random() * 900000); // 6-digit random number
-    this.attendanceId = `ATT-${randomNum}`;
-  }
-});
+// Prevent duplicate attendance records per employee per day
+attendanceSchema.index({ employeeId: 1, date: 1 }, { unique: true });
 
 module.exports = mongoose.model("Attendance", attendanceSchema);

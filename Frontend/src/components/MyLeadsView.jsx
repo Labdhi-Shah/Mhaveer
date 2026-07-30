@@ -6,6 +6,8 @@ import {
   Briefcase, User, DollarSign, Calendar, Phone, X
 } from "lucide-react";
 import api from "../api";
+import { useAuth } from "../context/AuthContext";
+import { getMergedLeadsAndStats } from "../utils/hierarchy";
 
 const formatFriendlyDate = (dateStr) => {
   if (!dateStr) return null;
@@ -51,6 +53,7 @@ const formatFriendlyTime = (timeStr) => {
 };
 
 export default function MyLeadsView() {
+  const { user } = useAuth();
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -86,12 +89,39 @@ export default function MyLeadsView() {
   const fetchLeads = async () => {
     setLoading(true);
     try {
-      const res = await api.get(
-        `/leads?page=${page}&limit=10&search=${search}&loanType=${filterType}&interested=${filterInterested}`
-      );
+      const res = await api.get("/leads?limit=100");
       if (res.data.success) {
-        setLeads(res.data.data);
-        setTotalPages(res.data.pages || 1);
+        const ownLeads = res.data.data;
+        const ownStats = { todaysCalls: 0, interestedLeads: 0, pendingFollowUps: 0, todaysMeetings: 0 };
+        const { leads: mergedLeads } = await getMergedLeadsAndStats(user, ownLeads, ownStats);
+
+        let filtered = mergedLeads;
+
+        if (search) {
+          const searchLower = search.toLowerCase();
+          filtered = filtered.filter(lead => 
+            (lead.companyName || "").toLowerCase().includes(searchLower) ||
+            (lead.contactPerson || "").toLowerCase().includes(searchLower) ||
+            (lead.leadId || "").toLowerCase().includes(searchLower)
+          );
+        }
+
+        if (filterType) {
+          filtered = filtered.filter(lead => lead.loanType === filterType);
+        }
+
+        if (filterInterested) {
+          filtered = filtered.filter(lead => lead.interested === filterInterested);
+        }
+
+        const limit = 10;
+        const pages = Math.ceil(filtered.length / limit) || 1;
+        setTotalPages(pages);
+
+        const startIndex = (page - 1) * limit;
+        const paginatedLeads = filtered.slice(startIndex, startIndex + limit);
+
+        setLeads(paginatedLeads);
       }
     } catch (err) {
       console.error(err);

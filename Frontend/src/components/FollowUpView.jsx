@@ -2,8 +2,11 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Phone, Loader2, Award, Calendar, AlertCircle, CheckCircle, HelpCircle, Eye } from "lucide-react";
 import api from "../api";
+import { useAuth } from "../context/AuthContext";
+import { getMergedLeadsAndStats } from "../utils/hierarchy";
 
 export default function FollowUpView() {
+  const { user } = useAuth();
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
@@ -17,10 +20,14 @@ export default function FollowUpView() {
   const fetchFollowups = async () => {
     setLoading(true);
     try {
-      // Query leads filtering by interested = "Call Back Later"
-      const res = await api.get("/leads?interested=Call%20Back%20Later");
+      const res = await api.get("/leads?limit=100");
       if (res.data.success) {
-        setLeads(res.data.data);
+        const ownLeads = res.data.data;
+        const ownStats = { todaysCalls: 0, interestedLeads: 0, pendingFollowUps: 0, todaysMeetings: 0 };
+        const { leads: mergedLeads } = await getMergedLeadsAndStats(user, ownLeads, ownStats);
+
+        const followUpLeads = mergedLeads.filter(lead => lead.interested === "Call Back Later");
+        setLeads(followUpLeads);
       }
     } catch (err) {
       console.error(err);

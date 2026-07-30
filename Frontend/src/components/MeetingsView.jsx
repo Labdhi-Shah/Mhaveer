@@ -2,8 +2,11 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Phone, Loader2, Award, Clock, AlertCircle, CheckCircle, MapPin, Eye } from "lucide-react";
 import api from "../api";
+import { useAuth } from "../context/AuthContext";
+import { getMergedLeadsAndStats } from "../utils/hierarchy";
 
 export default function MeetingsView() {
+  const { user } = useAuth();
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
@@ -17,10 +20,14 @@ export default function MeetingsView() {
   const fetchMeetings = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/leads");
+      const res = await api.get("/leads?limit=100");
       if (res.data.success) {
+        const ownLeads = res.data.data;
+        const ownStats = { todaysCalls: 0, interestedLeads: 0, pendingFollowUps: 0, todaysMeetings: 0 };
+        const { leads: mergedLeads } = await getMergedLeadsAndStats(user, ownLeads, ownStats);
+
         // Filter leads that have meeting date specified
-        const meetingLeads = res.data.data.filter((lead) => lead.meetingDate);
+        const meetingLeads = mergedLeads.filter((lead) => lead.meetingDate);
         setLeads(meetingLeads);
       }
     } catch (err) {

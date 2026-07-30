@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import api from "./api";
 import logoSvg from "./assets/logo.svg";
+import { getUserRoleCategory } from "./utils/hierarchy";
 
 export default function Header({ onToggleSidebar }) {
   const navigate = useNavigate();
@@ -12,7 +13,8 @@ export default function Header({ onToggleSidebar }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const isSuperAdmin = user?.role === "SuperAdmin";
+  const roleCategory = getUserRoleCategory(user);
+  const isSuperAdmin = roleCategory === "Admin";
 
   const [attendance, setAttendance] = useState(null);
   const [elapsed, setElapsed] = useState("00:00:00");

@@ -6,6 +6,8 @@ import {
   MapPin, CheckCircle, AlertCircle, Loader2, ArrowRight, Eye, Edit2, Trash2, X
 } from "lucide-react";
 import api from "../api";
+import { useAuth } from "../context/AuthContext";
+import { getMergedLeadsAndStats } from "../utils/hierarchy";
 
 const formatFriendlyDate = (dateStr) => {
   if (!dateStr) return null;
@@ -51,6 +53,7 @@ const formatFriendlyTime = (timeStr) => {
 };
 
 export default function EmployeeDashboard() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [statsLoading, setStatsLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -82,15 +85,16 @@ export default function EmployeeDashboard() {
       
       const [statsRes, leadsRes] = await Promise.all([
         api.get("/leads/stats"),
-        api.get("/leads?limit=5")
+        api.get("/leads?limit=100")
       ]);
 
-      if (statsRes.data.success) {
-        setStats(statsRes.data.data);
-      }
-      if (leadsRes.data.success) {
-        setRecentLeads(leadsRes.data.data);
-      }
+      const ownStats = statsRes.data.success ? statsRes.data.data : { todaysCalls: 0, interestedLeads: 0, pendingFollowUps: 0, todaysMeetings: 0 };
+      const ownLeads = leadsRes.data.success ? leadsRes.data.data : [];
+
+      const { leads: mergedLeads, stats: mergedStats } = await getMergedLeadsAndStats(user, ownLeads, ownStats);
+
+      setStats(mergedStats);
+      setRecentLeads(mergedLeads.slice(0, 10));
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
       showToast(error.response?.data?.message || "Failed to load dashboard data.", "error");

@@ -96,6 +96,16 @@ const ROLE_DATA = {
     "General insurance",
     "Policy servicing"
   ],
+  "Team Leader": [
+    "Team performance monitoring",
+    "Lead distribution and review",
+    "Team attendance and support"
+  ],
+  "Manager": [
+    "Branch oversight",
+    "Operations management",
+    "Regional reporting"
+  ],
   "Management": [
     "Branch Manager",
     "Operations Manager",

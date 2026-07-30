@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend
 } from 'recharts';
+import { getUserRoleCategory, filterAttendanceRecords } from "../utils/hierarchy";
 
 export default function AttendanceView() {
   const { user } = useAuth();
@@ -34,21 +35,95 @@ export default function AttendanceView() {
   const fetchAttendance = async () => {
     setLoading(true);
     try {
-      const endpoint = user?.role === "SuperAdmin" ? "/attendance/admin" : "/attendance";
-      const params = {
-        page,
-        limit: 10,
-        range: filterRange !== "Custom" ? filterRange : undefined,
-        startDate: filterRange === "Custom" ? customStart : undefined,
-        endDate: filterRange === "Custom" ? customEnd : undefined,
-        employeeName: searchTerm
-      };
+      const cat = getUserRoleCategory(user);
+      if (cat === "Admin" || cat === "Employee") {
+        const endpoint = cat === "Admin" ? "/attendance/admin" : "/attendance";
+        const params = {
+          page,
+          limit: 10,
+          range: filterRange !== "Custom" ? filterRange : undefined,
+          startDate: filterRange === "Custom" ? customStart : undefined,
+          endDate: filterRange === "Custom" ? customEnd : undefined,
+          employeeName: searchTerm
+        };
 
-      const res = await api.get(endpoint, { params });
-      if (res.data.success) {
-        setRecords(res.data.data.records);
-        setTotalPages(res.data.data.pages || 1);
-        calculateStats(res.data.data.records);
+        const res = await api.get(endpoint, { params });
+        if (res.data.success) {
+          setRecords(res.data.data.records);
+          setTotalPages(res.data.data.pages || 1);
+          calculateStats(res.data.data.records);
+        }
+      } else {
+        const res = await api.get("/attendance/admin?limit=1000");
+        if (res.data.success) {
+          const allRecords = res.data.data.records;
+          
+          let filtered = await filterAttendanceRecords(user, allRecords);
+
+          if (searchTerm) {
+            const searchLower = searchTerm.toLowerCase();
+            filtered = filtered.filter(r => 
+              (r.employeeName || "").toLowerCase().includes(searchLower) ||
+              (r.employeeId || "").toLowerCase().includes(searchLower)
+            );
+          }
+
+          const now = new Date();
+          const getStartOfDay = (date = new Date()) => {
+            const d = new Date(date);
+            d.setHours(0, 0, 0, 0);
+            return d;
+          };
+
+          if (filterRange === "Today") {
+            const todayStart = getStartOfDay();
+            filtered = filtered.filter(r => new Date(r.date) >= todayStart);
+          } else if (filterRange === "This Week") {
+            const day = now.getDay();
+            const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+            const startOfWeek = new Date(now.setDate(diff));
+            startOfWeek.setHours(0, 0, 0, 0);
+            filtered = filtered.filter(r => new Date(r.date) >= startOfWeek);
+          } else if (filterRange === "Last Week") {
+            const day = now.getDay();
+            const diff = now.getDate() - day - 6;
+            const startOfLastWeek = new Date(now.setDate(diff));
+            startOfLastWeek.setHours(0, 0, 0, 0);
+            const endOfLastWeek = new Date(startOfLastWeek.getTime() + 7 * 24 * 60 * 60 * 1000);
+            filtered = filtered.filter(r => {
+              const d = new Date(r.date);
+              return d >= startOfLastWeek && d < endOfLastWeek;
+            });
+          } else if (filterRange === "This Month") {
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            filtered = filtered.filter(r => new Date(r.date) >= startOfMonth);
+          } else if (filterRange === "Last Month") {
+            const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            filtered = filtered.filter(r => {
+              const d = new Date(r.date);
+              return d >= startOfLastMonth && d < endOfLastMonth;
+            });
+          } else if (filterRange === "Custom" && customStart && customEnd) {
+            const start = new Date(customStart);
+            const end = new Date(customEnd);
+            end.setHours(23, 59, 59, 999);
+            filtered = filtered.filter(r => {
+              const d = new Date(r.date);
+              return d >= start && d <= end;
+            });
+          }
+
+          calculateStats(filtered);
+
+          const limit = 10;
+          const pages = Math.ceil(filtered.length / limit) || 1;
+          setTotalPages(pages);
+
+          const startIndex = (page - 1) * limit;
+          const paginated = filtered.slice(startIndex, startIndex + limit);
+          setRecords(paginated);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch attendance:", error);

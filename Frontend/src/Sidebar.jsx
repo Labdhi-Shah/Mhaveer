@@ -4,6 +4,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
+import { getUserRoleCategory } from "./utils/hierarchy";
 
 export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
@@ -17,7 +18,19 @@ export default function Sidebar({ isOpen, onClose }) {
     }
   };
 
-  const isSuperAdmin = user?.role === "SuperAdmin";
+  const roleCategory = getUserRoleCategory(user);
+
+  const isSuperAdmin = roleCategory === "Admin";
+  const isManager = roleCategory === "Manager";
+  const isTeamLeader = roleCategory === "Team Leader";
+  const isEmployee = roleCategory === "Employee";
+
+  const getPortalLabel = () => {
+    if (isSuperAdmin) return "ADMIN PANEL";
+    if (isManager) return "MANAGER PORTAL";
+    if (isTeamLeader) return "TEAM LEADER PORTAL";
+    return "EMPLOYEE PORTAL";
+  };
 
   return (
     <>
@@ -34,25 +47,26 @@ export default function Sidebar({ isOpen, onClose }) {
       } md:translate-x-0`}>
         <div>
           <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest px-3 my-3">
-            {isSuperAdmin ? "ADMIN PANEL" : "EMPLOYEE PORTAL"}
+            {getPortalLabel()}
           </p>
 
           <div className="space-y-1.5">
-            {isSuperAdmin ? (
-              // Super Admin Sidebar Options
-              <>
-                <button
-                  onClick={() => handleNavigation("/dashboard")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                    location.pathname === "/dashboard"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                  }`}
-                >
-                  <LayoutDashboard size={18} />
-                  Dashboard
-                </button>
+            {/* Common Dashboard for everyone */}
+            <button
+              onClick={() => handleNavigation("/dashboard")}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                location.pathname === "/dashboard"
+                  ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+              }`}
+            >
+              <LayoutDashboard size={18} />
+              Dashboard
+            </button>
 
+            {/* Management specific options (Admin and Manager) */}
+            {(isSuperAdmin || isManager) && (
+              <>
                 <button
                   onClick={() => handleNavigation("/employees")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
@@ -77,21 +91,11 @@ export default function Sidebar({ isOpen, onClose }) {
                   Add Employee
                 </button>
               </>
-            ) : (
-              // Employee (Reception / Front Desk) Sidebar Options
-              <>
-                <button
-                  onClick={() => handleNavigation("/dashboard")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                    location.pathname === "/dashboard"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                  }`}
-                >
-                  <LayoutDashboard size={18} />
-                  Dashboard
-                </button>
+            )}
 
+            {/* Employee specific options (Manager, Team Leader, Employee) */}
+            {(isManager || isTeamLeader || isEmployee) && (
+              <>
                 <button
                   onClick={() => handleNavigation("/new-lead")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${

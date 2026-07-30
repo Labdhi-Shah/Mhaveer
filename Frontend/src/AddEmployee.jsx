@@ -113,7 +113,7 @@ export default function AddEmployee() {
     phone: "",
     dob: "", // Date of Birth
     joiningDate: "", // Joining Date
-    role: "", 
+    role: "",
     address: "",
     status: "Active",
   });
@@ -148,23 +148,23 @@ export default function AddEmployee() {
 
   const handlePhoneChange = (e) => {
     let val = e.target.value;
-    
+
     // Automatically prevent country codes like +91 when pasted/typed
-    let cleanVal = val.replace(/\s+/g, "").replace(/-/g, ""); 
+    let cleanVal = val.replace(/\s+/g, "").replace(/-/g, "");
     if (cleanVal.startsWith("+91")) {
       cleanVal = cleanVal.slice(3);
     } else if (cleanVal.startsWith("91") && cleanVal.length > 10) {
       cleanVal = cleanVal.slice(2);
     }
-    
+
     // Accept only digits & automatically prevent alphabets/special characters/spaces
     cleanVal = cleanVal.replace(/\D/g, "");
-    
+
     // Stop accepting input after 10 digits
     if (cleanVal.length > 10) {
       cleanVal = cleanVal.slice(0, 10);
     }
-    
+
     setForm(prev => ({ ...prev, phone: cleanVal }));
     validatePhone(cleanVal);
   };
@@ -282,11 +282,10 @@ export default function AddEmployee() {
             value={form.phone}
             onChange={handlePhoneChange}
             placeholder="9876543210"
-            className={`w-full px-4 py-2.5 bg-slate-100/70 border rounded-xl text-[#0a2540] outline-none transition ${
-              phoneError 
-                ? "border-rose-500 focus:border-rose-500" 
+            className={`w-full px-4 py-2.5 bg-slate-100/70 border rounded-xl text-[#0a2540] outline-none transition ${phoneError
+                ? "border-rose-500 focus:border-rose-500"
                 : "border-slate-300 focus:border-[#d4af37]"
-            }`}
+              }`}
           />
           {phoneError && (
             <p className="mt-1 text-[10px] font-extrabold text-rose-600 uppercase tracking-wider">

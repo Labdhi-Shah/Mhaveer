@@ -219,9 +219,9 @@ export default function Header({ onToggleSidebar }) {
         </button>
 
         <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white p-1 rounded-xl flex items-center justify-center shadow-md overflow-hidden shrink-0">
-          <img 
-            src={logoSvg} 
-            alt="MHAVEER FINCAP Logo" 
+          <img
+            src={logoSvg}
+            alt="MHAVEER FINCAP Logo"
             className="w-full h-full object-contain"
             onError={(e) => {
               e.target.style.display = 'none';
@@ -233,7 +233,7 @@ export default function Header({ onToggleSidebar }) {
             MHAVEER <span className="text-[#d4af37]">FINCAP</span>
           </span>
         </div>
-        
+
         {/* Page Title */}
         <div className="h-6 w-px bg-slate-700 mx-2 hidden md:block" />
         <span className="font-extrabold text-xs text-slate-300 tracking-wider uppercase whitespace-nowrap">
@@ -244,7 +244,7 @@ export default function Header({ onToggleSidebar }) {
       <div className="flex items-center gap-2 sm:gap-4">
         {user && !isSuperAdmin && (
           <div className="flex items-center gap-2">
-            <button 
+            <button
               onClick={handleAttendanceClick}
               disabled={widgetProps.disabled || loading}
               className={`flex items-center gap-2 border px-3.5 py-1.5 rounded-xl transition shadow-md font-bold text-xs cursor-pointer ${widgetProps.color} ${widgetProps.bg} ${widgetProps.border} ${widgetProps.disabled || loading ? 'opacity-70 cursor-not-allowed' : ''}`}
@@ -272,7 +272,7 @@ export default function Header({ onToggleSidebar }) {
 
         {/* Profile Dropdown Container */}
         <div className="relative" ref={dropdownRef}>
-          <button 
+          <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-800/80 transition cursor-pointer"
           >
@@ -327,9 +327,9 @@ export default function Header({ onToggleSidebar }) {
                 >
                   <Key size={14} /> Change Password
                 </button>
-                
+
                 <div className="h-px bg-slate-100 my-1" />
-                
+
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-rose-600 hover:bg-rose-50 font-bold transition text-left"

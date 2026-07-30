@@ -54,10 +54,10 @@ export default function EmployeeDashboard() {
   const [loading, setLoading] = useState(false);
   const [statsLoading, setStatsLoading] = useState(true);
   const [stats, setStats] = useState({
-    todayCalls: 0,
+    todaysCalls: 0,
     interestedLeads: 0,
-    pendingFollowups: 0,
-    todayMeetings: 0
+    pendingFollowUps: 0,
+    todaysMeetings: 0
   });
   const [recentLeads, setRecentLeads] = useState([]);
   const [recentLoading, setRecentLoading] = useState(true);
@@ -159,10 +159,10 @@ export default function EmployeeDashboard() {
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { title: "Today's Calls", value: stats.todayCalls || 0, color: "border-t-[#0a2540]", iconBg: "bg-blue-50 text-[#0a2540]", icon: <Phone size={22} /> },
+          { title: "Today's Calls", value: stats.todaysCalls || 0, color: "border-t-[#0a2540]", iconBg: "bg-blue-50 text-[#0a2540]", icon: <Phone size={22} /> },
           { title: "Interested Leads", value: stats.interestedLeads || 0, color: "border-t-emerald-500", iconBg: "bg-emerald-50 text-emerald-600", icon: <Award size={22} /> },
-          { title: "Pending Follow-ups", value: stats.pendingFollowups || 0, color: "border-t-[#d4af37]", iconBg: "bg-amber-50 text-[#d4af37]", icon: <Clock size={22} /> },
-          { title: "Today's Meetings", value: stats.todayMeetings || 0, color: "border-t-purple-500", iconBg: "bg-purple-50 text-purple-600", icon: <Calendar size={22} /> }
+          { title: "Pending Follow-ups", value: stats.pendingFollowUps || 0, color: "border-t-[#d4af37]", iconBg: "bg-amber-50 text-[#d4af37]", icon: <Clock size={22} /> },
+          { title: "Today's Meetings", value: stats.todaysMeetings || 0, color: "border-t-purple-500", iconBg: "bg-purple-50 text-purple-600", icon: <Calendar size={22} /> }
         ].map((card, idx) => (
           <div key={idx} className={`bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-t-4 ${card.color} flex items-center justify-between`}>
             <div>

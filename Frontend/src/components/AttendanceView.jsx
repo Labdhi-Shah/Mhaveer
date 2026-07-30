@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
-import { 
+import {
   Clock, Calendar, User, Search, Filter, AlertCircle, ChevronLeft, ChevronRight, X, Activity, Briefcase, ClipboardList
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend
 } from 'recharts';
 
@@ -21,14 +21,14 @@ export default function AttendanceView() {
     lastMonth: "00:00",
     total: "00:00"
   });
-  
+
   const [filterRange, setFilterRange] = useState("This Month");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  
+
   const [selectedRecord, setSelectedRecord] = useState(null);
 
   const fetchAttendance = async () => {
@@ -72,7 +72,7 @@ export default function AttendanceView() {
     const hours = Math.floor(totalMins / 60);
     const mins = totalMins % 60;
     const formatted = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-    
+
     // We update all stats to the current dataset sum as a placeholder for actual backend stats
     setStats({
       today: filterRange === "Today" ? formatted : "00:00",
@@ -125,7 +125,7 @@ export default function AttendanceView() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-500">
-      
+
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <div>
@@ -160,7 +160,7 @@ export default function AttendanceView() {
 
       {/* CHART & FILTERS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* CHART SECTION */}
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
           <h2 className="text-sm font-bold text-[#0a2540] mb-6 flex items-center gap-2">
@@ -173,8 +173,8 @@ export default function AttendanceView() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} />
-                  <RechartsTooltip 
-                    cursor={{fill: '#f8fafc'}}
+                  <RechartsTooltip
+                    cursor={{ fill: '#f8fafc' }}
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
                   <Bar dataKey="hours" name="Working Hours" fill="#0a2540" radius={[4, 4, 0, 0]} maxBarSize={40} />
@@ -193,10 +193,10 @@ export default function AttendanceView() {
           <h2 className="text-sm font-bold text-[#0a2540] flex items-center gap-2">
             <Filter size={16} className="text-[#d4af37]" /> Filter Records
           </h2>
-          
+
           <div className="space-y-3 flex-1">
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Date Range</label>
-            <select 
+            <select
               value={filterRange}
               onChange={(e) => setFilterRange(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/30"
@@ -211,19 +211,19 @@ export default function AttendanceView() {
 
             {filterRange === "Custom" && (
               <div className="grid grid-cols-2 gap-2 mt-2 animate-in slide-in-from-top-2 duration-300">
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   value={customStart}
                   onChange={e => setCustomStart(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2.5" 
+                  className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2.5"
                 />
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   value={customEnd}
                   onChange={e => setCustomEnd(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2.5" 
+                  className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2.5"
                 />
-                <button 
+                <button
                   onClick={handleApplyCustomDate}
                   className="col-span-2 mt-1 bg-[#0a2540] text-white text-xs font-bold py-2.5 rounded-xl hover:bg-[#0a2540]/90 transition"
                 >
@@ -237,7 +237,7 @@ export default function AttendanceView() {
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Search Employee</label>
                 <div className="relative">
                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input 
+                  <input
                     type="text"
                     placeholder="Search by name..."
                     value={searchTerm}
@@ -315,14 +315,14 @@ export default function AttendanceView() {
               Page {page} of {totalPages}
             </span>
             <div className="flex gap-2">
-              <button 
+              <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
                 className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-white hover:text-[#0a2540] disabled:opacity-50 transition bg-transparent"
               >
                 <ChevronLeft size={16} />
               </button>
-              <button 
+              <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
                 className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-white hover:text-[#0a2540] disabled:opacity-50 transition bg-transparent"
@@ -338,12 +338,12 @@ export default function AttendanceView() {
       <AnimatePresence>
         {selectedRecord && (
           <>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setSelectedRecord(null)}
               className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50"
             />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-3xl shadow-2xl z-50 overflow-hidden"
             >
@@ -356,16 +356,16 @@ export default function AttendanceView() {
                 </div>
                 <h3 className="text-xl font-black text-white">{selectedRecord.employeeName}</h3>
                 <p className="text-xs font-bold text-[#d4af37] uppercase tracking-widest mt-1">
-                  ID: {selectedRecord.employeeId?.toString().substring(0,8) || "N/A"}
+                  ID: {selectedRecord.employeeId?.toString().substring(0, 8) || "N/A"}
                 </p>
               </div>
-              
+
               <div className="p-6 space-y-4">
                 <div className="flex justify-between items-center pb-4 border-b border-slate-100">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Date</span>
                   <span className="text-sm font-black text-[#0a2540]">{formatDate(selectedRecord.date)}</span>
                 </div>
-                
+
                 <div className="flex justify-between items-center pb-4 border-b border-slate-100">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Start Time</span>
                   <span className="text-sm font-bold text-emerald-600">{formatTime(selectedRecord.startTime)}</span>
@@ -375,7 +375,7 @@ export default function AttendanceView() {
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">End Time</span>
                   <span className="text-sm font-bold text-rose-500">{formatTime(selectedRecord.endTime)}</span>
                 </div>
-                
+
                 {selectedRecord.breaks && selectedRecord.breaks.map((b, idx) => (
                   <div key={idx} className="bg-amber-50 rounded-xl p-3 flex justify-between items-center">
                     <span className="text-xs font-bold text-amber-700/70 uppercase tracking-widest">Lunch/Break {idx + 1}</span>
@@ -384,7 +384,7 @@ export default function AttendanceView() {
                     </span>
                   </div>
                 ))}
-                
+
                 <div className="flex justify-between items-center pb-4 border-b border-slate-100 pt-2">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Break</span>
                   <span className="text-sm font-bold text-amber-600">{selectedRecord.totalBreakMinutes} Mins</span>
@@ -394,7 +394,7 @@ export default function AttendanceView() {
                   <span className="text-xs font-black text-[#0a2540] uppercase tracking-widest">Total Working Time</span>
                   <span className="text-xl font-black text-[#0a2540]">{selectedRecord.totalWorkingHours}</span>
                 </div>
-                
+
                 <div className="mt-6 flex justify-end">
                   {getStatusBadge(selectedRecord.status)}
                 </div>

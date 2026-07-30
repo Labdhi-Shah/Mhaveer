@@ -15,12 +15,12 @@ const app = express();
 connectDB();
 
 // Middleware
-const allowedOrigins = process.env.ALLOWED_ORIGINS 
-  ? process.env.ALLOWED_ORIGINS.split(",") 
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
   : [
-      "http://localhost:5173",
-      "https://mhaveer.vercel.app"
-    ];
+    "http://localhost:5173",
+    "https://mhaveer.vercel.app"
+  ];
 
 app.use(cors({
   origin: allowedOrigins,

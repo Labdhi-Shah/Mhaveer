@@ -13,34 +13,9 @@ export default function Header({ onToggleSidebar }) {
   const [elapsed, setElapsed] = useState("00:00:00");
   const dropdownRef = useRef(null);
 
-  const [isOnBreak, setIsOnBreak] = useState(() => localStorage.getItem("isOnBreak") === "true");
-  const [isBreakLoading, setIsBreakLoading] = useState(false);
-  
   const [attendanceStart, setAttendanceStart] = useState(() => localStorage.getItem("attendance_timer_start"));
 
   const loginTimeStr = localStorage.getItem("loginTime");
-
-  const toggleBreak = async () => {
-    const attendanceId = localStorage.getItem("attendanceId");
-    if (!attendanceId) return;
-
-    setIsBreakLoading(true);
-    try {
-      if (isOnBreak) {
-        await api.put("/attendance/break/end", { attendanceId });
-        setIsOnBreak(false);
-        localStorage.removeItem("isOnBreak");
-      } else {
-        await api.put("/attendance/break/start", { attendanceId });
-        setIsOnBreak(true);
-        localStorage.setItem("isOnBreak", "true");
-      }
-    } catch (err) {
-      console.error("Error toggling break", err);
-    } finally {
-      setIsBreakLoading(false);
-    }
-  };
 
   // Format Page Title
   const getPageTitle = () => {
@@ -118,7 +93,6 @@ export default function Header({ onToggleSidebar }) {
         loginTime: checkInTime.toISOString(),
         logoutTime: checkOutTime.toISOString(),
         workingHours: totalWorkingHours,
-        totalBreakTime: "00:00:00",
         status: "Present"
       };
 
@@ -167,7 +141,6 @@ export default function Header({ onToggleSidebar }) {
     logout();
     localStorage.removeItem("loginTime");
     localStorage.removeItem("attendanceId");
-    localStorage.removeItem("isOnBreak");
     navigate("/login", { replace: true });
   };
 
@@ -213,25 +186,6 @@ export default function Header({ onToggleSidebar }) {
           {getPageTitle()}
         </span>
       </div>
-
-      {/* CENTER SECTION - WORKING TIMER FOR EMPLOYEES */}
-      {!isSuperAdmin && loginTimeStr && (
-        <div className="flex items-center gap-3 md:gap-4">
-
-          <button 
-            onClick={toggleBreak}
-            disabled={isBreakLoading || !attendanceStart}
-            className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black shadow-md transition-all ${
-              isOnBreak 
-                ? "bg-emerald-500 hover:bg-emerald-600 text-white" 
-                : "bg-slate-700 hover:bg-slate-600 text-slate-100 border border-slate-600"
-            } disabled:opacity-50`}
-            title={!attendanceStart ? "Please check-in first" : ""}
-          >
-            {isOnBreak ? "▶ Resume Work" : "☕ Take Break"}
-          </button>
-        </div>
-      )}
 
       <div className="flex items-center gap-2 sm:gap-4">
         {user && (

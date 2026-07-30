@@ -139,9 +139,95 @@ export default function EmployeeDashboard() {
         ))}
       </div>
 
-      {/* Recent Leads Panel */}
-      <div className="w-full">
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between h-fit">
+      {/* Main Grid for Logs and Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* Recent Leads Detailed Table - Left Side on Desktop, bottom on mobile */}
+        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 p-6 shadow-sm overflow-hidden order-2 lg:order-1">
+          <h3 className="text-lg font-black text-[#0a2540] mb-5">Latest Leads Log</h3>
+          
+          {recentLoading ? (
+            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#0a2540]" size={28} /></div>
+          ) : recentLeads.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 text-xs">No leads logged.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-[#0a2540] text-[#d4af37] font-extrabold uppercase whitespace-nowrap">
+                    <th className="py-3 px-4 rounded-l-xl">LEAD ID</th>
+                    <th className="py-3 px-4">COMPANY NAME</th>
+                    <th className="py-3 px-4">CONTACT PERSON</th>
+                    <th className="py-3 px-4">PHONE NUMBER</th>
+                    <th className="py-3 px-4">LOAN TYPE</th>
+                    <th className="py-3 px-4 text-center">CIBIL</th>
+                    <th className="py-3 px-4 text-center">INTERESTED</th>
+                    <th className="py-3 px-4 text-center">CALL STATUS</th>
+                    <th className="py-3 px-4 text-center">MEETING</th>
+                    <th className="py-3 px-4 text-center">FOLLOW-UP</th>
+                    <th className="py-3 px-4 text-center rounded-r-xl">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700 whitespace-nowrap">
+                  {recentLeads.map((lead) => (
+                    <tr key={lead._id} className="hover:bg-slate-50 transition">
+                      <td className="py-3.5 px-4 font-mono font-black text-[#0a2540]">{lead.leadId}</td>
+                      <td className="py-3.5 px-4 font-bold text-[#0a2540]">{lead.companyName}</td>
+                      <td className="py-3.5 px-4 font-medium text-slate-800">{lead.contactPerson}</td>
+                      <td className="py-3.5 px-4 text-slate-600">{lead.phone}</td>
+                      <td className="py-3.5 px-4 font-extrabold text-slate-500">{lead.loanType}</td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                          lead.cibilScore >= 750 ? "bg-emerald-50 text-emerald-700" :
+                          lead.cibilScore >= 650 ? "bg-amber-50 text-amber-700" :
+                          "bg-rose-50 text-rose-700"
+                        }`}>
+                          {lead.cibilScore}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-black ${
+                          lead.interested === "Yes" ? "bg-emerald-100 text-emerald-800" :
+                          lead.interested === "No" ? "bg-rose-100 text-rose-800" :
+                          "bg-amber-100 text-amber-800"
+                        }`}>
+                          {lead.interested}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-center font-bold text-slate-600">{lead.callStatus}</td>
+                      <td className="py-3.5 px-4 text-center text-slate-500">
+                        {lead.meetingDate ? `${lead.meetingDate} ${lead.meetingTime || ""}` : "N/A"}
+                      </td>
+                      <td className="py-3.5 px-4 text-center text-slate-500">
+                        {lead.followUpDate ? `${lead.followUpDate} ${lead.followUpTime || ""}` : "N/A"}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <div className="flex justify-center gap-1.5">
+                          <button 
+                            onClick={() => setViewLead(lead)}
+                            className="p-1 text-slate-400 hover:text-[#0a2540] hover:bg-slate-100 rounded-lg transition"
+                            title="View Details"
+                          >
+                            <Eye size={14} />
+                          </button>
+                          <button 
+                            onClick={() => setDeleteConfirm(lead._id)}
+                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition"
+                            title="Delete Lead"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Recent CRM Actions Panel - Right Side on Desktop, top on mobile */}
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between h-fit order-1 lg:order-2">
           <div>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
               <h3 className="text-md font-black text-[#0a2540] flex items-center gap-2">
@@ -204,91 +290,6 @@ export default function EmployeeDashboard() {
         </div>
       </div>
 
-      {/* Recent Leads Detailed Table at the Bottom */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm overflow-hidden">
-        <h3 className="text-lg font-black text-[#0a2540] mb-5">Latest Leads Log</h3>
-        
-        {recentLoading ? (
-          <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#0a2540]" size={28} /></div>
-        ) : recentLeads.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 text-xs">No leads logged.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-[#0a2540] text-[#d4af37] font-extrabold uppercase whitespace-nowrap">
-                  <th className="py-3 px-4 rounded-l-xl">LEAD ID</th>
-                  <th className="py-3 px-4">COMPANY NAME</th>
-                  <th className="py-3 px-4">CONTACT PERSON</th>
-                  <th className="py-3 px-4">PHONE NUMBER</th>
-                  <th className="py-3 px-4">LOAN TYPE</th>
-                  <th className="py-3 px-4 text-center">CIBIL</th>
-                  <th className="py-3 px-4 text-center">INTERESTED</th>
-                  <th className="py-3 px-4 text-center">CALL STATUS</th>
-                  <th className="py-3 px-4 text-center">MEETING</th>
-                  <th className="py-3 px-4 text-center">FOLLOW-UP</th>
-                  <th className="py-3 px-4 text-center rounded-r-xl">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700 whitespace-nowrap">
-                {recentLeads.map((lead) => (
-                  <tr key={lead._id} className="hover:bg-slate-50 transition">
-                    <td className="py-3.5 px-4 font-mono font-black text-[#0a2540]">{lead.leadId}</td>
-                    <td className="py-3.5 px-4 font-bold text-[#0a2540]">{lead.companyName}</td>
-                    <td className="py-3.5 px-4 font-medium text-slate-800">{lead.contactPerson}</td>
-                    <td className="py-3.5 px-4 text-slate-600">{lead.phone}</td>
-                    <td className="py-3.5 px-4 font-extrabold text-slate-500">{lead.loanType}</td>
-                    <td className="py-3.5 px-4 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                        lead.cibilScore >= 750 ? "bg-emerald-50 text-emerald-700" :
-                        lead.cibilScore >= 650 ? "bg-amber-50 text-amber-700" :
-                        "bg-rose-50 text-rose-700"
-                      }`}>
-                        {lead.cibilScore}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <span className={`px-2 py-1 rounded-full text-[10px] font-black ${
-                        lead.interested === "Yes" ? "bg-emerald-100 text-emerald-800" :
-                        lead.interested === "No" ? "bg-rose-100 text-rose-800" :
-                        "bg-amber-100 text-amber-800"
-                      }`}>
-                        {lead.interested}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-center font-bold text-slate-600">{lead.callStatus}</td>
-                    <td className="py-3.5 px-4 text-center text-slate-500">
-                      {lead.meetingDate ? `${lead.meetingDate} ${lead.meetingTime || ""}` : "N/A"}
-                    </td>
-                    <td className="py-3.5 px-4 text-center text-slate-500">
-                      {lead.followUpDate ? `${lead.followUpDate} ${lead.followUpTime || ""}` : "N/A"}
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex justify-center gap-1.5">
-                        <button 
-                          onClick={() => setViewLead(lead)}
-                          className="p-1 text-slate-400 hover:text-[#0a2540] hover:bg-slate-100 rounded-lg transition"
-                          title="View Details"
-                        >
-                          <Eye size={14} />
-                        </button>
-                        <button 
-                          onClick={() => setDeleteConfirm(lead._id)}
-                          className="p-1 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition"
-                          title="Delete Lead"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
       {/* Action Modals */}
       {/* 1. View Lead Details Modal */}
       {viewLead && (
@@ -299,7 +300,7 @@ export default function EmployeeDashboard() {
               <button onClick={() => setViewLead(null)} className="text-slate-400 hover:text-[#0a2540] font-black text-sm">✕</button>
             </div>
             <div className="p-6 space-y-4 text-xs text-slate-700">
-              <div className="grid grid-cols-2 gap-4 border-b border-slate-50 pb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-b border-slate-50 pb-4">
                 <div>
                   <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Company Name</p>
                   <p className="font-black text-sm text-[#0a2540] mt-1">{viewLead.companyName}</p>
@@ -309,7 +310,7 @@ export default function EmployeeDashboard() {
                   <p className="font-black text-sm text-[#0a2540] mt-1">{viewLead.contactPerson}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 border-b border-slate-50 pb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-b border-slate-50 pb-4">
                 <div>
                   <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Phone Number</p>
                   <p className="font-bold text-slate-800 mt-1">{viewLead.phone}</p>
@@ -319,7 +320,7 @@ export default function EmployeeDashboard() {
                   <p className="font-bold text-slate-800 mt-1">{viewLead.city ? `${viewLead.city}, ${viewLead.state || ""}` : "N/A"}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-b border-slate-50 pb-4">
                 <div>
                   <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Yearly Income</p>
                   <p className="font-black text-slate-800 mt-1">₹{viewLead.yearlyIncome?.toLocaleString("en-IN")}</p>
@@ -333,7 +334,7 @@ export default function EmployeeDashboard() {
                   <p className="font-black text-slate-800 mt-1">{viewLead.cibilScore}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 border-b border-slate-50 pb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-b border-slate-50 pb-4">
                 <div>
                   <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Interested Status</p>
                   <p className="font-bold mt-1 text-slate-800">{viewLead.interested}</p>
@@ -344,7 +345,7 @@ export default function EmployeeDashboard() {
                 </div>
               </div>
               {(viewLead.meetingDate || viewLead.followUpDate) && (
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 grid grid-cols-2 gap-4">
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {viewLead.meetingDate && (
                     <div>
                       <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Meeting Schedule</p>

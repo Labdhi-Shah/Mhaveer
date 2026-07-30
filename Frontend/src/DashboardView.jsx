@@ -66,9 +66,9 @@ export default function DashboardView() {
       </div>
 
       <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
           <h3 className="text-lg font-black text-[#0a2540]">Recently Joined Employees</h3>
-          <button onClick={() => navigate("/employees")} className="text-xs text-[#0a2540] hover:text-[#d4af37] font-black flex items-center gap-1">
+          <button onClick={() => navigate("/employees")} className="text-xs text-[#0a2540] hover:text-[#d4af37] font-black flex items-center gap-1 w-fit">
             View All <ArrowRight size={14} />
           </button>
         </div>

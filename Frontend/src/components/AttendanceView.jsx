@@ -82,7 +82,6 @@ const initializeMockData = (currentUser) => {
       loginTime: checkIn.toISOString(),
       logoutTime: checkOut.toISOString(),
       workingHours: workingHours,
-      totalBreakTime: "00:35:00",
       status: isHalfDay ? "Half Day" : "Present"
     });
   }
@@ -124,7 +123,6 @@ const initializeMockData = (currentUser) => {
           loginTime: checkIn.toISOString(),
           logoutTime: checkOut.toISOString(),
           workingHours: totalWorkingHours,
-          totalBreakTime: "00:45:00",
           status: "Present"
         });
       }
@@ -446,25 +444,6 @@ export default function AttendanceView() {
           </button>
         </div>
       </div>
-
-      {/* Timer Running Banner */}
-      {attendanceStart && (
-        <div className="bg-gradient-to-r from-amber-500 to-[#d4af37] text-[#0a2540] p-6 rounded-3xl border border-[#d4af37]/30 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4 animate-pulse print:hidden">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-[#0a2540]">
-              <Clock size={24} className="animate-spin" style={{ animationDuration: '4s' }} />
-            </div>
-            <div>
-              <h3 className="text-sm font-black uppercase tracking-wider">Attendance Timer Running</h3>
-              <p className="text-xs font-bold text-[#0a2540]/80 mt-0.5">Currently checked in. Stop the timer in the header when checking out.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-2xl font-black tracking-widest bg-white/20 px-4 py-2 rounded-2xl border border-white/10">{elapsed}</span>
-            <span className="w-3 h-3 bg-emerald-500 rounded-full animate-ping" />
-          </div>
-        </div>
-      )}
 
       {loading && !stats ? (
         <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#0a2540]" size={40} /></div>

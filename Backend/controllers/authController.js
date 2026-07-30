@@ -43,23 +43,27 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    // Create an Attendance record for this session
-    const attendance = new Attendance({
-      employeeId: employee._id,
-      employeeName: employee.name,
-      officialEmail: employee.officialEmail,
-      role: employee.role,
-      branch: employee.branch || "Corporate",
-      loginTime: new Date(),
-      status: "Present",
-    });
-    await attendance.save();
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // Find or create Attendance record for today
+    let attendance = await Attendance.findOne({ employeeId: employee._id, date: today });
+    if (!attendance) {
+      attendance = new Attendance({
+        employeeId: employee._id,
+        employeeName: employee.name,
+        date: today,
+        startTime: now,
+        status: "Working",
+      });
+      await attendance.save();
+    }
 
     return res.json({
       success: true,
       token,
       message: "Login Success",
-      loginTime: attendance.loginTime,
+      loginTime: attendance.startTime,
       attendanceId: attendance._id,
       employee: {
         fullName: employee.name, // keep fullName for frontend compatibility
@@ -90,42 +94,22 @@ exports.logout = async (req, res) => {
       return res.status(404).json({ success: false, message: "Attendance record not found" });
     }
 
-    if (!attendance.logoutTime) {
-      attendance.logoutTime = new Date();
-      
-      // End active break if any
-      if (attendance.breaks && attendance.breaks.length > 0) {
-        const lastBreak = attendance.breaks[attendance.breaks.length - 1];
-        if (!lastBreak.endTime) {
-          lastBreak.endTime = attendance.logoutTime;
-        }
-      }
+    if (!attendance.endTime) {
+      attendance.endTime = new Date();
+      attendance.status = "Completed";
 
-      // Recalculate total break minutes
-      let totalBreakMins = 0;
-      if (attendance.breaks) {
-        attendance.breaks.forEach(b => {
-          if (b.startTime && b.endTime) {
-            totalBreakMins += Math.floor((b.endTime - b.startTime) / 60000);
-          }
-        });
-        const bh = Math.floor(totalBreakMins / 60);
-        const bm = totalBreakMins % 60;
-        attendance.totalBreakTime = `${String(bh).padStart(2, '0')}:${String(bm).padStart(2, '0')}`;
-      }
-
-      // Calculate working hours (Total Time - Break Time)
-      const diffMs = attendance.logoutTime - attendance.loginTime;
-      const totalWorkMins = Math.floor(diffMs / 60000) - totalBreakMins;
+      // Calculate working hours
+      const diffMs = attendance.endTime - attendance.startTime;
+      const totalWorkMins = Math.floor(diffMs / 60000);
       
-      // Prevent negative
       const finalWorkMins = totalWorkMins > 0 ? totalWorkMins : 0;
       const hours = Math.floor(finalWorkMins / 60);
       const minutes = finalWorkMins % 60;
       
       const pad = (n) => String(n).padStart(2, "0");
       
-      attendance.workingHours = `${pad(hours)}:${pad(minutes)}`;
+      attendance.totalWorkingMinutes = finalWorkMins;
+      attendance.totalWorkingHours = `${pad(hours)}:${pad(minutes)}`;
       await attendance.save();
     }
 

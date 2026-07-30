@@ -2,9 +2,53 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Search, Eye, Edit2, Trash2, Loader2, ArrowLeft, Filter, RefreshCw, AlertCircle, CheckCircle, Clock 
+  Search, Eye, Edit2, Trash2, Loader2, ArrowLeft, Filter, RefreshCw, AlertCircle, CheckCircle, Clock,
+  Briefcase, User, DollarSign, Calendar, Phone, X
 } from "lucide-react";
 import api from "../api";
+
+const formatFriendlyDate = (dateStr) => {
+  if (!dateStr) return null;
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const month = months[d.getUTCMonth()];
+    const year = d.getUTCFullYear();
+    return `${day} ${month} ${year}`;
+  } catch (e) {
+    return dateStr;
+  }
+};
+
+const formatFriendlyTime = (timeStr) => {
+  if (!timeStr) return null;
+  const hhmm = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+  if (hhmm) {
+    let hh = parseInt(hhmm[1], 10);
+    const mm = hhmm[2];
+    const ampm = hh >= 12 ? "PM" : "AM";
+    hh = hh % 12;
+    hh = hh ? hh : 12;
+    return `${hh}:${mm} ${ampm}`;
+  }
+  if (timeStr.toLowerCase().includes("am") || timeStr.toLowerCase().includes("pm")) {
+    return timeStr;
+  }
+  try {
+    const d = new Date(timeStr);
+    if (!isNaN(d.getTime())) {
+      let hh = d.getHours();
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      const ampm = hh >= 12 ? "PM" : "AM";
+      hh = hh % 12;
+      hh = hh ? hh : 12;
+      return `${hh}:${mm} ${ampm}`;
+    }
+  } catch (e) {}
+  return timeStr;
+};
 
 export default function MyLeadsView() {
   const [leads, setLeads] = useState([]);
@@ -354,86 +398,225 @@ export default function MyLeadsView() {
       
       {/* 1. View Lead Details Modal */}
       {viewLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl shadow-xl max-w-xl w-full max-h-[85vh] overflow-y-auto border border-slate-200">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-lg font-black text-[#0a2540]">Lead Details</h3>
-              <button onClick={() => setViewLead(null)} className="text-slate-400 hover:text-[#0a2540] font-black text-sm">✕</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 print:hidden">
+          {/* Backdrop overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setViewLead(null)}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+          />
+
+          {/* Modal Container */}
+          <motion.div
+            initial={{ scale: 0.95, y: 20, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            exit={{ scale: 0.95, y: 20, opacity: 0 }}
+            transition={{ type: "spring", duration: 0.4, bounce: 0.15 }}
+            className="bg-white rounded-[18px] shadow-2xl max-w-[900px] w-full max-h-[80vh] flex flex-col border border-slate-200 overflow-hidden z-50 text-left"
+          >
+            {/* Sticky Header */}
+            <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#0a2540]/5 rounded-xl flex items-center justify-center text-[#0a2540]">
+                  <Briefcase size={20} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-[#0a2540]">Lead Profile</h3>
+                    <span className="font-mono text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">{viewLead.leadId}</span>
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Mhaveer Fincap CRM</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                  viewLead.interested === "Yes" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                  viewLead.interested === "No" ? "bg-rose-50 text-rose-700 border border-rose-200" :
+                  "bg-amber-50 text-amber-700 border border-amber-200"
+                }`}>
+                  {viewLead.interested}
+                </span>
+                <button
+                  onClick={() => setViewLead(null)}
+                  className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 transition cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
-            <div className="p-6 space-y-4 text-xs text-slate-700">
-              <div className="grid grid-cols-2 gap-4 border-b border-slate-50 pb-4">
-                <div>
-                  <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Company Name</p>
-                  <p className="font-black text-sm text-[#0a2540] mt-1">{viewLead.companyName}</p>
-                </div>
-                <div>
-                  <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Contact Person</p>
-                  <p className="font-black text-sm text-[#0a2540] mt-1">{viewLead.contactPerson}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 border-b border-slate-50 pb-4">
-                <div>
-                  <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Phone Number</p>
-                  <p className="font-bold text-slate-800 mt-1">{viewLead.phone}</p>
-                </div>
-                <div>
-                  <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Location</p>
-                  <p className="font-bold text-slate-800 mt-1">{viewLead.city ? `${viewLead.city}, ${viewLead.state || ""}` : "N/A"}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-4">
-                <div>
-                  <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Yearly Income</p>
-                  <p className="font-black text-slate-800 mt-1">₹{viewLead.yearlyIncome?.toLocaleString("en-IN")}</p>
-                </div>
-                <div>
-                  <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Loan Required</p>
-                  <p className="font-black text-emerald-600 mt-1">₹{viewLead.loanAmount?.toLocaleString("en-IN")}</p>
-                </div>
-                <div>
-                  <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">CIBIL Score</p>
-                  <p className="font-black text-slate-800 mt-1">{viewLead.cibilScore}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 border-b border-slate-50 pb-4">
-                <div>
-                  <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Interested Status</p>
-                  <p className="font-bold mt-1 text-slate-800">{viewLead.interested}</p>
-                </div>
-                <div>
-                  <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Call Status</p>
-                  <p className="font-bold mt-1 text-slate-800">{viewLead.callStatus}</p>
-                </div>
-              </div>
-              {(viewLead.meetingDate || viewLead.followUpDate) && (
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 grid grid-cols-2 gap-4">
-                  {viewLead.meetingDate && (
-                    <div>
-                      <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Meeting Schedule</p>
-                      <p className="font-bold text-[#0a2540] mt-1">{viewLead.meetingDate} at {viewLead.meetingTime || "N/A"}</p>
+
+            {/* Scrollable Body */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-slate-50/50">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                
+                {/* Left Side (3 cols): Company Information & Remarks */}
+                <div className="md:col-span-3 space-y-6">
+                  {/* Company Info Card */}
+                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-4">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
+                      <User size={14} className="text-[#0a2540]" /> Company & Contact Information
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="sm:col-span-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Company Name</span>
+                        <p className="font-extrabold text-[#0a2540] text-sm mt-0.5">{viewLead.companyName || "N/A"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Contact Person</span>
+                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.contactPerson || "N/A"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Phone Number</span>
+                        <p className="font-bold text-slate-700 text-xs mt-0.5 flex items-center gap-1.5">
+                          <Phone size={12} className="text-slate-400" /> {viewLead.phone || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">City</span>
+                        <p className="font-bold text-slate-700 text-xs mt-0.5">{viewLead.city || "N/A"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">State</span>
+                        <p className="font-bold text-slate-700 text-xs mt-0.5">{viewLead.state || "N/A"}</p>
+                      </div>
                     </div>
-                  )}
-                  {viewLead.followUpDate && (
-                    <div>
-                      <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Follow-up Schedule</p>
-                      <p className="font-bold text-[#d4af37] mt-1">{viewLead.followUpDate} at {viewLead.followUpTime || "N/A"}</p>
+                  </div>
+
+                  {/* Remarks Card */}
+                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-3">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
+                      Remarks / Notes
+                    </h4>
+                    <div className="bg-slate-50/50 border border-slate-100/80 rounded-xl p-3.5 min-h-[90px] text-xs leading-relaxed text-slate-600 whitespace-pre-wrap font-medium">
+                      {viewLead.remarks ? viewLead.remarks : <span className="text-slate-400 italic">No Remarks</span>}
                     </div>
-                  )}
+                  </div>
                 </div>
-              )}
-              {viewLead.remarks && (
-                <div>
-                  <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Remarks / Notes</p>
-                  <p className="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-slate-600 mt-1 leading-relaxed whitespace-pre-wrap">{viewLead.remarks}</p>
+
+                {/* Right Side (2 cols): Loan, Status, Meeting & Follow-up */}
+                <div className="md:col-span-2 space-y-6">
+                  {/* Loan & Financial Details Card */}
+                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-4">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
+                      <DollarSign size={14} className="text-emerald-500" /> Loan & Financials
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Loan Type</span>
+                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.loanType || "N/A"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CIBIL Score</span>
+                        <p className={`font-black text-xs mt-0.5 ${
+                          viewLead.cibilScore >= 750 ? "text-emerald-600" :
+                          viewLead.cibilScore >= 650 ? "text-amber-500" :
+                          "text-rose-500"
+                        }`}>
+                          {viewLead.cibilScore || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Loan Required</span>
+                        <p className="font-black text-emerald-600 text-xs mt-0.5">
+                          {viewLead.loanAmount ? `₹${viewLead.loanAmount.toLocaleString("en-IN")}` : "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Yearly Income</span>
+                        <p className="font-black text-slate-700 text-xs mt-0.5">
+                          {viewLead.yearlyIncome ? `₹${viewLead.yearlyIncome.toLocaleString("en-IN")}` : "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Call & Lead Status Card */}
+                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-4">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
+                      Status Overview
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Interested</span>
+                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.interested || "N/A"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Call Status</span>
+                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.callStatus || "N/A"}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Meeting Information Card */}
+                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-3">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
+                      <Calendar size={14} className="text-[#0a2540]" /> Meeting Details
+                    </h4>
+                    {viewLead.meetingDate ? (
+                      <div className="flex gap-4 items-center">
+                        <div className="w-9 h-9 bg-slate-50 rounded-lg flex items-center justify-center text-slate-500 shrink-0">
+                          <Calendar size={16} />
+                        </div>
+                        <div>
+                          <p className="font-extrabold text-slate-700 text-xs">{formatFriendlyDate(viewLead.meetingDate)}</p>
+                          <p className="text-[10px] font-bold text-slate-400 mt-0.5 flex items-center gap-1">
+                            <Clock size={10} /> {formatFriendlyTime(viewLead.meetingTime) || "Time Not Specified"}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-slate-400 text-xs italic py-1">No Meeting Scheduled</p>
+                    )}
+                  </div>
+
+                  {/* Follow-up Information highlighted card */}
+                  <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${
+                    viewLead.followUpDate 
+                      ? "bg-amber-50/60 border-amber-200/50 text-[#0a2540]" 
+                      : "bg-white border-slate-100 text-slate-700"
+                  }`}>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100/50 pb-2">
+                      <Clock size={14} className="text-amber-500" /> Follow-up Schedule
+                    </h4>
+                    {viewLead.followUpDate ? (
+                      <div className="flex gap-4 items-center">
+                        <div className="w-9 h-9 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-600 shrink-0">
+                          <Clock size={16} />
+                        </div>
+                        <div>
+                          <p className="font-extrabold text-slate-700 text-xs">{formatFriendlyDate(viewLead.followUpDate)}</p>
+                          <p className="text-[10px] font-bold text-slate-500 mt-0.5 flex items-center gap-1">
+                            <Clock size={10} /> {formatFriendlyTime(viewLead.followUpTime) || "Time Not Specified"}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-slate-400 text-xs italic py-1">No Follow-up Scheduled</p>
+                    )}
+                  </div>
                 </div>
-              )}
+
+              </div>
             </div>
-            <div className="p-6 border-t border-slate-100 text-right">
-              <button onClick={() => setViewLead(null)} className="px-5 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 font-bold transition text-xs">
+
+            {/* Sticky Footer */}
+            <div className="sticky bottom-0 bg-slate-50 border-t border-slate-100 px-6 py-4 flex items-center justify-end gap-3 z-10 shrink-0">
+              <button 
+                onClick={() => { setViewLead(null); openEditModal(viewLead); }}
+                className="px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl text-slate-700 font-bold transition text-xs shadow-xs cursor-pointer"
+              >
+                Edit Lead
+              </button>
+              <button 
+                onClick={() => setViewLead(null)}
+                className="px-6 py-2.5 bg-[#0a2540] hover:bg-[#0a2540]/90 text-white rounded-xl font-bold transition text-xs shadow-sm cursor-pointer"
+              >
                 Close
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
 

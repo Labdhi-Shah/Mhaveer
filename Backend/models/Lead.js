@@ -88,7 +88,13 @@ const leadSchema = new mongoose.Schema(
     employeeName: {
       type: String,
     },
-    employeeRole: {
+    officialEmail: {
+      type: String,
+    },
+    role: {
+      type: String,
+    },
+    createdBy: {
       type: String,
     },
     status: {

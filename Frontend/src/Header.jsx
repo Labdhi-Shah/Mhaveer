@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, Settings, Menu, ChevronDown, Clock, Circle, User, Key, LogOut } from "lucide-react";
+import { Bell, Settings, Menu, ChevronDown, Clock, Circle, User, Key, LogOut, PauseCircle, PlayCircle, CheckCircle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import api from "./api";
@@ -10,12 +10,13 @@ export default function Header({ onToggleSidebar }) {
   const location = useLocation();
   const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [elapsed, setElapsed] = useState("00:00:00");
   const dropdownRef = useRef(null);
 
-  const [attendanceStart, setAttendanceStart] = useState(() => localStorage.getItem("attendance_timer_start"));
+  const isSuperAdmin = user?.role === "SuperAdmin";
 
-  const loginTimeStr = localStorage.getItem("loginTime");
+  const [attendance, setAttendance] = useState(null);
+  const [elapsed, setElapsed] = useState("00:00:00");
+  const [loading, setLoading] = useState(false);
 
   // Format Page Title
   const getPageTitle = () => {
@@ -33,28 +34,62 @@ export default function Header({ onToggleSidebar }) {
     return "CRM Portal";
   };
 
-  // Live Timer & Synchronization Effect
-  useEffect(() => {
-    const handleUpdate = () => {
-      setAttendanceStart(localStorage.getItem("attendance_timer_start"));
-    };
-    window.addEventListener("attendance-update", handleUpdate);
-    return () => window.removeEventListener("attendance-update", handleUpdate);
-  }, []);
+  const fetchAttendanceStatus = async () => {
+    try {
+      const res = await api.get("/attendance/today");
+      if (res.data.success) {
+        setAttendance(res.data.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch today's attendance", err);
+    }
+  };
 
   useEffect(() => {
-    if (!attendanceStart) {
+    if (user && !isSuperAdmin) {
+      fetchAttendanceStatus();
+    }
+  }, [user, isSuperAdmin]);
+
+  useEffect(() => {
+    if (!attendance || attendance.status === "Not Started") {
       setElapsed("00:00:00");
       return;
     }
 
-    const updateTimer = () => {
-      const start = new Date(attendanceStart);
-      const now = new Date();
-      const diffMs = now - start;
-      if (diffMs < 0) return;
+    if (attendance.status === "Completed") {
+      if (attendance.totalWorkingHours) {
+        setElapsed(`${attendance.totalWorkingHours}:00`);
+      } else {
+        setElapsed("00:00:00");
+      }
+      return;
+    }
 
-      const diffSecs = Math.floor(diffMs / 1000);
+    const updateTimer = () => {
+      if (!attendance.startTime) return;
+      const start = new Date(attendance.startTime);
+      let currentEnd = new Date();
+
+      if (attendance.status === "On Break" && attendance.breaks && attendance.breaks.length > 0) {
+        currentEnd = new Date(attendance.breaks[attendance.breaks.length - 1].startTime);
+      }
+
+      let elapsedMs = currentEnd - start;
+
+      let breaksMs = 0;
+      if (attendance.breaks) {
+        attendance.breaks.forEach(b => {
+          if (b.endTime) {
+            breaksMs += (new Date(b.endTime) - new Date(b.startTime));
+          }
+        });
+      }
+
+      elapsedMs -= breaksMs;
+      if (elapsedMs < 0) elapsedMs = 0;
+
+      const diffSecs = Math.floor(elapsedMs / 1000);
       const hours = Math.floor(diffSecs / 3600);
       const minutes = Math.floor((diffSecs % 3600) / 60);
       const seconds = diffSecs % 60;
@@ -66,50 +101,28 @@ export default function Header({ onToggleSidebar }) {
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [attendanceStart]);
+  }, [attendance]);
 
-  const handleAttendanceClick = () => {
-    const start = localStorage.getItem("attendance_timer_start");
-    if (start) {
-      // Check Out
-      const checkInTime = new Date(start);
-      const checkOutTime = new Date();
-      const diffMs = checkOutTime - checkInTime;
-      
-      const diffSecs = Math.floor(diffMs / 1000);
-      const hours = Math.floor(diffSecs / 3600);
-      const minutes = Math.floor((diffSecs % 3600) / 60);
-      const seconds = diffSecs % 60;
-      const totalWorkingHours = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-
-      const newRecord = {
-        _id: Date.now().toString(),
-        date: new Date().toISOString().split("T")[0],
-        employeeName: user?.fullName || user?.name || "Corporate Employee",
-        employeeId: user?.employeeId || "EMP-MOCK-" + Math.floor(1000 + Math.random() * 9000),
-        officialEmail: user?.email || "employee@mhaveerfincap.com",
-        role: user?.role || "Representative",
-        branch: "Corporate Gujarat",
-        loginTime: checkInTime.toISOString(),
-        logoutTime: checkOutTime.toISOString(),
-        workingHours: totalWorkingHours,
-        status: "Present"
-      };
-
-      const existingRecords = JSON.parse(localStorage.getItem("attendance_records") || "[]");
-      existingRecords.unshift(newRecord);
-      localStorage.setItem("attendance_records", JSON.stringify(existingRecords));
-      
-      localStorage.removeItem("attendance_timer_start");
-      setAttendanceStart(null);
-    } else {
-      // Check In
-      const nowStr = new Date().toISOString();
-      localStorage.setItem("attendance_timer_start", nowStr);
-      setAttendanceStart(nowStr);
+  const handleAttendanceClick = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      if (!attendance || attendance.status === "Not Started" || attendance.status === null) {
+        const res = await api.post("/attendance/start");
+        if (res.data.success) setAttendance(res.data.data);
+      } else if (attendance.status === "Working") {
+        const res = await api.post("/attendance/pause");
+        if (res.data.success) setAttendance(res.data.data);
+      } else if (attendance.status === "On Break") {
+        const res = await api.post("/attendance/resume");
+        if (res.data.success) setAttendance(res.data.data);
+      }
+      // If completed, do nothing
+    } catch (err) {
+      console.error("Attendance action failed", err);
+    } finally {
+      setLoading(false);
     }
-    // Notify all listeners
-    window.dispatchEvent(new Event("attendance-update"));
   };
 
   // Click outside dropdown handler
@@ -123,20 +136,18 @@ export default function Header({ onToggleSidebar }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const formatLoginTime = (isoString) => {
-    if (!isoString) return "";
-    const date = new Date(isoString);
-    return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
-  };
-
   const handleLogout = async () => {
-    const attendanceId = localStorage.getItem("attendanceId");
-    if (attendanceId) {
-      try {
-        await api.post("/auth/logout", { attendanceId });
-      } catch (err) {
-        console.error("Logout API failed", err);
+    try {
+      if (attendance && attendance.status !== "Completed" && attendance.status !== "Not Started") {
+        await api.post("/attendance/stop");
       }
+      // Also call auth logout just to clear any old state
+      const attendanceId = localStorage.getItem("attendanceId");
+      if (attendanceId) {
+        await api.post("/auth/logout", { attendanceId });
+      }
+    } catch (err) {
+      console.error("Logout API failed", err);
     }
     logout();
     localStorage.removeItem("loginTime");
@@ -144,13 +155,56 @@ export default function Header({ onToggleSidebar }) {
     navigate("/login", { replace: true });
   };
 
-  const isSuperAdmin = user?.role === "SuperAdmin";
   const initials = (user?.fullName || user?.name || "SA")
     .split(" ")
     .map((n) => n[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
+
+  const getTimerWidgetProps = () => {
+    if (!attendance || attendance.status === "Not Started" || attendance.status === null) {
+      return {
+        label: "Start Work",
+        icon: <Clock size={16} />,
+        color: "text-slate-300",
+        bg: "bg-slate-800/60 hover:bg-slate-700/80",
+        border: "border-transparent",
+        showPulse: false
+      };
+    } else if (attendance.status === "Working") {
+      return {
+        label: elapsed,
+        icon: <PauseCircle size={16} />,
+        color: "text-emerald-400",
+        bg: "bg-emerald-400/10 hover:bg-emerald-400/20",
+        border: "border-emerald-400/50",
+        showPulse: true
+      };
+    } else if (attendance.status === "On Break") {
+      return {
+        label: `Lunch / Break (${elapsed})`,
+        icon: <PlayCircle size={16} />,
+        color: "text-amber-400",
+        bg: "bg-amber-400/10 hover:bg-amber-400/20",
+        border: "border-amber-400/50",
+        showPulse: false
+      };
+    } else if (attendance.status === "Completed") {
+      return {
+        label: `Completed (${elapsed})`,
+        icon: <CheckCircle size={16} />,
+        color: "text-slate-400",
+        bg: "bg-slate-800/40",
+        border: "border-slate-700",
+        showPulse: false,
+        disabled: true
+      };
+    }
+    return {};
+  };
+
+  const widgetProps = getTimerWidgetProps();
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-[#0a2540] text-white border-b-2 border-[#d4af37] z-50 flex items-center justify-between px-4 md:px-6 shadow-md select-none">
@@ -188,27 +242,22 @@ export default function Header({ onToggleSidebar }) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4">
-        {user && (
+        {user && !isSuperAdmin && (
           <div className="flex items-center gap-2">
-            {attendanceStart ? (
-              <button 
-                onClick={handleAttendanceClick}
-                className="flex items-center gap-2 bg-[#d4af37]/20 border border-[#d4af37] text-[#d4af37] px-3.5 py-1.5 rounded-xl transition hover:bg-[#d4af37]/30 shadow-md font-bold text-xs cursor-pointer"
-                title="Checked In - Click to Check Out"
-              >
-                <Clock size={16} className="animate-pulse" />
-                <span className="font-mono tracking-widest">{elapsed}</span>
+            <button 
+              onClick={handleAttendanceClick}
+              disabled={widgetProps.disabled || loading}
+              className={`flex items-center gap-2 border px-3.5 py-1.5 rounded-xl transition shadow-md font-bold text-xs cursor-pointer ${widgetProps.color} ${widgetProps.bg} ${widgetProps.border} ${widgetProps.disabled || loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+              title={attendance?.status === "Working" ? "Click to Pause (Lunch/Break)" : (attendance?.status === "On Break" ? "Click to Resume Work" : "Start Working")}
+            >
+              <div className={widgetProps.showPulse ? "animate-pulse" : ""}>
+                {widgetProps.icon}
+              </div>
+              <span className="font-mono tracking-widest">{widgetProps.label}</span>
+              {widgetProps.showPulse && (
                 <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
-              </button>
-            ) : (
-              <button 
-                onClick={handleAttendanceClick}
-                className="p-2 text-slate-300 hover:text-[#d4af37] hover:bg-slate-800/60 rounded-xl transition cursor-pointer"
-                title="Check In Attendance"
-              >
-                <Clock size={18} />
-              </button>
-            )}
+              )}
+            </button>
           </div>
         )}
         <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#d4af37] rounded-lg transition relative" title="Notifications">
@@ -265,7 +314,7 @@ export default function Header({ onToggleSidebar }) {
                       <User size={14} /> My Profile
                     </button>
                     <button
-                      onClick={() => { navigate("/dashboard"); setDropdownOpen(false); }}
+                      onClick={() => { navigate("/attendance"); setDropdownOpen(false); }}
                       className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-600 hover:bg-slate-100 hover:text-[#0a2540] font-bold transition text-left"
                     >
                       <Clock size={14} /> Attendance Logs

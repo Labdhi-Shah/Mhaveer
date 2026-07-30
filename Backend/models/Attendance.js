@@ -12,17 +12,32 @@ const attendanceSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    officialEmail: {
+      type: String,
+    },
+    role: {
+      type: String,
+    },
     date: {
       type: Date,
       required: true,
     },
     startTime: {
       type: Date,
-      required: true,
     },
     endTime: {
       type: Date,
       default: null,
+    },
+    breaks: [
+      {
+        startTime: { type: Date },
+        endTime: { type: Date }
+      }
+    ],
+    totalBreakMinutes: {
+      type: Number,
+      default: 0,
     },
     totalWorkingMinutes: {
       type: Number,
@@ -34,8 +49,9 @@ const attendanceSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Working", "Completed"],
+      enum: ["Not Started", "Working", "On Break", "Completed"],
       required: true,
+      default: "Working"
     },
   },
   {

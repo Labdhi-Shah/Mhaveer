@@ -43,31 +43,15 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    // Find or create Attendance record for today
-    let attendance = await Attendance.findOne({ employeeId: employee._id, date: today });
-    if (!attendance) {
-      attendance = new Attendance({
-        employeeId: employee._id,
-        employeeName: employee.name,
-        date: today,
-        startTime: now,
-        status: "Working",
-      });
-      await attendance.save();
-    }
-
     return res.json({
       success: true,
       token,
       message: "Login Success",
-      loginTime: attendance.startTime,
-      attendanceId: attendance._id,
       employee: {
+        id: employee._id,
         fullName: employee.name, // keep fullName for frontend compatibility
         name: employee.name,
+        email: employee.officialEmail,
         role: employee.role
       }
     });
@@ -94,20 +78,41 @@ exports.logout = async (req, res) => {
       return res.status(404).json({ success: false, message: "Attendance record not found" });
     }
 
-    if (!attendance.endTime) {
+    if (attendance.status !== "Completed") {
+      // If currently on break, cap the break
+      if (attendance.status === "On Break" && attendance.breaks.length > 0) {
+        const lastBreak = attendance.breaks[attendance.breaks.length - 1];
+        if (!lastBreak.endTime) {
+          lastBreak.endTime = new Date();
+        }
+      }
+
       attendance.endTime = new Date();
       attendance.status = "Completed";
 
+      // Calculate total break minutes
+      let totalBreakMs = 0;
+      attendance.breaks.forEach((b) => {
+        if (b.startTime && b.endTime) {
+          totalBreakMs += (b.endTime - b.startTime);
+        }
+      });
+      const totalBreakMins = Math.floor(totalBreakMs / 60000);
+      attendance.totalBreakMinutes = totalBreakMins;
+
       // Calculate working hours
-      const diffMs = attendance.endTime - attendance.startTime;
-      const totalWorkMins = Math.floor(diffMs / 60000);
-      
+      let diffMs = 0;
+      if (attendance.startTime) {
+        diffMs = attendance.endTime - attendance.startTime;
+      }
+      const totalWorkMins = Math.floor(diffMs / 60000) - totalBreakMins;
+
       const finalWorkMins = totalWorkMins > 0 ? totalWorkMins : 0;
       const hours = Math.floor(finalWorkMins / 60);
       const minutes = finalWorkMins % 60;
-      
+
       const pad = (n) => String(n).padStart(2, "0");
-      
+
       attendance.totalWorkingMinutes = finalWorkMins;
       attendance.totalWorkingHours = `${pad(hours)}:${pad(minutes)}`;
       await attendance.save();

@@ -7,12 +7,14 @@ exports.createLead = async (req, res) => {
   try {
     // If the user is an employee, attach their info to the lead
     let employeeName = "";
-    let employeeRole = req.user.role;
+    let officialEmail = "";
+    let role = req.user.role;
     
     if (req.user.id) {
       const employee = await Employee.findById(req.user.id);
       if (employee) {
         employeeName = employee.name;
+        officialEmail = employee.officialEmail;
       }
     }
 
@@ -20,7 +22,9 @@ exports.createLead = async (req, res) => {
       ...req.body,
       employeeId: req.user.id || null,
       employeeName,
-      employeeRole,
+      officialEmail,
+      role,
+      createdBy: req.user.id || "System",
     };
 
     const lead = new Lead(leadData);
@@ -63,9 +67,10 @@ exports.getLeads = async (req, res) => {
     if (req.query.loanType) query.loanType = req.query.loanType;
     if (req.query.interested) query.interested = req.query.interested;
     
-    // If not super admin, optionally restrict to their own leads (or leave open if FrontDesk sees all)
-    // Uncomment next line if employees should only see their own leads
-    // if (req.user.role !== "SuperAdmin") query.employeeId = req.user.id;
+    // If not super admin, restrict to their own leads
+    if (req.user.role !== "SuperAdmin") {
+      query.employeeId = req.user.id;
+    }
 
     // Pagination
     const page = parseInt(req.query.page) || 1;
@@ -97,6 +102,10 @@ exports.getLeadById = async (req, res) => {
     if (!lead) {
       return res.status(404).json({ success: false, message: "Lead not found" });
     }
+
+    if (req.user.role !== "SuperAdmin" && lead.employeeId !== req.user.id) {
+      return res.status(403).json({ success: false, message: "Not authorized to access this lead" });
+    }
     res.status(200).json({
       success: true,
       message: "Lead fetched successfully",
@@ -112,14 +121,19 @@ exports.getLeadById = async (req, res) => {
 // @route   PUT /api/leads/:id
 exports.updateLead = async (req, res) => {
   try {
-    const lead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-
+    let lead = await Lead.findById(req.params.id);
     if (!lead) {
       return res.status(404).json({ success: false, message: "Lead not found" });
     }
+
+    if (req.user.role !== "SuperAdmin" && lead.employeeId !== req.user.id) {
+      return res.status(403).json({ success: false, message: "Not authorized to update this lead" });
+    }
+
+    lead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
 
     res.status(200).json({
       success: true,
@@ -140,11 +154,16 @@ exports.updateLead = async (req, res) => {
 // @route   DELETE /api/leads/:id
 exports.deleteLead = async (req, res) => {
   try {
-    const lead = await Lead.findByIdAndDelete(req.params.id);
-    
+    const lead = await Lead.findById(req.params.id);
     if (!lead) {
       return res.status(404).json({ success: false, message: "Lead not found" });
     }
+
+    if (req.user.role !== "SuperAdmin" && lead.employeeId !== req.user.id) {
+      return res.status(403).json({ success: false, message: "Not authorized to delete this lead" });
+    }
+
+    await lead.deleteOne();
 
     res.status(200).json({
       success: true,

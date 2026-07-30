@@ -26,21 +26,23 @@ exports.startAttendance = async (req, res) => {
     });
 
     if (existingRecord) {
-      if (existingRecord.status === "Working") {
-        return res.status(400).json({ success: false, message: "Attendance already started." });
+      if (existingRecord.status !== "Completed") {
+        return res.status(400).json({ success: false, message: "Attendance already started for today." });
       }
-      if (existingRecord.status === "Completed") {
-        return res.status(400).json({ success: false, message: "Attendance already completed for today." });
-      }
+      return res.status(400).json({ success: false, message: "Attendance already completed for today." });
     }
 
     const newAttendance = new Attendance({
       employeeId,
       employeeName: employee.name || employee.firstName + " " + employee.lastName,
-      date: new Date(),
+      officialEmail: employee.officialEmail,
+      role: employee.role,
+      date: getStartOfDay(),
       startTime: new Date(),
       status: "Working",
       endTime: null,
+      breaks: [],
+      totalBreakMinutes: 0,
       totalWorkingMinutes: 0,
       totalWorkingHours: "00:00"
     });
@@ -58,7 +60,76 @@ exports.startAttendance = async (req, res) => {
   }
 };
 
-// 2. Attendance Stop API
+// 2. Attendance Pause API (Lunch/Break)
+exports.pauseAttendance = async (req, res) => {
+  try {
+    const employeeId = req.user.id;
+    const today = getStartOfDay();
+
+    const record = await Attendance.findOne({
+      employeeId,
+      date: { $gte: today }
+    });
+
+    if (!record || record.status !== "Working") {
+      return res.status(400).json({ success: false, message: "No active working session to pause." });
+    }
+
+    record.status = "On Break";
+    record.breaks.push({ startTime: new Date() });
+    
+    await record.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Attendance paused successfully.",
+      data: record
+    });
+  } catch (error) {
+    console.error("Pause Attendance Error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error.", error: error.message });
+  }
+};
+
+// 3. Attendance Resume API
+exports.resumeAttendance = async (req, res) => {
+  try {
+    const employeeId = req.user.id;
+    const today = getStartOfDay();
+
+    const record = await Attendance.findOne({
+      employeeId,
+      date: { $gte: today }
+    });
+
+    if (!record || record.status !== "On Break") {
+      return res.status(400).json({ success: false, message: "Attendance is not currently paused." });
+    }
+
+    if (record.breaks.length > 0) {
+      const lastBreak = record.breaks[record.breaks.length - 1];
+      if (!lastBreak.endTime) {
+        lastBreak.endTime = new Date();
+      }
+    }
+
+    record.status = "Working";
+    
+    await record.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Attendance resumed successfully.",
+      data: record
+    });
+  } catch (error) {
+    console.error("Resume Attendance Error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error.", error: error.message });
+  }
+};
+
+
+// 4. Attendance Stop API
 exports.stopAttendance = async (req, res) => {
   try {
     const employeeId = req.user.id;
@@ -77,19 +148,41 @@ exports.stopAttendance = async (req, res) => {
       return res.status(400).json({ success: false, message: "Attendance already completed for today." });
     }
 
+    if (record.status === "On Break" && record.breaks.length > 0) {
+      const lastBreak = record.breaks[record.breaks.length - 1];
+      if (!lastBreak.endTime) {
+        lastBreak.endTime = new Date();
+      }
+    }
+
     const endTime = new Date();
     record.endTime = endTime;
+    record.status = "Completed";
     
-    const diffMs = endTime - record.startTime;
-    const diffMins = Math.floor(diffMs / 60000);
-    record.totalWorkingMinutes = diffMins;
+    // Calculate total break time
+    let totalBreakMs = 0;
+    record.breaks.forEach((b) => {
+      if (b.startTime && b.endTime) {
+        totalBreakMs += (b.endTime - b.startTime);
+      }
+    });
+    const totalBreakMins = Math.floor(totalBreakMs / 60000);
+    record.totalBreakMinutes = totalBreakMins;
+
+    // Calculate working time
+    let diffMs = 0;
+    if (record.startTime) {
+      diffMs = record.endTime - record.startTime;
+    }
+    const totalWorkMins = Math.floor(diffMs / 60000) - totalBreakMins;
+
+    const finalWorkMins = totalWorkMins > 0 ? totalWorkMins : 0;
+    record.totalWorkingMinutes = finalWorkMins;
     
-    const hours = Math.floor(diffMins / 60);
-    const minutes = diffMins % 60;
+    const hours = Math.floor(finalWorkMins / 60);
+    const minutes = finalWorkMins % 60;
     record.totalWorkingHours = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     
-    record.status = "Completed";
-
     await record.save();
 
     return res.status(200).json({
@@ -103,7 +196,7 @@ exports.stopAttendance = async (req, res) => {
   }
 };
 
-// 3. Today's Attendance API
+// 5. Today's Attendance API
 exports.getTodayAttendance = async (req, res) => {
   try {
     const employeeId = req.user.id;
@@ -120,14 +213,9 @@ exports.getTodayAttendance = async (req, res) => {
         message: "No attendance started for today.",
         data: {
           attendanceStarted: false,
-          status: null
+          status: "Not Started"
         }
       });
-    }
-
-    let elapsedSeconds = 0;
-    if (record.status === "Working") {
-      elapsedSeconds = Math.floor((new Date() - record.startTime) / 1000);
     }
 
     return res.status(200).json({
@@ -139,7 +227,7 @@ exports.getTodayAttendance = async (req, res) => {
         startTime: record.startTime,
         endTime: record.endTime,
         totalWorkingHours: record.totalWorkingHours,
-        elapsedSeconds
+        breaks: record.breaks
       }
     });
   } catch (error) {
@@ -148,11 +236,11 @@ exports.getTodayAttendance = async (req, res) => {
   }
 };
 
-// 4. Attendance History API
+// 6. Attendance History API
 exports.getAttendanceHistory = async (req, res) => {
   try {
     const employeeId = req.user.id;
-    const { page = 1, limit = 10, employeeName, status, startDate, endDate } = req.query;
+    const { page = 1, limit = 10, employeeName, status, startDate, endDate, range } = req.query;
     
     const query = { employeeId };
     
@@ -163,15 +251,43 @@ exports.getAttendanceHistory = async (req, res) => {
     if (status) {
       query.status = status;
     }
-    
-    if (startDate || endDate) {
-      query.date = {};
-      if (startDate) query.date.$gte = new Date(startDate);
+
+    const now = new Date();
+    let sDate, eDate;
+
+    if (range === "Today") {
+      sDate = getStartOfDay();
+      eDate = new Date(sDate.getTime() + 24 * 60 * 60 * 1000);
+    } else if (range === "This Week") {
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+      sDate = new Date(now.setDate(diff));
+      sDate.setHours(0, 0, 0, 0);
+      eDate = new Date();
+    } else if (range === "Last Week") {
+      const day = now.getDay();
+      const diff = now.getDate() - day - 6;
+      sDate = new Date(now.setDate(diff));
+      sDate.setHours(0, 0, 0, 0);
+      eDate = new Date(sDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    } else if (range === "This Month") {
+      sDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      eDate = new Date();
+    } else if (range === "Last Month") {
+      sDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      eDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else if (startDate || endDate) {
+      if (startDate) sDate = new Date(startDate);
       if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        query.date.$lte = end;
+        eDate = new Date(endDate);
+        eDate.setHours(23, 59, 59, 999);
       }
+    }
+
+    if (sDate || eDate) {
+      query.date = {};
+      if (sDate) query.date.$gte = sDate;
+      if (eDate) query.date.$lte = eDate;
     }
 
     const skip = (page - 1) * limit;
@@ -198,10 +314,10 @@ exports.getAttendanceHistory = async (req, res) => {
   }
 };
 
-// 5. Admin Attendance API
+// 7. Admin Attendance API
 exports.getAdminAttendance = async (req, res) => {
   try {
-    const { page = 1, limit = 10, employeeName, employeeId, status, startDate, endDate } = req.query;
+    const { page = 1, limit = 10, employeeName, employeeId, status, startDate, endDate, range } = req.query;
     
     const query = {};
     
@@ -214,15 +330,43 @@ exports.getAdminAttendance = async (req, res) => {
     if (status) {
       query.status = status;
     }
-    
-    if (startDate || endDate) {
-      query.date = {};
-      if (startDate) query.date.$gte = new Date(startDate);
+
+    const now = new Date();
+    let sDate, eDate;
+
+    if (range === "Today") {
+      sDate = getStartOfDay();
+      eDate = new Date(sDate.getTime() + 24 * 60 * 60 * 1000);
+    } else if (range === "This Week") {
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+      sDate = new Date(now.setDate(diff));
+      sDate.setHours(0, 0, 0, 0);
+      eDate = new Date();
+    } else if (range === "Last Week") {
+      const day = now.getDay();
+      const diff = now.getDate() - day - 6;
+      sDate = new Date(now.setDate(diff));
+      sDate.setHours(0, 0, 0, 0);
+      eDate = new Date(sDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    } else if (range === "This Month") {
+      sDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      eDate = new Date();
+    } else if (range === "Last Month") {
+      sDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      eDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else if (startDate || endDate) {
+      if (startDate) sDate = new Date(startDate);
       if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        query.date.$lte = end;
+        eDate = new Date(endDate);
+        eDate.setHours(23, 59, 59, 999);
       }
+    }
+
+    if (sDate || eDate) {
+      query.date = {};
+      if (sDate) query.date.$gte = sDate;
+      if (eDate) query.date.$lte = eDate;
     }
 
     const skip = (page - 1) * limit;

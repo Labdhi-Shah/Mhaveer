@@ -182,155 +182,152 @@ export default function EmployeeDashboard() {
         ))}
       </div>
 
-      {/* Main Grid for Logs and Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Recent Leads Detailed Table - Left Side on Desktop, bottom on mobile */}
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 p-6 shadow-sm overflow-hidden order-2 lg:order-1">
-          <h3 className="text-lg font-black text-[#0a2540] mb-5">Latest Leads Log</h3>
-          
+      {/* Recent CRM Actions Panel */}
+      <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between h-fit w-full">
+        <div>
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <h3 className="text-md font-black text-[#0a2540] flex items-center gap-2">
+              <CheckCircle size={18} className="text-emerald-500" />
+              Recent CRM Actions
+            </h3>
+          </div>
+
           {recentLoading ? (
-            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#0a2540]" size={28} /></div>
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <Loader2 className="animate-spin text-[#0a2540]" size={28} />
+              <p className="text-[10px] text-slate-400 font-bold uppercase">Retrieving Leads...</p>
+            </div>
           ) : recentLeads.length === 0 ? (
-            <div className="text-center py-8 text-slate-400 text-xs">No leads logged.</div>
+            <div className="text-center py-12 text-slate-400 text-xs">
+              No recent leads created. Use the form to save leads.
+            </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-[#0a2540] text-[#d4af37] font-extrabold uppercase whitespace-nowrap">
-                    <th className="py-3 px-4 rounded-l-xl">LEAD ID</th>
-                    <th className="py-3 px-4">COMPANY NAME</th>
-                    <th className="py-3 px-4">CONTACT PERSON</th>
-                    <th className="py-3 px-4">PHONE NUMBER</th>
-                    <th className="py-3 px-4">LOAN TYPE</th>
-                    <th className="py-3 px-4 text-center">CIBIL</th>
-                    <th className="py-3 px-4 text-center">INTERESTED</th>
-                    <th className="py-3 px-4 text-center">CALL STATUS</th>
-                    <th className="py-3 px-4 text-center">MEETING</th>
-                    <th className="py-3 px-4 text-center">FOLLOW-UP</th>
-                    <th className="py-3 px-4 text-center rounded-r-xl">ACTIONS</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700 whitespace-nowrap">
-                  {recentLeads.map((lead) => (
-                    <tr key={lead._id} className="hover:bg-slate-50 transition">
-                      <td className="py-3.5 px-4 font-mono font-black text-[#0a2540]">{lead.leadId}</td>
-                      <td className="py-3.5 px-4 font-bold text-[#0a2540]">{lead.companyName}</td>
-                      <td className="py-3.5 px-4 font-medium text-slate-800">{lead.contactPerson}</td>
-                      <td className="py-3.5 px-4 text-slate-600">{lead.phone}</td>
-                      <td className="py-3.5 px-4 font-extrabold text-slate-500">{lead.loanType}</td>
-                      <td className="py-3.5 px-4 text-center">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                          lead.cibilScore >= 750 ? "bg-emerald-50 text-emerald-700" :
-                          lead.cibilScore >= 650 ? "bg-amber-50 text-amber-700" :
-                          "bg-rose-50 text-rose-700"
-                        }`}>
-                          {lead.cibilScore}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-center">
-                        <span className={`px-2 py-1 rounded-full text-[10px] font-black ${
-                          lead.interested === "Yes" ? "bg-emerald-100 text-emerald-800" :
-                          lead.interested === "No" ? "bg-rose-100 text-rose-800" :
-                          "bg-amber-100 text-amber-800"
-                        }`}>
-                          {lead.interested}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-center font-bold text-slate-600">{lead.callStatus}</td>
-                      <td className="py-3.5 px-4 text-center text-slate-500">
-                        {lead.meetingDate ? `${lead.meetingDate} ${lead.meetingTime || ""}` : "N/A"}
-                      </td>
-                      <td className="py-3.5 px-4 text-center text-slate-500">
-                        {lead.followUpDate ? `${lead.followUpDate} ${lead.followUpTime || ""}` : "N/A"}
-                      </td>
-                      <td className="py-3.5 px-4 text-center">
-                        <div className="flex justify-center gap-1.5">
-                          <button 
-                            onClick={() => setViewLead(lead)}
-                            className="p-1 text-slate-400 hover:text-[#0a2540] hover:bg-slate-100 rounded-lg transition"
-                            title="View Details"
-                          >
-                            <Eye size={14} />
-                          </button>
-                          <button 
-                            onClick={() => setDeleteConfirm(lead._id)}
-                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition"
-                            title="Delete Lead"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-4">
+              {recentLeads.map((lead) => (
+                <div key={lead._id} className="p-3 bg-slate-50 hover:bg-slate-100/70 border border-slate-100 rounded-2xl flex flex-col gap-2 transition">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[10px] font-black text-slate-400">{lead.leadId}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold ${
+                      lead.interested === "Yes" ? "bg-emerald-100 text-emerald-800" :
+                      lead.interested === "No" ? "bg-rose-100 text-rose-800" :
+                      "bg-amber-100 text-amber-800"
+                    }`}>
+                      {lead.interested}
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-[#0a2540] truncate">{lead.companyName}</h4>
+                    <p className="text-[10px] text-slate-500 font-medium">Contact: {lead.contactPerson}</p>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-slate-100/70 pt-2 mt-1">
+                    <span className="text-[10px] font-extrabold text-[#d4af37]">{lead.loanType}</span>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => setViewLead(lead)} 
+                        className="p-1 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg text-slate-500 hover:text-[#0a2540] transition"
+                        title="Quick View"
+                      >
+                        <Eye size={12} />
+                      </button>
+                      <button 
+                        onClick={() => setDeleteConfirm(lead._id)}
+                        className="p-1 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg text-slate-400 hover:text-rose-600 transition"
+                        title="Delete Lead"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
+      </div>
 
-        {/* Recent CRM Actions Panel - Right Side on Desktop, top on mobile */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between h-fit order-1 lg:order-2">
-          <div>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-              <h3 className="text-md font-black text-[#0a2540] flex items-center gap-2">
-                <CheckCircle size={18} className="text-emerald-500" />
-                Recent CRM Actions
-              </h3>
-            </div>
-
-            {recentLoading ? (
-              <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <Loader2 className="animate-spin text-[#0a2540]" size={28} />
-                <p className="text-[10px] text-slate-400 font-bold uppercase">Retrieving Leads...</p>
-              </div>
-            ) : recentLeads.length === 0 ? (
-              <div className="text-center py-12 text-slate-400 text-xs">
-                No recent leads created. Use the form to save leads.
-              </div>
-            ) : (
-              <div className="space-y-4">
+      {/* Recent Leads Detailed Table */}
+      <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm overflow-hidden w-full">
+        <h3 className="text-lg font-black text-[#0a2540] mb-5">Latest Leads Log</h3>
+        
+        {recentLoading ? (
+          <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#0a2540]" size={28} /></div>
+        ) : recentLeads.length === 0 ? (
+          <div className="text-center py-8 text-slate-400 text-xs">No leads logged.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-[#0a2540] text-[#d4af37] font-extrabold uppercase whitespace-nowrap">
+                  <th className="py-3 px-4 rounded-l-xl">LEAD ID</th>
+                  <th className="py-3 px-4">COMPANY NAME</th>
+                  <th className="py-3 px-4">CONTACT PERSON</th>
+                  <th className="py-3 px-4">PHONE NUMBER</th>
+                  <th className="py-3 px-4">LOAN TYPE</th>
+                  <th className="py-3 px-4 text-center">CIBIL</th>
+                  <th className="py-3 px-4 text-center">INTERESTED</th>
+                  <th className="py-3 px-4 text-center">CALL STATUS</th>
+                  <th className="py-3 px-4 text-center">MEETING</th>
+                  <th className="py-3 px-4 text-center">FOLLOW-UP</th>
+                  <th className="py-3 px-4 text-center rounded-r-xl">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700 whitespace-nowrap">
                 {recentLeads.map((lead) => (
-                  <div key={lead._id} className="p-3 bg-slate-50 hover:bg-slate-100/70 border border-slate-100 rounded-2xl flex flex-col gap-2 transition">
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-[10px] font-black text-slate-400">{lead.leadId}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold ${
+                  <tr key={lead._id} className="hover:bg-slate-50 transition">
+                    <td className="py-3.5 px-4 font-mono font-black text-[#0a2540]">{lead.leadId}</td>
+                    <td className="py-3.5 px-4 font-bold text-[#0a2540]">{lead.companyName}</td>
+                    <td className="py-3.5 px-4 font-medium text-slate-800">{lead.contactPerson}</td>
+                    <td className="py-3.5 px-4 text-slate-600">{lead.phone}</td>
+                    <td className="py-3.5 px-4 font-extrabold text-slate-500">{lead.loanType}</td>
+                    <td className="py-3.5 px-4 text-center">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                        lead.cibilScore >= 750 ? "bg-emerald-50 text-emerald-700" :
+                        lead.cibilScore >= 650 ? "bg-amber-50 text-amber-700" :
+                        "bg-rose-50 text-rose-700"
+                      }`}>
+                        {lead.cibilScore}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-center">
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-black ${
                         lead.interested === "Yes" ? "bg-emerald-100 text-emerald-800" :
                         lead.interested === "No" ? "bg-rose-100 text-rose-800" :
                         "bg-amber-100 text-amber-800"
                       }`}>
                         {lead.interested}
                       </span>
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-black text-[#0a2540] truncate">{lead.companyName}</h4>
-                      <p className="text-[10px] text-slate-500 font-medium">Contact: {lead.contactPerson}</p>
-                    </div>
-                    <div className="flex items-center justify-between border-t border-slate-100/70 pt-2 mt-1">
-                      <span className="text-[10px] font-extrabold text-[#d4af37]">{lead.loanType}</span>
-                      <div className="flex gap-2">
+                    </td>
+                    <td className="py-3.5 px-4 text-center font-bold text-slate-600">{lead.callStatus}</td>
+                    <td className="py-3.5 px-4 text-center text-slate-500">
+                      {lead.meetingDate ? `${lead.meetingDate} ${lead.meetingTime || ""}` : "N/A"}
+                    </td>
+                    <td className="py-3.5 px-4 text-center text-slate-500">
+                      {lead.followUpDate ? `${lead.followUpDate} ${lead.followUpTime || ""}` : "N/A"}
+                    </td>
+                    <td className="py-3.5 px-4 text-center">
+                      <div className="flex justify-center gap-1.5">
                         <button 
-                          onClick={() => setViewLead(lead)} 
-                          className="p-1 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg text-slate-500 hover:text-[#0a2540] transition"
-                          title="Quick View"
+                          onClick={() => setViewLead(lead)}
+                          className="p-1 text-slate-400 hover:text-[#0a2540] hover:bg-slate-100 rounded-lg transition"
+                          title="View Details"
                         >
-                          <Eye size={12} />
+                          <Eye size={14} />
                         </button>
                         <button 
                           onClick={() => setDeleteConfirm(lead._id)}
-                          className="p-1 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg text-slate-400 hover:text-rose-600 transition"
+                          className="p-1 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition"
                           title="Delete Lead"
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
-                    </div>
-                  </div>
+                    </td>
+                  </tr>
                 ))}
-              </div>
-            )}
+              </tbody>
+            </table>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Action Modals */}

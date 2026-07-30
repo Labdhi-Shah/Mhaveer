@@ -7,7 +7,7 @@ const generatePassword = require("../utils/generatePassword");
 // @route   POST /api/employees
 exports.createEmployee = async (req, res) => {
   try {
-    const { fullName, name, personalEmail, phone, role, address, joiningDate, dateOfBirth, dob } = req.body;
+    const { fullName, name, personalEmail, phone, role, address, joiningDate, dateOfBirth, dob, managerId, teamLeaderId } = req.body;
 
     const empName = fullName || name;
     const empDob = dateOfBirth || dob;
@@ -20,6 +20,32 @@ exports.createEmployee = async (req, res) => {
     const phoneRegex = /^[6-9]\d{9}$/;
     if (!phoneRegex.test(phone)) {
       return res.status(400).json({ success: false, message: "Please enter a valid 10-digit Indian mobile number." });
+    }
+
+    let managerName = "";
+    let teamLeaderName = "";
+    let reportingTo = "";
+
+    if (role === "Team Leader" && managerId) {
+      const manager = await Employee.findById(managerId);
+      if (manager) {
+        managerName = manager.name;
+        reportingTo = managerId;
+      }
+    } else if (role === "Employee") {
+      if (managerId) {
+        const manager = await Employee.findById(managerId);
+        if (manager) {
+          managerName = manager.name;
+        }
+      }
+      if (teamLeaderId) {
+        const teamLeader = await Employee.findById(teamLeaderId);
+        if (teamLeader) {
+          teamLeaderName = teamLeader.name;
+          reportingTo = teamLeaderId;
+        }
+      }
     }
 
     // Auto-generate official login email based on first name
@@ -56,6 +82,11 @@ exports.createEmployee = async (req, res) => {
       joiningDate,
       dob: empDob,
       password: hashedPassword,
+      managerId,
+      managerName,
+      teamLeaderId,
+      teamLeaderName,
+      reportingTo,
     });
 
     await newEmployee.save();
@@ -82,7 +113,7 @@ exports.getEmployees = async (req, res) => {
   try {
     const { search, sort = "-createdAt", page = 1, limit = 10 } = req.query;
 
-    const query = {};
+    let query = {};
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: "i" } },
@@ -90,6 +121,29 @@ exports.getEmployees = async (req, res) => {
         { personalEmail: { $regex: search, $options: "i" } },
         { employeeId: { $regex: search, $options: "i" } },
       ];
+    }
+
+    if (req.user && req.user.role === "Manager") {
+      query = {
+        ...query,
+        $or: [
+          { _id: req.user.id },
+          { managerId: req.user.id }
+        ]
+      };
+    } else if (req.user && req.user.role === "Team Leader") {
+      query = {
+        ...query,
+        $or: [
+          { _id: req.user.id },
+          { teamLeaderId: req.user.id }
+        ]
+      };
+    } else if (req.user && req.user.role === "Employee") {
+      query = {
+        ...query,
+        _id: req.user.id
+      };
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -167,15 +221,11 @@ exports.getEmployeeById = async (req, res) => {
 exports.updateEmployee = async (req, res) => {
   try {
     // Fields that are allowed to be updated
-<<<<<<< HEAD
-    const { fullName, name, email, officialEmail, personalEmail, phone, role, address, joiningDate, dateOfBirth, dob, status } = req.body;
+    const { fullName, name, email, officialEmail, personalEmail, phone, role, address, joiningDate, dateOfBirth, dob, status, managerId, teamLeaderId } = req.body;
     
     const empName = fullName || name;
     const empDob = dateOfBirth || dob;
     const offEmail = officialEmail || email;
-=======
-    const { fullName, email, personalEmail, phone, role, address, joiningDate, dateOfBirth, status } = req.body;
->>>>>>> 5dddf36 (Update employee controller)
 
     if (phone) {
       const phoneRegex = /^[6-9]\d{9}$/;
@@ -198,11 +248,8 @@ exports.updateEmployee = async (req, res) => {
     }
     employee.fullName = fullName || employee.fullName;
     employee.email = email || employee.email;
-<<<<<<< HEAD
     employee.name = empName || employee.name;
     employee.officialEmail = offEmail || employee.officialEmail;
-=======
->>>>>>> 5dddf36 (Update employee controller)
     employee.personalEmail = personalEmail || employee.personalEmail;
     employee.phone = phone || employee.phone;
     employee.role = role || employee.role;
@@ -210,6 +257,38 @@ exports.updateEmployee = async (req, res) => {
     employee.joiningDate = joiningDate || employee.joiningDate;
     employee.dob = empDob || employee.dob;
     if (status) employee.status = status;
+
+    if (managerId !== undefined) {
+      employee.managerId = managerId;
+      if (managerId) {
+        const manager = await Employee.findById(managerId);
+        if (manager) {
+          employee.managerName = manager.name;
+        }
+      } else {
+        employee.managerName = "";
+      }
+    }
+    
+    if (teamLeaderId !== undefined) {
+      employee.teamLeaderId = teamLeaderId;
+      if (teamLeaderId) {
+        const teamLeader = await Employee.findById(teamLeaderId);
+        if (teamLeader) {
+          employee.teamLeaderName = teamLeader.name;
+        }
+      } else {
+        employee.teamLeaderName = "";
+      }
+    }
+    
+    if (employee.role === "Team Leader") {
+      employee.reportingTo = employee.managerId || "";
+    } else if (employee.role === "Employee") {
+      employee.reportingTo = employee.teamLeaderId || "";
+    } else {
+      employee.reportingTo = "";
+    }
 
     await employee.save();
 

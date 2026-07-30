@@ -53,6 +53,21 @@ const employeeSchema = new mongoose.Schema(
       enum: ["Active", "Inactive"],
       default: "Active",
     },
+    managerId: {
+      type: String,
+    },
+    managerName: {
+      type: String,
+    },
+    teamLeaderId: {
+      type: String,
+    },
+    teamLeaderName: {
+      type: String,
+    },
+    reportingTo: {
+      type: String,
+    },
   },
   {
     timestamps: true,

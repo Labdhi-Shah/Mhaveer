@@ -101,6 +101,18 @@ const leadSchema = new mongoose.Schema(
       type: String,
       default: "Active",
     },
+    managerId: {
+      type: String,
+    },
+    managerName: {
+      type: String,
+    },
+    teamLeaderId: {
+      type: String,
+    },
+    teamLeaderName: {
+      type: String,
+    },
   },
   {
     timestamps: true,

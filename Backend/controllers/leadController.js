@@ -9,12 +9,20 @@ exports.createLead = async (req, res) => {
     let employeeName = "";
     let officialEmail = "";
     let role = req.user.role;
+    let managerId = "";
+    let managerName = "";
+    let teamLeaderId = "";
+    let teamLeaderName = "";
     
     if (req.user.id) {
       const employee = await Employee.findById(req.user.id);
       if (employee) {
         employeeName = employee.name;
         officialEmail = employee.officialEmail;
+        managerId = employee.managerId || "";
+        managerName = employee.managerName || "";
+        teamLeaderId = employee.teamLeaderId || "";
+        teamLeaderName = employee.teamLeaderName || "";
       }
     }
 
@@ -23,6 +31,10 @@ exports.createLead = async (req, res) => {
       employeeId: req.user.id || null,
       employeeName,
       officialEmail,
+      managerId,
+      managerName,
+      teamLeaderId,
+      teamLeaderName,
       role,
       createdBy: req.user.id || "System",
     };
@@ -67,9 +79,27 @@ exports.getLeads = async (req, res) => {
     if (req.query.loanType) query.loanType = req.query.loanType;
     if (req.query.interested) query.interested = req.query.interested;
     
-    // If not super admin, restrict to their own leads
+    // If not super admin, restrict according to role hierarchy
     if (req.user.role !== "SuperAdmin") {
-      query.employeeId = req.user.id;
+      if (req.user.role === "Manager") {
+        query.$or = query.$or ? query.$or : [];
+        if (query.$or.length > 0) {
+           query.$and = [{ $or: query.$or }, { $or: [{ employeeId: req.user.id }, { managerId: req.user.id }] }];
+           delete query.$or;
+        } else {
+           query.$or = [{ employeeId: req.user.id }, { managerId: req.user.id }];
+        }
+      } else if (req.user.role === "Team Leader") {
+        query.$or = query.$or ? query.$or : [];
+        if (query.$or.length > 0) {
+           query.$and = [{ $or: query.$or }, { $or: [{ employeeId: req.user.id }, { teamLeaderId: req.user.id }] }];
+           delete query.$or;
+        } else {
+           query.$or = [{ employeeId: req.user.id }, { teamLeaderId: req.user.id }];
+        }
+      } else {
+        query.employeeId = req.user.id;
+      }
     }
 
     // Pagination

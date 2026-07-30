@@ -23,8 +23,15 @@ exports.getDashboardStats = async (req, res) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // Optionally filter by employeeId if they only see their own
-      const filter = { employeeId: req.user.id };
+      // Filter by role hierarchy
+      let filter = {};
+      if (req.user.role === "Manager") {
+        filter = { $or: [{ employeeId: req.user.id }, { managerId: req.user.id }] };
+      } else if (req.user.role === "Team Leader") {
+        filter = { $or: [{ employeeId: req.user.id }, { teamLeaderId: req.user.id }] };
+      } else {
+        filter = { employeeId: req.user.id };
+      }
 
       const totalLeads = await Lead.countDocuments(filter);
       

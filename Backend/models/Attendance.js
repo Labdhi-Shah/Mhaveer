@@ -53,6 +53,18 @@ const attendanceSchema = new mongoose.Schema(
       required: true,
       default: "Working"
     },
+    managerId: {
+      type: String,
+    },
+    managerName: {
+      type: String,
+    },
+    teamLeaderId: {
+      type: String,
+    },
+    teamLeaderName: {
+      type: String,
+    },
   },
   {
     timestamps: true,

@@ -36,6 +36,10 @@ exports.startAttendance = async (req, res) => {
       employeeId,
       employeeName: employee.name || employee.firstName + " " + employee.lastName,
       officialEmail: employee.officialEmail,
+      managerId: employee.managerId || "",
+      managerName: employee.managerName || "",
+      teamLeaderId: employee.teamLeaderId || "",
+      teamLeaderName: employee.teamLeaderName || "",
       role: employee.role,
       date: getStartOfDay(),
       startTime: new Date(),
@@ -242,7 +246,15 @@ exports.getAttendanceHistory = async (req, res) => {
     const employeeId = req.user.id;
     const { page = 1, limit = 10, employeeName, status, startDate, endDate, range } = req.query;
     
-    const query = { employeeId };
+    let query = {};
+    
+    if (req.user.role === "Manager") {
+      query.$or = [{ employeeId: req.user.id }, { managerId: req.user.id }];
+    } else if (req.user.role === "Team Leader") {
+      query.$or = [{ employeeId: req.user.id }, { teamLeaderId: req.user.id }];
+    } else {
+      query.employeeId = req.user.id;
+    }
     
     if (employeeName) {
       query.employeeName = { $regex: employeeName, $options: "i" };
@@ -319,7 +331,17 @@ exports.getAdminAttendance = async (req, res) => {
   try {
     const { page = 1, limit = 10, employeeName, employeeId, status, startDate, endDate, range } = req.query;
     
-    const query = {};
+    let query = {};
+
+    if (req.user && req.user.role !== "SuperAdmin") {
+      if (req.user.role === "Manager") {
+        query.$or = [{ employeeId: req.user.id }, { managerId: req.user.id }];
+      } else if (req.user.role === "Team Leader") {
+        query.$or = [{ employeeId: req.user.id }, { teamLeaderId: req.user.id }];
+      } else {
+        query.employeeId = req.user.id;
+      }
+    }
     
     if (employeeName) {
       query.employeeName = { $regex: employeeName, $options: "i" };

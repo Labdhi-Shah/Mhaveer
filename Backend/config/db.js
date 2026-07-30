@@ -1,4 +1,12 @@
 const mongoose = require("mongoose");
+const dns = require("dns");
+
+// Set public DNS servers to avoid querySrv ECONNREFUSED issues on local networks/Windows environments
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch (e) {
+  console.warn("⚠️ DNS: Failed to set custom DNS servers, using system default:", e.message);
+}
 
 const connectDB = async () => {
   try {

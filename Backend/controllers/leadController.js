@@ -80,25 +80,34 @@ exports.getLeads = async (req, res) => {
     if (req.query.interested) query.interested = req.query.interested;
     
     // If not super admin, restrict according to role hierarchy
-    if (req.user.role !== "SuperAdmin") {
+    if (req.user.role !== "SuperAdmin" && req.user.role !== "Admin") {
+      let hierarchyFilter = {};
       if (req.user.role === "Manager") {
-        query.$or = query.$or ? query.$or : [];
-        if (query.$or.length > 0) {
-           query.$and = [{ $or: query.$or }, { $or: [{ employeeId: req.user.id }, { managerId: req.user.id }] }];
-           delete query.$or;
-        } else {
-           query.$or = [{ employeeId: req.user.id }, { managerId: req.user.id }];
-        }
+        const teamLeaders = await Employee.find({ managerId: req.user.id, role: "Team Leader" }).select('_id');
+        const tlIds = teamLeaders.map(tl => tl._id.toString());
+        hierarchyFilter = {
+          $or: [
+            { employeeId: req.user.id },
+            { managerId: req.user.id },
+            { teamLeaderId: { $in: tlIds } }
+          ]
+        };
       } else if (req.user.role === "Team Leader") {
-        query.$or = query.$or ? query.$or : [];
-        if (query.$or.length > 0) {
-           query.$and = [{ $or: query.$or }, { $or: [{ employeeId: req.user.id }, { teamLeaderId: req.user.id }] }];
-           delete query.$or;
-        } else {
-           query.$or = [{ employeeId: req.user.id }, { teamLeaderId: req.user.id }];
-        }
+        hierarchyFilter = {
+          $or: [
+            { employeeId: req.user.id },
+            { teamLeaderId: req.user.id }
+          ]
+        };
       } else {
-        query.employeeId = req.user.id;
+        hierarchyFilter = { employeeId: req.user.id };
+      }
+
+      if (query.$or) {
+        query.$and = [{ $or: query.$or }, hierarchyFilter];
+        delete query.$or;
+      } else {
+        Object.assign(query, hierarchyFilter);
       }
     }
 
@@ -133,7 +142,20 @@ exports.getLeadById = async (req, res) => {
       return res.status(404).json({ success: false, message: "Lead not found" });
     }
 
-    if (req.user.role !== "SuperAdmin" && lead.employeeId !== req.user.id) {
+    let isAuthorized = false;
+    if (req.user.role === "SuperAdmin" || req.user.role === "Admin") isAuthorized = true;
+    else if (lead.employeeId === req.user.id) isAuthorized = true;
+    else if (req.user.role === "Manager") {
+      if (lead.managerId === req.user.id) isAuthorized = true;
+      else if (lead.teamLeaderId) {
+        const tl = await Employee.findById(lead.teamLeaderId);
+        if (tl && tl.managerId === req.user.id) isAuthorized = true;
+      }
+    } else if (req.user.role === "Team Leader" && lead.teamLeaderId === req.user.id) {
+      isAuthorized = true;
+    }
+
+    if (!isAuthorized) {
       return res.status(403).json({ success: false, message: "Not authorized to access this lead" });
     }
     res.status(200).json({
@@ -156,7 +178,20 @@ exports.updateLead = async (req, res) => {
       return res.status(404).json({ success: false, message: "Lead not found" });
     }
 
-    if (req.user.role !== "SuperAdmin" && lead.employeeId !== req.user.id) {
+    let isAuthorized = false;
+    if (req.user.role === "SuperAdmin" || req.user.role === "Admin") isAuthorized = true;
+    else if (lead.employeeId === req.user.id) isAuthorized = true;
+    else if (req.user.role === "Manager") {
+      if (lead.managerId === req.user.id) isAuthorized = true;
+      else if (lead.teamLeaderId) {
+        const tl = await Employee.findById(lead.teamLeaderId);
+        if (tl && tl.managerId === req.user.id) isAuthorized = true;
+      }
+    } else if (req.user.role === "Team Leader" && lead.teamLeaderId === req.user.id) {
+      isAuthorized = true;
+    }
+
+    if (!isAuthorized) {
       return res.status(403).json({ success: false, message: "Not authorized to update this lead" });
     }
 
@@ -189,7 +224,20 @@ exports.deleteLead = async (req, res) => {
       return res.status(404).json({ success: false, message: "Lead not found" });
     }
 
-    if (req.user.role !== "SuperAdmin" && lead.employeeId !== req.user.id) {
+    let isAuthorized = false;
+    if (req.user.role === "SuperAdmin" || req.user.role === "Admin") isAuthorized = true;
+    else if (lead.employeeId === req.user.id) isAuthorized = true;
+    else if (req.user.role === "Manager") {
+      if (lead.managerId === req.user.id) isAuthorized = true;
+      else if (lead.teamLeaderId) {
+        const tl = await Employee.findById(lead.teamLeaderId);
+        if (tl && tl.managerId === req.user.id) isAuthorized = true;
+      }
+    } else if (req.user.role === "Team Leader" && lead.teamLeaderId === req.user.id) {
+      isAuthorized = true;
+    }
+
+    if (!isAuthorized) {
       return res.status(403).json({ success: false, message: "Not authorized to delete this lead" });
     }
 

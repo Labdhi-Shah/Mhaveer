@@ -7,7 +7,7 @@ const generatePassword = require("../utils/generatePassword");
 // @route   POST /api/employees
 exports.createEmployee = async (req, res) => {
   try {
-    const { fullName, name, personalEmail, phone, role, address, joiningDate, dateOfBirth, dob, managerId, teamLeaderId } = req.body;
+    const { fullName, name, personalEmail, phone, role, department, address, joiningDate, dateOfBirth, dob, managerId, teamLeaderId } = req.body;
 
     const empName = fullName || name;
     const empDob = dateOfBirth || dob;
@@ -26,13 +26,13 @@ exports.createEmployee = async (req, res) => {
     let teamLeaderName = "";
     let reportingTo = "";
 
-    if (role === "Team Leader" && managerId) {
+    if (["Team Leader", "TL", "Teamleader"].includes(role) && managerId) {
       const manager = await Employee.findById(managerId);
       if (manager) {
         managerName = manager.name;
         reportingTo = managerId;
       }
-    } else if (role === "Employee") {
+    } else if (!["Manager", "Management", "Branch Manager", "Regional Manager", "Director / CEO"].includes(role)) {
       if (managerId) {
         const manager = await Employee.findById(managerId);
         if (manager) {
@@ -45,6 +45,9 @@ exports.createEmployee = async (req, res) => {
           teamLeaderName = teamLeader.name;
           reportingTo = teamLeaderId;
         }
+      }
+      if (!reportingTo && managerId) {
+        reportingTo = managerId;
       }
     }
 
@@ -78,6 +81,7 @@ exports.createEmployee = async (req, res) => {
       officialEmail,
       phone,
       role,
+      department,
       address,
       joiningDate,
       dob: empDob,
@@ -123,27 +127,35 @@ exports.getEmployees = async (req, res) => {
       ];
     }
 
-    if (req.user && req.user.role === "Manager") {
-      query = {
-        ...query,
-        $or: [
-          { _id: req.user.id },
-          { managerId: req.user.id }
-        ]
-      };
-    } else if (req.user && req.user.role === "Team Leader") {
-      query = {
-        ...query,
-        $or: [
-          { _id: req.user.id },
-          { teamLeaderId: req.user.id }
-        ]
-      };
-    } else if (req.user && req.user.role === "Employee") {
-      query = {
-        ...query,
-        _id: req.user.id
-      };
+    if (req.user && req.user.role !== "SuperAdmin" && req.user.role !== "Admin") {
+      let hierarchyFilter = {};
+      if (req.user.role === "Manager") {
+        const teamLeaders = await Employee.find({ managerId: req.user.id, role: "Team Leader" }).select('_id');
+        const tlIds = teamLeaders.map(tl => tl._id.toString());
+        hierarchyFilter = {
+          $or: [
+            { _id: req.user.id },
+            { managerId: req.user.id },
+            { teamLeaderId: { $in: tlIds } }
+          ]
+        };
+      } else if (req.user.role === "Team Leader") {
+        hierarchyFilter = {
+          $or: [
+            { _id: req.user.id },
+            { teamLeaderId: req.user.id }
+          ]
+        };
+      } else {
+        hierarchyFilter = { _id: req.user.id };
+      }
+
+      if (query.$or) {
+        query.$and = [{ $or: query.$or }, hierarchyFilter];
+        delete query.$or;
+      } else {
+        Object.assign(query, hierarchyFilter);
+      }
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -202,6 +214,7 @@ exports.getEmployeeById = async (req, res) => {
       email: employee.officialEmail, // map for existing frontend that uses email field
       phone: employee.phone,
       role: employee.role,
+      department: employee.department,
       address: employee.address,
       dob: employee.dob,
       dateOfBirth: employee.dob,
@@ -221,7 +234,7 @@ exports.getEmployeeById = async (req, res) => {
 exports.updateEmployee = async (req, res) => {
   try {
     // Fields that are allowed to be updated
-    const { fullName, name, email, officialEmail, personalEmail, phone, role, address, joiningDate, dateOfBirth, dob, status, managerId, teamLeaderId } = req.body;
+    const { fullName, name, email, officialEmail, personalEmail, phone, role, department, address, joiningDate, dateOfBirth, dob, status, managerId, teamLeaderId } = req.body;
     
     const empName = fullName || name;
     const empDob = dateOfBirth || dob;
@@ -250,10 +263,11 @@ exports.updateEmployee = async (req, res) => {
     employee.email = email || employee.email;
     employee.name = empName || employee.name;
     employee.officialEmail = offEmail || employee.officialEmail;
-    employee.personalEmail = personalEmail || employee.personalEmail;
-    employee.phone = phone || employee.phone;
-    employee.role = role || employee.role;
-    employee.address = address || employee.address;
+    if (personalEmail) employee.personalEmail = personalEmail;
+    if (phone) employee.phone = phone;
+    if (role) employee.role = role;
+    if (department !== undefined) employee.department = department;
+    if (address !== undefined) employee.address = address;
     employee.joiningDate = joiningDate || employee.joiningDate;
     employee.dob = empDob || employee.dob;
     if (status) employee.status = status;
@@ -282,10 +296,10 @@ exports.updateEmployee = async (req, res) => {
       }
     }
     
-    if (employee.role === "Team Leader") {
+    if (["Team Leader", "TL", "Teamleader"].includes(employee.role)) {
       employee.reportingTo = employee.managerId || "";
-    } else if (employee.role === "Employee") {
-      employee.reportingTo = employee.teamLeaderId || "";
+    } else if (!["Manager", "Management", "Branch Manager", "Regional Manager", "Director / CEO"].includes(employee.role)) {
+      employee.reportingTo = employee.teamLeaderId || employee.managerId || "";
     } else {
       employee.reportingTo = "";
     }

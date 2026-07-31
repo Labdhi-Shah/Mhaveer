@@ -5,7 +5,7 @@ const Lead = require("../models/Lead");
 // @route   GET /api/dashboard
 exports.getDashboardStats = async (req, res) => {
   try {
-    if (req.user.role === "SuperAdmin") {
+    if (req.user.role === "SuperAdmin" || req.user.role === "Admin") {
       const totalEmployees = await Employee.countDocuments();
       const activeEmployees = await Employee.countDocuments({ status: "Active" });
       const inactiveEmployees = await Employee.countDocuments({ status: "Inactive" });
@@ -26,7 +26,15 @@ exports.getDashboardStats = async (req, res) => {
       // Filter by role hierarchy
       let filter = {};
       if (req.user.role === "Manager") {
-        filter = { $or: [{ employeeId: req.user.id }, { managerId: req.user.id }] };
+        const teamLeaders = await Employee.find({ managerId: req.user.id, role: "Team Leader" }).select('_id');
+        const tlIds = teamLeaders.map(tl => tl._id.toString());
+        filter = { 
+          $or: [
+            { employeeId: req.user.id }, 
+            { managerId: req.user.id },
+            { teamLeaderId: { $in: tlIds } }
+          ] 
+        };
       } else if (req.user.role === "Team Leader") {
         filter = { $or: [{ employeeId: req.user.id }, { teamLeaderId: req.user.id }] };
       } else {

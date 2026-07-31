@@ -12,15 +12,37 @@ export default function EmployeeList() {
   // Modal States
   const [viewEmp, setViewEmp] = useState(null); // View Modal State
   const [editingEmp, setEditingEmp] = useState(null); // Edit Modal State
+  
+  const [managers, setManagers] = useState([]);
+  const [teamLeaders, setTeamLeaders] = useState([]);
+
+  useEffect(() => {
+    const fetchAllEmps = async () => {
+      try {
+        const res = await api.get("/employees?limit=1000");
+        if (res.data.success) {
+          const allEmps = res.data.data;
+          setManagers(allEmps.filter(e => e.role === "Manager" || e.role === "Management"));
+          setTeamLeaders(allEmps.filter(e => e.role === "Team Leader"));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchAllEmps();
+  }, []);
   const [editForm, setEditForm] = useState({
     fullName: "",
     personalEmail: "",
     phone: "",
     role: "",
+    department: "",
     address: "",
     dateOfBirth: "",
     joiningDate: "",
-    status: "Active"
+    status: "Active",
+    managerId: "",
+    teamLeaderId: ""
   });
 
   const fetchEmployees = useCallback(async () => {
@@ -132,7 +154,7 @@ export default function EmployeeList() {
                     <td className="py-4 px-4 font-bold text-[#0a2540]">{emp.fullName}</td>
                     <td className="py-4 px-4 text-slate-500">{emp.personalEmail}</td>
                     <td className="py-4 px-4 text-slate-500">{emp.phone}</td>
-                    <td className="py-4 px-4 text-slate-500">{emp.role}</td>
+                    <td className="py-4 px-4 text-slate-500">{emp.role} {emp.department ? `- ${emp.department}` : ''}</td>
                     <td className="py-4 px-4 text-center">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-black ${emp.status === "Active" ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"}`}>
                         {emp.status}
@@ -157,10 +179,13 @@ export default function EmployeeList() {
                             personalEmail: emp.personalEmail || "",
                             phone: emp.phone || "",
                             role: emp.role || "",
+                            department: emp.department || "",
                             address: emp.address || "",
                             dateOfBirth: emp.dateOfBirth ? new Date(emp.dateOfBirth).toISOString().split('T')[0] : "",
                             joiningDate: emp.joiningDate ? new Date(emp.joiningDate).toISOString().split('T')[0] : "",
-                            status: emp.status || "Active"
+                            status: emp.status || "Active",
+                            managerId: emp.managerId || "",
+                            teamLeaderId: emp.teamLeaderId || ""
                           });
                         }}
                         title="Edit Employee"
@@ -236,7 +261,7 @@ export default function EmployeeList() {
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="font-bold text-slate-400">Role</span>
-                <span className="font-semibold">{viewEmp.role}</span>
+                <span className="font-semibold">{viewEmp.role} {viewEmp.department ? `- ${viewEmp.department}` : ''}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="font-bold text-slate-400">DOB (Date of Birth)</span>
@@ -336,6 +361,15 @@ export default function EmployeeList() {
                   />
                 </div>
                 <div>
+                  <label className="block font-extrabold text-slate-700 uppercase mb-1">Specific Department</label>
+                  <input
+                    type="text"
+                    value={editForm.department || ""}
+                    onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
+                  />
+                </div>
+                <div>
                   <label className="block font-extrabold text-slate-700 uppercase mb-1">Date of Birth (DOB) *</label>
                   <input
                     type="date"
@@ -375,6 +409,38 @@ export default function EmployeeList() {
                     className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37] resize-none"
                   />
                 </div>
+                
+                {editForm.role && !["Management", "Manager"].includes(editForm.role) && (
+                  <div>
+                    <label className="block font-extrabold text-slate-700 uppercase mb-1">Assign Manager</label>
+                    <select
+                      value={editForm.managerId || ""}
+                      onChange={(e) => setEditForm({ ...editForm, managerId: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
+                    >
+                      <option value="">-- No Manager --</option>
+                      {managers.map(m => (
+                        <option key={m._id} value={m._id}>{m.fullName} ({m.employeeId})</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {editForm.role && !["Management", "Manager", "Team Leader"].includes(editForm.role) && (
+                  <div>
+                    <label className="block font-extrabold text-slate-700 uppercase mb-1">Assign Team Leader</label>
+                    <select
+                      value={editForm.teamLeaderId || ""}
+                      onChange={(e) => setEditForm({ ...editForm, teamLeaderId: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
+                    >
+                      <option value="">-- No Team Leader --</option>
+                      {teamLeaders.map(tl => (
+                        <option key={tl._id} value={tl._id}>{tl.fullName} ({tl.employeeId})</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               <button type="submit" className="w-full py-3 bg-[#0a2540] text-[#d4af37] font-black rounded-xl text-xs uppercase shadow-md mt-4">Save Changes</button>

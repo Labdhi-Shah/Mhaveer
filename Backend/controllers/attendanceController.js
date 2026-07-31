@@ -248,12 +248,29 @@ exports.getAttendanceHistory = async (req, res) => {
     
     let query = {};
     
-    if (req.user.role === "Manager") {
-      query.$or = [{ employeeId: req.user.id }, { managerId: req.user.id }];
-    } else if (req.user.role === "Team Leader") {
-      query.$or = [{ employeeId: req.user.id }, { teamLeaderId: req.user.id }];
-    } else {
-      query.employeeId = req.user.id;
+    if (req.user.role !== "SuperAdmin" && req.user.role !== "Admin") {
+      let hierarchyFilter = {};
+      if (req.user.role === "Manager") {
+        const teamLeaders = await Employee.find({ managerId: req.user.id, role: "Team Leader" }).select('_id');
+        const tlIds = teamLeaders.map(tl => tl._id.toString());
+        hierarchyFilter = {
+          $or: [
+            { employeeId: req.user.id },
+            { managerId: req.user.id },
+            { teamLeaderId: { $in: tlIds } }
+          ]
+        };
+      } else if (req.user.role === "Team Leader") {
+        hierarchyFilter = {
+          $or: [
+            { employeeId: req.user.id },
+            { teamLeaderId: req.user.id }
+          ]
+        };
+      } else {
+        hierarchyFilter = { employeeId: req.user.id };
+      }
+      Object.assign(query, hierarchyFilter);
     }
     
     if (employeeName) {
@@ -333,14 +350,29 @@ exports.getAdminAttendance = async (req, res) => {
     
     let query = {};
 
-    if (req.user && req.user.role !== "SuperAdmin") {
+    if (req.user && req.user.role !== "SuperAdmin" && req.user.role !== "Admin") {
+      let hierarchyFilter = {};
       if (req.user.role === "Manager") {
-        query.$or = [{ employeeId: req.user.id }, { managerId: req.user.id }];
+        const teamLeaders = await Employee.find({ managerId: req.user.id, role: "Team Leader" }).select('_id');
+        const tlIds = teamLeaders.map(tl => tl._id.toString());
+        hierarchyFilter = {
+          $or: [
+            { employeeId: req.user.id },
+            { managerId: req.user.id },
+            { teamLeaderId: { $in: tlIds } }
+          ]
+        };
       } else if (req.user.role === "Team Leader") {
-        query.$or = [{ employeeId: req.user.id }, { teamLeaderId: req.user.id }];
+        hierarchyFilter = {
+          $or: [
+            { employeeId: req.user.id },
+            { teamLeaderId: req.user.id }
+          ]
+        };
       } else {
-        query.employeeId = req.user.id;
+        hierarchyFilter = { employeeId: req.user.id };
       }
+      Object.assign(query, hierarchyFilter);
     }
     
     if (employeeName) {

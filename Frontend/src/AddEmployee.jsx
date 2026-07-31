@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "./api";
 import { Loader2, CheckCircle, Copy, X } from "lucide-react";
 
@@ -124,15 +124,36 @@ export default function AddEmployee() {
     dob: "", // Date of Birth
     joiningDate: "", // Joining Date
     role: "",
+    department: "",
     address: "",
     status: "Active",
+    managerId: "",
+    teamLeaderId: "",
   });
 
+  const [managers, setManagers] = useState([]);
+  const [teamLeaders, setTeamLeaders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [createdData, setCreatedData] = useState(null);
   const [copied, setCopied] = useState(false);
   const [phoneError, setPhoneError] = useState("");
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = await api.get("/employees?limit=1000");
+        if (res.data.success) {
+          const allEmps = res.data.data;
+          setManagers(allEmps.filter(e => e.role === "Manager" || e.role === "Management"));
+          setTeamLeaders(allEmps.filter(e => e.role === "Team Leader"));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchEmployees();
+  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -217,8 +238,11 @@ export default function AddEmployee() {
           dob: "",
           joiningDate: "",
           role: "",
+          department: "",
           address: "",
           status: "Active",
+          managerId: "",
+          teamLeaderId: "",
         });
         setPhoneError("");
       }
@@ -387,6 +411,73 @@ export default function AddEmployee() {
             ))}
           </select>
         </div>
+
+        {/* Department Selection (For Managers and Team Leaders) */}
+        {form.role && ["Manager", "Management", "Team Leader"].includes(form.role) && (
+          <div>
+            <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">
+              Which Department? *
+            </label>
+            <select
+              name="department"
+              value={form.department}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer"
+            >
+              <option value="" disabled>-- Select Department --</option>
+              {ROLES.filter(r => !["Manager", "Management", "Team Leader"].includes(r)).map((r, idx) => (
+                <option key={idx} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Manager Selection Dropdown */}
+        {form.role && !["Management", "Manager"].includes(form.role) && (
+          <div>
+            <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">
+              Assign Manager (Optional)
+            </label>
+            <select
+              name="managerId"
+              value={form.managerId}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer"
+            >
+              <option value="">-- No Manager --</option>
+              {managers.map((m) => (
+                <option key={m._id} value={m._id}>
+                  {m.fullName} ({m.employeeId}) {m.department ? `- ${m.department}` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Team Leader Selection Dropdown */}
+        {form.role && !["Management", "Manager", "Team Leader"].includes(form.role) && (
+          <div>
+            <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">
+              Assign Team Leader (Optional)
+            </label>
+            <select
+              name="teamLeaderId"
+              value={form.teamLeaderId}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer"
+            >
+              <option value="">-- No Team Leader --</option>
+              {teamLeaders.map((tl) => (
+                <option key={tl._id} value={tl._id}>
+                  {tl.fullName} ({tl.employeeId}) {tl.department ? `- ${tl.department}` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* RESPONSIBILITIES - Appears ONLY AFTER selecting a role */}
         {form.role && ROLE_DATA[form.role] && (

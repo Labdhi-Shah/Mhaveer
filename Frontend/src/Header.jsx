@@ -168,6 +168,7 @@ export default function Header({ onToggleSidebar }) {
     if (!attendance || attendance.status === "Not Started" || attendance.status === null) {
       return {
         label: "Start Work",
+        mobileLabel: "Start",
         icon: <Clock size={16} />,
         color: "text-slate-300",
         bg: "bg-slate-800/60 hover:bg-slate-700/80",
@@ -177,6 +178,7 @@ export default function Header({ onToggleSidebar }) {
     } else if (attendance.status === "Working") {
       return {
         label: elapsed,
+        mobileLabel: elapsed,
         icon: <PauseCircle size={16} />,
         color: "text-emerald-400",
         bg: "bg-emerald-400/10 hover:bg-emerald-400/20",
@@ -186,6 +188,7 @@ export default function Header({ onToggleSidebar }) {
     } else if (attendance.status === "On Break") {
       return {
         label: `Lunch / Break (${elapsed})`,
+        mobileLabel: `Break (${elapsed})`,
         icon: <PlayCircle size={16} />,
         color: "text-amber-400",
         bg: "bg-amber-400/10 hover:bg-amber-400/20",
@@ -195,6 +198,7 @@ export default function Header({ onToggleSidebar }) {
     } else if (attendance.status === "Completed") {
       return {
         label: `Completed (${elapsed})`,
+        mobileLabel: `Done (${elapsed})`,
         icon: <CheckCircle size={16} />,
         color: "text-slate-400",
         bg: "bg-slate-800/40",
@@ -238,7 +242,7 @@ export default function Header({ onToggleSidebar }) {
 
         {/* Page Title */}
         <div className="h-6 w-px bg-slate-700 mx-2 hidden md:block" />
-        <span className="font-extrabold text-xs text-slate-300 tracking-wider uppercase whitespace-nowrap">
+        <span className="font-extrabold text-xs text-slate-300 tracking-wider uppercase whitespace-nowrap hidden md:block">
           {getPageTitle()}
         </span>
       </div>
@@ -249,20 +253,21 @@ export default function Header({ onToggleSidebar }) {
             <button
               onClick={handleAttendanceClick}
               disabled={widgetProps.disabled || loading}
-              className={`flex items-center gap-2 border px-3.5 py-1.5 rounded-xl transition shadow-md font-bold text-xs cursor-pointer ${widgetProps.color} ${widgetProps.bg} ${widgetProps.border} ${widgetProps.disabled || loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`flex items-center gap-2 border px-3 py-1.5 rounded-xl transition shadow-md font-bold text-xs cursor-pointer ${widgetProps.color} ${widgetProps.bg} ${widgetProps.border} ${widgetProps.disabled || loading ? 'opacity-70 cursor-not-allowed' : ''}`}
               title={attendance?.status === "Working" ? "Click to Pause (Lunch/Break)" : (attendance?.status === "On Break" ? "Click to Resume Work" : "Start Working")}
             >
               <div className={widgetProps.showPulse ? "animate-pulse" : ""}>
                 {widgetProps.icon}
               </div>
-              <span className="font-mono tracking-widest">{widgetProps.label}</span>
+              <span className="font-mono tracking-widest hidden sm:inline">{widgetProps.label}</span>
+              <span className="font-mono tracking-widest inline sm:hidden">{widgetProps.mobileLabel || widgetProps.label}</span>
               {widgetProps.showPulse && (
                 <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
               )}
             </button>
           </div>
         )}
-        <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#d4af37] rounded-lg transition relative" title="Notifications">
+        <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#d4af37] rounded-lg transition relative hidden sm:block" title="Notifications">
           <Bell size={18} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#d4af37] rounded-full" />
         </button>

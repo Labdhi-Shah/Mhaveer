@@ -315,8 +315,8 @@ export default function MyLeadsView() {
           <div className="text-center py-20 text-slate-400 text-xs">No records found matching current criteria.</div>
         ) : (
           <div className="space-y-4">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
+            <div className="overflow-x-auto scrollbar-thin">
+              <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
                 <thead>
                   <tr className="bg-[#0a2540] text-[#d4af37] font-extrabold uppercase whitespace-nowrap">
                     <th className="py-3.5 px-4 rounded-l-xl">LEAD ID</th>

@@ -328,8 +328,8 @@ export default function AttendanceView() {
 
       {/* DATA TABLE */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse whitespace-nowrap">
+        <div className="overflow-x-auto scrollbar-thin">
+          <table className="w-full text-left border-collapse whitespace-nowrap min-w-[800px]">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-100">
                 <th className="py-4 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>

@@ -127,8 +127,8 @@ export default function EmployeeList() {
           <Loader2 className="animate-spin text-[#0a2540]" size={32} />
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto scrollbar-thin">
+          <table className="w-full text-left text-xs min-w-[800px]">
             <thead className="bg-[#0a2540] text-[#d4af37] font-extrabold uppercase tracking-wider whitespace-nowrap">
               <tr>
                 <th className="py-3.5 px-4 rounded-l-xl">EMP ID</th>

@@ -76,8 +76,8 @@ export default function DashboardView() {
         {loading ? (
           <div className="flex justify-center py-8"><Loader2 className="animate-spin text-[#0a2540]" size={28} /></div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="overflow-x-auto scrollbar-thin">
+            <table className="w-full text-left text-xs min-w-[500px]">
               <thead className="bg-[#0a2540] text-[#d4af37] font-extrabold uppercase whitespace-nowrap">
                 <tr>
                   <th className="py-3.5 px-4 rounded-l-xl">EMP ID</th>

@@ -89,7 +89,13 @@ export default function EmployeeDashboard() {
       ]);
 
       const ownStats = statsRes.data.success ? statsRes.data.data : { todaysCalls: 0, interestedLeads: 0, pendingFollowUps: 0, todaysMeetings: 0 };
-      const ownLeads = leadsRes.data.success ? leadsRes.data.data : [];
+      const ownLeadsRaw = leadsRes.data.success ? leadsRes.data.data : [];
+      const ownLeads = ownLeadsRaw.map(lead => ({
+        ...lead,
+        phone: lead.phoneNumber || lead.phone,
+        companyTurnover: lead.companyTurnover !== undefined ? lead.companyTurnover : lead.yearlyIncome,
+        address: lead.address !== undefined ? lead.address : lead.remarks
+      }));
 
       const { leads: mergedLeads, stats: mergedStats } = await getMergedLeadsAndStats(user, ownLeads, ownStats);
 
@@ -426,13 +432,13 @@ export default function EmployeeDashboard() {
                     </div>
                   </div>
 
-                  {/* Remarks Card */}
+                  {/* Address Card */}
                   <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-3">
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
-                      Remarks / Notes
+                      Address
                     </h4>
                     <div className="bg-slate-50/50 border border-slate-100/80 rounded-xl p-3.5 min-h-[90px] text-xs leading-relaxed text-slate-600 whitespace-pre-wrap font-medium">
-                      {viewLead.remarks ? viewLead.remarks : <span className="text-slate-400 italic">No Remarks</span>}
+                      {viewLead.address ? viewLead.address : <span className="text-slate-400 italic">No Address Specified</span>}
                     </div>
                   </div>
                 </div>
@@ -449,6 +455,12 @@ export default function EmployeeDashboard() {
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Loan Type</span>
                         <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.loanType || "N/A"}</p>
                       </div>
+                      {viewLead.loanType === "Property Loan" && (
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Property Loan Category</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.propertyLoanCategory || "N/A"}</p>
+                        </div>
+                      )}
                       <div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CIBIL Score</span>
                         <p className={`font-black text-xs mt-0.5 ${
@@ -466,9 +478,10 @@ export default function EmployeeDashboard() {
                         </p>
                       </div>
                       <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Yearly Income</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Company Turnover</span>
                         <p className="font-black text-slate-700 text-xs mt-0.5">
-                          {viewLead.yearlyIncome ? `₹${viewLead.yearlyIncome.toLocaleString("en-IN")}` : "N/A"}
+                          {viewLead.companyTurnover ? `₹${viewLead.companyTurnover.toLocaleString("en-IN")}` : 
+                           viewLead.yearlyIncome ? `₹${viewLead.yearlyIncome.toLocaleString("en-IN")}` : "N/A"}
                         </p>
                       </div>
                     </div>

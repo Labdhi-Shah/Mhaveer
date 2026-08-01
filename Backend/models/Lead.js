@@ -29,9 +29,9 @@ const leadSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    yearlyIncome: {
+    companyTurnover: {
       type: Number,
-      required: [true, "Yearly Income is required"],
+      required: [true, "Company Turnover is required"],
     },
     loanAmount: {
       type: Number,
@@ -41,9 +41,20 @@ const leadSchema = new mongoose.Schema(
       type: String,
       required: [true, "Loan Type is required"],
     },
+    propertyLoanCategory: {
+      type: String,
+      required: [
+        function() {
+          return this.loanType === "Property Loan";
+        },
+        "Property Loan Category is required when Loan Type is Property Loan"
+      ]
+    },
     cibilScore: {
       type: Number,
       required: [true, "CIBIL Score is required"],
+      min: [700, "CIBIL Score must be at least 700"],
+      max: [900, "CIBIL Score cannot exceed 900"],
     },
     interested: {
       type: String,
@@ -79,7 +90,7 @@ const leadSchema = new mongoose.Schema(
         return this.interested === "Call Back Later";
       },
     },
-    remarks: {
+    address: {
       type: String,
     },
     employeeId: {

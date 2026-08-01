@@ -91,7 +91,12 @@ export default function MyLeadsView() {
     try {
       const res = await api.get("/leads?limit=100");
       if (res.data.success) {
-        const ownLeads = res.data.data;
+        const ownLeads = res.data.data.map(lead => ({
+          ...lead,
+          phone: lead.phoneNumber || lead.phone,
+          companyTurnover: lead.companyTurnover !== undefined ? lead.companyTurnover : lead.yearlyIncome,
+          address: lead.address !== undefined ? lead.address : lead.remarks
+        }));
         const ownStats = { todaysCalls: 0, interestedLeads: 0, pendingFollowUps: 0, todaysMeetings: 0 };
         const { leads: mergedLeads } = await getMergedLeadsAndStats(user, ownLeads, ownStats);
 
@@ -141,18 +146,19 @@ export default function MyLeadsView() {
     reset({
       companyName: lead.companyName,
       contactPerson: lead.contactPerson,
-      phone: lead.phone,
+      phone: lead.phone || lead.phoneNumber,
       city: lead.city || "",
       state: lead.state || "",
-      yearlyIncome: lead.yearlyIncome,
+      companyTurnover: lead.companyTurnover !== undefined ? lead.companyTurnover : lead.yearlyIncome,
       loanAmount: lead.loanAmount,
       loanType: lead.loanType,
+      propertyLoanCategory: lead.propertyLoanCategory || "",
       cibilScore: lead.cibilScore,
       interested: lead.interested,
       callStatus: lead.callStatus,
       meetingDate: lead.meetingDate || "",
       meetingTime: lead.meetingTime || "",
-      remarks: lead.remarks || "",
+      address: lead.address !== undefined ? lead.address : (lead.remarks || ""),
       followUpDate: lead.followUpDate || "",
       followUpTime: lead.followUpTime || ""
     });
@@ -175,10 +181,15 @@ export default function MyLeadsView() {
 
       const payload = {
         ...data,
-        yearlyIncome: parseFloat(data.yearlyIncome),
+        phoneNumber: data.phone,
+        companyTurnover: parseFloat(data.companyTurnover),
         loanAmount: parseFloat(data.loanAmount),
         cibilScore: parseInt(data.cibilScore)
       };
+
+      if (payload.loanType !== "Property Loan") {
+        delete payload.propertyLoanCategory;
+      }
 
       const res = await api.put(`/leads/${editLead._id}`, payload);
       if (res.data.success) {
@@ -278,12 +289,9 @@ export default function MyLeadsView() {
               className="px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs bg-white outline-none focus:border-[#0a2540] transition"
             >
               <option value="">All Loan Types</option>
-              <option value="Personal Loan">Personal Loan</option>
               <option value="Home Loan">Home Loan</option>
               <option value="Business Loan">Business Loan</option>
-              <option value="Car Loan">Car Loan</option>
-              <option value="Gold Loan">Gold Loan</option>
-              <option value="Education Loan">Education Loan</option>
+              <option value="Property Loan">Property Loan</option>
             </select>
           </div>
 
@@ -514,13 +522,13 @@ export default function MyLeadsView() {
                     </div>
                   </div>
 
-                  {/* Remarks Card */}
+                  {/* Address Card */}
                   <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-3">
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
-                      Remarks / Notes
+                      Address
                     </h4>
                     <div className="bg-slate-50/50 border border-slate-100/80 rounded-xl p-3.5 min-h-[90px] text-xs leading-relaxed text-slate-600 whitespace-pre-wrap font-medium">
-                      {viewLead.remarks ? viewLead.remarks : <span className="text-slate-400 italic">No Remarks</span>}
+                      {viewLead.address ? viewLead.address : <span className="text-slate-400 italic">No Address Specified</span>}
                     </div>
                   </div>
                 </div>
@@ -537,6 +545,12 @@ export default function MyLeadsView() {
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Loan Type</span>
                         <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.loanType || "N/A"}</p>
                       </div>
+                      {viewLead.loanType === "Property Loan" && (
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Property Loan Category</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.propertyLoanCategory || "N/A"}</p>
+                        </div>
+                      )}
                       <div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CIBIL Score</span>
                         <p className={`font-black text-xs mt-0.5 ${
@@ -554,9 +568,10 @@ export default function MyLeadsView() {
                         </p>
                       </div>
                       <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Yearly Income</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Company Turnover</span>
                         <p className="font-black text-slate-700 text-xs mt-0.5">
-                          {viewLead.yearlyIncome ? `₹${viewLead.yearlyIncome.toLocaleString("en-IN")}` : "N/A"}
+                          {viewLead.companyTurnover ? `₹${viewLead.companyTurnover.toLocaleString("en-IN")}` : 
+                           viewLead.yearlyIncome ? `₹${viewLead.yearlyIncome.toLocaleString("en-IN")}` : "N/A"}
                         </p>
                       </div>
                     </div>
@@ -713,12 +728,12 @@ export default function MyLeadsView() {
                   <input type="text" {...register("state")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540]" />
                 </div>
 
-                {/* Yearly Income */}
+                {/* Company Turnover */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Yearly Income *</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Company Turnover *</label>
                   <input
                     type="number"
-                    {...register("yearlyIncome", { required: "Yearly income required", min: 1 })}
+                    {...register("companyTurnover", { required: "Company Turnover is required", min: 1 })}
                     className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540]"
                   />
                 </div>
@@ -740,21 +755,35 @@ export default function MyLeadsView() {
                     {...register("loanType", { required: "Loan Type is required" })}
                     className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540] bg-white"
                   >
-                    <option value="Personal Loan">Personal Loan</option>
                     <option value="Home Loan">Home Loan</option>
                     <option value="Business Loan">Business Loan</option>
-                    <option value="Car Loan">Car Loan</option>
-                    <option value="Gold Loan">Gold Loan</option>
-                    <option value="Education Loan">Education Loan</option>
+                    <option value="Property Loan">Property Loan</option>
                   </select>
                 </div>
+
+                {/* Property Loan Category (if Loan Type is Property Loan) */}
+                {watch("loanType") === "Property Loan" && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Property Loan Category *</label>
+                    <select
+                      {...register("propertyLoanCategory", { required: "Property Loan Category is required" })}
+                      className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540] bg-white"
+                    >
+                      <option value="">Select Category</option>
+                      <option value="Commercial Loan">Commercial Loan</option>
+                      <option value="Industrial Loan">Industrial Loan</option>
+                      <option value="Residential Loan">Residential Loan</option>
+                      <option value="Plot Loan">Plot Loan</option>
+                    </select>
+                  </div>
+                )}
 
                 {/* CIBIL Score */}
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">CIBIL Score *</label>
                   <input
                     type="number"
-                    {...register("cibilScore", { required: "CIBIL score required", min: 300, max: 900 })}
+                    {...register("cibilScore", { required: "CIBIL score required", min: 700, max: 900 })}
                     className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540]"
                   />
                 </div>
@@ -814,10 +843,10 @@ export default function MyLeadsView() {
                 </div>
               )}
 
-              {/* Remarks */}
+              {/* Address */}
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Remarks / Call Notes</label>
-                <textarea rows="3" {...register("remarks")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540]"></textarea>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Address</label>
+                <textarea rows="3" {...register("address")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540]"></textarea>
               </div>
 
               <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">

@@ -22,7 +22,12 @@ export default function FollowUpView() {
     try {
       const res = await api.get("/leads?limit=100");
       if (res.data.success) {
-        const ownLeads = res.data.data;
+        const ownLeads = res.data.data.map(lead => ({
+          ...lead,
+          phone: lead.phoneNumber || lead.phone,
+          companyTurnover: lead.companyTurnover !== undefined ? lead.companyTurnover : lead.yearlyIncome,
+          address: lead.address !== undefined ? lead.address : lead.remarks
+        }));
         const ownStats = { todaysCalls: 0, interestedLeads: 0, pendingFollowUps: 0, todaysMeetings: 0 };
         const { leads: mergedLeads } = await getMergedLeadsAndStats(user, ownLeads, ownStats);
 
@@ -134,9 +139,9 @@ export default function FollowUpView() {
                   <p className="font-bold text-slate-700 flex items-center gap-1.5"><Phone size={13} /> {lead.phone}</p>
                 </div>
 
-                {lead.remarks && (
+                {lead.address && (
                   <div className="text-xs bg-slate-50/50 p-2.5 rounded-xl border border-dashed border-slate-200 text-slate-600 italic">
-                    "{lead.remarks}"
+                    Address: {lead.address}
                   </div>
                 )}
               </div>

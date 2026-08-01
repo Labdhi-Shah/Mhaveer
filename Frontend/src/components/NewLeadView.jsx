@@ -21,21 +21,23 @@ export default function NewLeadView() {
       phone: "",
       city: "",
       state: "",
-      yearlyIncome: "",
+      companyTurnover: "",
       loanAmount: "",
       loanType: "",
+      propertyLoanCategory: "",
       cibilScore: "",
       interested: "",
       callStatus: "",
       meetingDate: "",
       meetingTime: "",
-      remarks: "",
+      address: "",
       followUpDate: "",
       followUpTime: ""
     }
   });
 
   const interestedValue = watch("interested");
+  const loanTypeValue = watch("loanType");
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -59,10 +61,14 @@ export default function NewLeadView() {
       const payload = {
         ...data,
         phoneNumber: data.phone,
-        yearlyIncome: data.yearlyIncome ? parseFloat(data.yearlyIncome) : undefined,
+        companyTurnover: data.companyTurnover ? parseFloat(data.companyTurnover) : undefined,
         loanAmount: data.loanAmount ? parseFloat(data.loanAmount) : undefined,
         cibilScore: data.cibilScore ? parseInt(data.cibilScore) : undefined
       };
+
+      if (payload.loanType !== "Property Loan") {
+        delete payload.propertyLoanCategory;
+      }
 
       if (!payload.meetingDate) delete payload.meetingDate;
       if (!payload.meetingTime) delete payload.meetingTime;
@@ -144,9 +150,9 @@ export default function NewLeadView() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5">Yearly Income (INR) *</label>
-              <input type="number" placeholder="e.g. 600000" {...register("yearlyIncome", { required: "Yearly Income is required", min: { value: 1, message: "Income must be greater than 0" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.yearlyIncome ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
-              {errors.yearlyIncome && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.yearlyIncome.message}</p>}
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Company Turnover (INR) *</label>
+              <input type="number" placeholder="e.g. 600000" {...register("companyTurnover", { required: "Company Turnover is required", min: { value: 1, message: "Turnover must be greater than 0" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.companyTurnover ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+              {errors.companyTurnover && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.companyTurnover.message}</p>}
             </div>
 
             <div>
@@ -159,19 +165,30 @@ export default function NewLeadView() {
               <label className="block text-xs font-bold text-slate-600 mb-1.5">Type of Loan *</label>
               <select {...register("loanType", { required: "Loan Type is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none bg-white transition ${errors.loanType ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`}>
                 <option value="">Select Loan Type</option>
-                <option value="Personal Loan">Personal Loan</option>
                 <option value="Home Loan">Home Loan</option>
                 <option value="Business Loan">Business Loan</option>
-                <option value="Car Loan">Car Loan</option>
-                <option value="Gold Loan">Gold Loan</option>
-                <option value="Education Loan">Education Loan</option>
+                <option value="Property Loan">Property Loan</option>
               </select>
               {errors.loanType && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.loanType.message}</p>}
             </div>
 
+            {loanTypeValue === "Property Loan" && (
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1.5">Property Loan Category *</label>
+                <select {...register("propertyLoanCategory", { required: "Property Loan Category is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none bg-white transition ${errors.propertyLoanCategory ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`}>
+                  <option value="">Select Category</option>
+                  <option value="Commercial Loan">Commercial Loan</option>
+                  <option value="Industrial Loan">Industrial Loan</option>
+                  <option value="Residential Loan">Residential Loan</option>
+                  <option value="Plot Loan">Plot Loan</option>
+                </select>
+                {errors.propertyLoanCategory && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.propertyLoanCategory.message}</p>}
+              </div>
+            )}
+
             <div>
               <label className="block text-xs font-bold text-slate-600 mb-1.5">CIBIL Score *</label>
-              <input type="number" placeholder="300 - 900" {...register("cibilScore", { required: "CIBIL Score is required", min: { value: 300, message: "Min score is 300" }, max: { value: 900, message: "Max score is 900" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.cibilScore ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+              <input type="number" placeholder="700 - 900" {...register("cibilScore", { required: "CIBIL Score is required", min: { value: 700, message: "Min score is 700" }, max: { value: 900, message: "Max score is 900" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.cibilScore ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
               {errors.cibilScore && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.cibilScore.message}</p>}
             </div>
 
@@ -232,8 +249,8 @@ export default function NewLeadView() {
           </AnimatePresence>
 
           <div>
-            <label className="block text-xs font-bold text-slate-600 mb-1.5">Internal Remarks</label>
-            <textarea placeholder="Any additional notes..." {...register("remarks")} className="w-full px-4 py-3 border border-slate-200 focus:border-[#0a2540] rounded-xl text-xs outline-none transition min-h-[80px] resize-y" />
+            <label className="block text-xs font-bold text-slate-600 mb-1.5">Address</label>
+            <textarea placeholder="Address" {...register("address")} className="w-full px-4 py-3 border border-slate-200 focus:border-[#0a2540] rounded-xl text-xs outline-none transition min-h-[80px] resize-y" />
           </div>
 
           <button type="submit" disabled={loading} className="w-full bg-[#d4af37] hover:bg-[#c39e2d] text-[#0a2540] font-black py-3.5 rounded-xl shadow-md transition-all text-xs uppercase tracking-widest disabled:opacity-70">

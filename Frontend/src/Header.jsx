@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, Settings, Menu, ChevronDown, Clock, Circle, User, Key, LogOut, PauseCircle, PlayCircle, CheckCircle } from "lucide-react";
+import { Bell, Menu, ChevronDown, Clock, Circle, User, Key, LogOut, PauseCircle, PlayCircle, CheckCircle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import api from "./api";
@@ -29,7 +29,7 @@ export default function Header({ onToggleSidebar }) {
     if (path.includes("follow-up")) return "Call Back Follow-ups";
     if (path.includes("meetings")) return "Scheduled Meetings";
     if (path.includes("profile")) return "Employee Profile";
-    if (path.includes("settings")) return "Account Settings";
+
     if (path.includes("employees")) return "Employee Directory";
     if (path.includes("add-employee")) return "Register Employee";
     if (path.includes("attendance")) return "Attendance Logs";
@@ -271,9 +271,6 @@ export default function Header({ onToggleSidebar }) {
           <Bell size={18} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#d4af37] rounded-full" />
         </button>
-        <button onClick={() => navigate("/settings")} className="p-1.5 sm:p-2 text-slate-300 hover:text-[#d4af37] rounded-lg transition" title="Settings">
-          <Settings size={18} />
-        </button>
 
         <div className="h-6 w-px bg-slate-700" />
 
@@ -328,12 +325,7 @@ export default function Header({ onToggleSidebar }) {
                     </button>
                   </>
                 )}
-                <button
-                  onClick={() => { navigate("/settings"); setDropdownOpen(false); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-600 hover:bg-slate-100 hover:text-[#0a2540] font-bold transition text-left"
-                >
-                  <Key size={14} /> Change Password
-                </button>
+
 
                 <div className="h-px bg-slate-100 my-1" />
 

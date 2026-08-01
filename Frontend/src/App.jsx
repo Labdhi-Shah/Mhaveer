@@ -9,7 +9,7 @@ import MyLeadsView from "./components/MyLeadsView";
 import FollowUpView from "./components/FollowUpView";
 import MeetingsView from "./components/MeetingsView";
 import ProfileView from "./components/ProfileView";
-import SettingsView from "./components/SettingsView";
+
 import EmployeeDashboard from "./components/EmployeeDashboard";
 import NewLeadView from "./components/NewLeadView";
 import AttendanceView from "./components/AttendanceView";
@@ -47,7 +47,7 @@ export default function App() {
             <Route path="meetings" element={<MeetingsView />} />
             <Route path="attendance" element={<AttendanceView />} />
             <Route path="profile" element={<ProfileView />} />
-            <Route path="settings" element={<SettingsView />} />
+
             <Route path="employees" element={<EmployeeList />} />
             <Route path="add-employee" element={<AddEmployee />} />
           </Route>

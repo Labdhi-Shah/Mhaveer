@@ -65,8 +65,8 @@ export default function Sidebar({ isOpen, onClose }) {
               Dashboard
             </button>
 
-            {/* Management specific options (Admin and Manager) */}
-            {(isSuperAdmin || isManager) && (
+            {/* Management specific options (Admin only) */}
+            {isSuperAdmin && (
               <>
                 <button
                   onClick={() => handleNavigation("/employees")}

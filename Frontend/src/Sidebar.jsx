@@ -1,7 +1,7 @@
 import { 
   LayoutDashboard, Users, UserPlus, 
   PlusCircle, FolderHeart, Clock, Calendar, ClipboardList,
-  FileText
+  FileText, BarChart2
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
@@ -94,6 +94,23 @@ export default function Sidebar({ isOpen, onClose }) {
               </>
             )}
 
+            {/* Management and Team Leader specific options */}
+            {(isManager || isTeamLeader) && (
+              <>
+                <button
+                  onClick={() => handleNavigation("/team-performance")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    location.pathname === "/team-performance"
+                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                  }`}
+                >
+                  <BarChart2 size={18} />
+                  Team Performance
+                </button>
+              </>
+            )}
+
             {/* Employee specific options (Manager, Team Leader, Employee) */}
             {(isManager || isTeamLeader || isEmployee) && (
               <>
@@ -133,17 +150,6 @@ export default function Sidebar({ isOpen, onClose }) {
                   Follow-up
                 </button>
 
-                <button
-                  onClick={() => handleNavigation("/work-updates")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                    location.pathname === "/work-updates"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                  }`}
-                >
-                  <FileText size={18} />
-                  Work Updates
-                </button>
 
                 <button
                   onClick={() => handleNavigation("/meetings")}

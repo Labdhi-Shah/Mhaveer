@@ -7,13 +7,13 @@ import EmployeeList from "./EmployeeList";
 import AddEmployee from "./AddEmployee";
 import MyLeadsView from "./components/MyLeadsView";
 import FollowUpView from "./components/FollowUpView";
-import WorkUpdatesView from "./components/WorkUpdatesView";
 import MeetingsView from "./components/MeetingsView";
 import ProfileView from "./components/ProfileView";
 import SettingsView from "./components/SettingsView";
 import EmployeeDashboard from "./components/EmployeeDashboard";
 import NewLeadView from "./components/NewLeadView";
 import AttendanceView from "./components/AttendanceView";
+import TeamPerformanceView from "./components/TeamPerformanceView";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -43,7 +43,7 @@ export default function App() {
             <Route path="new-lead" element={<NewLeadView />} />
             <Route path="my-leads" element={<MyLeadsView />} />
             <Route path="follow-up" element={<FollowUpView />} />
-            <Route path="work-updates" element={<WorkUpdatesView />} />
+            <Route path="team-performance" element={<TeamPerformanceView />} />
             <Route path="meetings" element={<MeetingsView />} />
             <Route path="attendance" element={<AttendanceView />} />
             <Route path="profile" element={<ProfileView />} />

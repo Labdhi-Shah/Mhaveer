@@ -27,7 +27,7 @@ const ROLE_DATA = {
   ],
   "Credit / Underwriting": [
     "Income assessment",
-    "CIBIL check",
+    "  check",
     "Document verification",
     "Loan eligibility analysis"
   ],

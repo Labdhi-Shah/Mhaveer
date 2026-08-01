@@ -7,6 +7,7 @@ const employeeRoutes = require("./routes/employeeRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const leadRoutes = require("./routes/leadRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
+const workUpdateRoutes = require("./routes/workUpdateRoutes");
 dotenv.config();
 
 const app = express();
@@ -33,6 +34,7 @@ app.use("/api/employees", employeeRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/leads", leadRoutes);
 app.use("/api/attendance", attendanceRoutes);
+app.use("/api/work-updates", workUpdateRoutes);
 const adminRoutes = require("./routes/adminRoutes");
 app.use("/api/admin", adminRoutes);
 

@@ -39,7 +39,7 @@ function Login() {
 
       if (response.ok && data.success) {
         localStorage.setItem("token", data.token);
-        
+
         if (data.employee) {
           // Employee Login
           const employeeData = {
@@ -49,18 +49,18 @@ function Login() {
             employeeId: "EMP-" + Math.floor(100000 + Math.random() * 900000) // unique mock ID
           };
           localStorage.setItem("user", JSON.stringify(employeeData));
-          
+
           // Start the working timer using server time
           if (data.loginTime) {
             localStorage.setItem("loginTime", data.loginTime);
           } else if (!localStorage.getItem("loginTime")) {
             localStorage.setItem("loginTime", new Date().toISOString());
           }
-          
+
           if (data.attendanceId) {
             localStorage.setItem("attendanceId", data.attendanceId);
           }
-          
+
           setMessage("✅ Login Successful");
           setTimeout(() => {
             window.location.href = "/dashboard";

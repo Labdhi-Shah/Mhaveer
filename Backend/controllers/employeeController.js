@@ -56,7 +56,7 @@ exports.createEmployee = async (req, res) => {
     let generatedEmail = `${firstName}@mhaveer.com`;
     let emailExists = await Employee.findOne({ officialEmail: generatedEmail });
     let counter = 1;
-    
+
     while (emailExists) {
       generatedEmail = `${firstName}${counter}@mhaveer.com`;
       emailExists = await Employee.findOne({ officialEmail: generatedEmail });
@@ -235,7 +235,7 @@ exports.updateEmployee = async (req, res) => {
   try {
     // Fields that are allowed to be updated
     const { fullName, name, email, officialEmail, personalEmail, phone, role, department, address, joiningDate, dateOfBirth, dob, status, managerId, teamLeaderId } = req.body;
-    
+
     const empName = fullName || name;
     const empDob = dateOfBirth || dob;
     const offEmail = officialEmail || email;
@@ -283,7 +283,7 @@ exports.updateEmployee = async (req, res) => {
         employee.managerName = "";
       }
     }
-    
+
     if (teamLeaderId !== undefined) {
       employee.teamLeaderId = teamLeaderId;
       if (teamLeaderId) {
@@ -295,7 +295,7 @@ exports.updateEmployee = async (req, res) => {
         employee.teamLeaderName = "";
       }
     }
-    
+
     if (["Team Leader", "TL", "Teamleader"].includes(employee.role)) {
       employee.reportingTo = employee.managerId || "";
     } else if (!["Manager", "Management", "Branch Manager", "Regional Manager", "Director / CEO"].includes(employee.role)) {

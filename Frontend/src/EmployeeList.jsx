@@ -12,7 +12,7 @@ export default function EmployeeList() {
   // Modal States
   const [viewEmp, setViewEmp] = useState(null); // View Modal State
   const [editingEmp, setEditingEmp] = useState(null); // Edit Modal State
-  
+
   const [managers, setManagers] = useState([]);
   const [teamLeaders, setTeamLeaders] = useState([]);
 
@@ -409,7 +409,7 @@ export default function EmployeeList() {
                     className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37] resize-none"
                   />
                 </div>
-                
+
                 {editForm.role && !["Management", "Manager"].includes(editForm.role) && (
                   <div>
                     <label className="block font-extrabold text-slate-700 uppercase mb-1">Assign Manager</label>

@@ -14,6 +14,7 @@ import EmployeeDashboard from "./components/EmployeeDashboard";
 import NewLeadView from "./components/NewLeadView";
 import AttendanceView from "./components/AttendanceView";
 import TeamPerformanceView from "./components/TeamPerformanceView";
+import LoanUploadView from "./components/LoanUploadView";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -47,6 +48,7 @@ export default function App() {
             <Route path="meetings" element={<MeetingsView />} />
             <Route path="attendance" element={<AttendanceView />} />
             <Route path="profile" element={<ProfileView />} />
+            <Route path="loan-upload" element={<LoanUploadView />} />
 
             <Route path="employees" element={<EmployeeList />} />
             <Route path="add-employee" element={<AddEmployee />} />

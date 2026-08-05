@@ -29,7 +29,7 @@ export default function Header({ onToggleSidebar }) {
     if (path.includes("follow-up")) return "Call Back Follow-ups";
     if (path.includes("meetings")) return "Scheduled Meetings";
     if (path.includes("profile")) return "Employee Profile";
-    if (path.includes("loan-upload")) return "Loan Documents Upload";
+    if (path.includes("sales-dashboard")) return "Sales Department Dashboard";
 
     if (path.includes("employees")) return "Employee Directory";
     if (path.includes("add-employee")) return "Register Employee";

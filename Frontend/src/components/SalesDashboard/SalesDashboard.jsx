@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FileText, CheckCircle, AlertCircle, RefreshCw, LogIn, Trash2, ArrowRight } from "lucide-react";
 import DocumentUploadCard from "./DocumentUploadCard";
-import "./LoanUploadView.css";
+import "./SalesDashboard.css";
 
 const REQUIRED_DOCUMENTS = [
   { id: "aadhaar", title: "Aadhaar Card" },
@@ -14,7 +14,7 @@ const REQUIRED_DOCUMENTS = [
   { id: "rationCard", title: "Ration Card" }
 ];
 
-export default function LoanUploadView() {
+export default function SalesDashboard() {
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [toast, setToast] = useState(null);
@@ -157,7 +157,7 @@ export default function LoanUploadView() {
       {/* Page Header */}
       <div className="loan-upload-header">
         <p>Sales Department Portal</p>
-        <h1>Loan Document Upload Dashboard</h1>
+        <h1>Sales Department Dashboard</h1>
       </div>
 
       {/* Main Upload Cards grid */}

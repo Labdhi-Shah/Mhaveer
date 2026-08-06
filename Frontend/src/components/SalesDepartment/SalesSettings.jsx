@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Settings, Save, CheckCircle } from "lucide-react";
-import "../components/SalesDepartment.css";
+import "./SalesDepartment.css";
 
 export default function SalesSettings() {
   const [theme, setTheme] = useState("light");

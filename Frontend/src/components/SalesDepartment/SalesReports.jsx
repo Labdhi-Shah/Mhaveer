@@ -23,8 +23,8 @@ import {
   Tooltip,
   Legend
 } from "recharts";
-import { getLeads, getRevenueData } from "../utils/dummyData";
-import "../components/SalesDepartment.css";
+import { getLeads, getRevenueData } from "./dummyData";
+import "./SalesDepartment.css";
 
 export default function SalesReports() {
   const [leads, setLeads] = useState([]);

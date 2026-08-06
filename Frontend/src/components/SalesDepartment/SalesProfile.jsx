@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { User, Key, Camera, CheckCircle, AlertTriangle } from "lucide-react";
-import "../components/SalesDepartment.css";
+import "./SalesDepartment.css";
 
 export default function SalesProfile() {
   const [user, setUser] = useState({

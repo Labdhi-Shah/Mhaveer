@@ -14,8 +14,8 @@ import {
   MapPin,
   CheckCircle
 } from "lucide-react";
-import { getLeads, saveLeads, addActivity } from "../utils/dummyData";
-import "../components/SalesDepartment.css";
+import { getLeads, saveLeads, addActivity } from "./dummyData";
+import "./SalesDepartment.css";
 
 export default function SalesCustomers() {
   const [allLeads, setAllLeads] = useState([]);

@@ -17,7 +17,7 @@ import {
   LogOut,
   X
 } from "lucide-react";
-import logoSvg from "../assets/logo.svg";
+import logoSvg from "../../assets/logo.svg";
 import "./SalesDepartment.css";
 
 export default function SalesLayout() {
@@ -71,7 +71,7 @@ export default function SalesLayout() {
   const handleLogout = () => {
     localStorage.removeItem("sales_token");
     localStorage.removeItem("sales_user");
-    navigate("/", { replace: true });
+    navigate("/sales/login", { replace: true });
   };
 
   const initials = user.name
@@ -82,15 +82,15 @@ export default function SalesLayout() {
     .toUpperCase();
 
   const menuItems = [
-    { label: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={18} /> },
-    { label: "Leads", path: "/leads", icon: <Users size={18} /> },
-    { label: "Customers", path: "/customers", icon: <FolderHeart size={18} /> },
-    { label: "Follow Up", path: "/follow-up", icon: <Clock size={18} /> },
-    { label: "Meetings", path: "/meetings", icon: <Calendar size={18} /> },
-    { label: "Sales Pipeline", path: "/pipeline", icon: <Layers size={18} /> },
-    { label: "Reports", path: "/reports", icon: <FileBarChart size={18} /> },
-    { label: "Profile", path: "/profile", icon: <User size={18} /> },
-    { label: "Settings", path: "/settings", icon: <SettingsIcon size={18} /> }
+    { label: "Dashboard", path: "/sales/dashboard", icon: <LayoutDashboard size={18} /> },
+    { label: "Leads", path: "/sales/leads", icon: <Users size={18} /> },
+    { label: "Customers", path: "/sales/customers", icon: <FolderHeart size={18} /> },
+    { label: "Follow Up", path: "/sales/follow-up", icon: <Clock size={18} /> },
+    { label: "Meetings", path: "/sales/meetings", icon: <Calendar size={18} /> },
+    { label: "Sales Pipeline", path: "/sales/pipeline", icon: <Layers size={18} /> },
+    { label: "Reports", path: "/sales/reports", icon: <FileBarChart size={18} /> },
+    { label: "Profile", path: "/sales/profile", icon: <User size={18} /> },
+    { label: "Settings", path: "/sales/settings", icon: <SettingsIcon size={18} /> }
   ];
 
   return (
@@ -167,7 +167,7 @@ export default function SalesLayout() {
                 <div className="sales-dropdown-menu">
                   <button
                     onClick={() => {
-                      navigate("/profile");
+                      navigate("/sales/profile");
                       setDropdownOpen(false);
                     }}
                     className="sales-dropdown-item"
@@ -176,7 +176,7 @@ export default function SalesLayout() {
                   </button>
                   <button
                     onClick={() => {
-                      navigate("/settings");
+                      navigate("/sales/settings");
                       setDropdownOpen(false);
                     }}
                     className="sales-dropdown-item"

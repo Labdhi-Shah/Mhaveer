@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
-import logoSvg from "../assets/logo.svg";
-import "../components/SalesDepartment.css";
+import logoSvg from "../../assets/logo.svg";
+import "./SalesDepartment.css";
 
 export default function SalesLogin() {
   const navigate = useNavigate();
@@ -68,7 +68,7 @@ export default function SalesLogin() {
       
       setTimeout(() => {
         setLoading(false);
-        navigate("/dashboard", { replace: true });
+        navigate("/sales/dashboard", { replace: true });
       }, 800);
     }, 1000);
   };

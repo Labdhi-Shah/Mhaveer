@@ -29,7 +29,7 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const config = error.config;
-    
+
     // Auto-logout on 401 Unauthorized
     if (error.response && error.response.status === 401) {
       localStorage.removeItem("token");
@@ -45,15 +45,16 @@ api.interceptors.response.use(
     }
 
     const shouldRetry = !error.response || (error.response.status >= 500 && error.response.status <= 599);
+
     if (shouldRetry && config.retryCount < config.retry) {
       config.retryCount += 1;
       console.warn(`API Request Failed. Retrying... (${config.retryCount}/${config.retry})`);
-      
+
       // Exponential backoff
       const backoff = new Promise((resolve) => {
         setTimeout(() => resolve(), config.retryCount * 1000);
       });
-      
+
       await backoff;
       return api(config);
     }

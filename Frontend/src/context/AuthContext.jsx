@@ -4,9 +4,11 @@ import api from "../api";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+
   const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem("user");
     const token = localStorage.getItem("token");
+
     if (storedUser && token) {
       try {
         return JSON.parse(storedUser);
@@ -29,9 +31,11 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         return { success: true };
       }
+
       return { success: false, message: res.data.message || "Invalid credentials." };
+
     } catch (err) {
-      console.error(err);
+
       return {
         success: false,
         message: err.response?.data?.message || "Server error during login",
@@ -50,6 +54,7 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
+
 };
 
 // eslint-disable-next-line react-refresh/only-export-components

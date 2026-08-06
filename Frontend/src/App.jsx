@@ -2,35 +2,25 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from "./Page/Login";
 import { AuthProvider } from "./context/AuthContext";
 import DashboardLayout from "./components/DashboardLayout";
-import DashboardSelector from "./components/DashboardSelector";
-import EmployeeList from "./EmployeeList";
-import AddEmployee from "./AddEmployee";
-import MyLeadsView from "./components/MyLeadsView";
-import FollowUpView from "./components/FollowUpView";
-import MeetingsView from "./components/MeetingsView";
-import ProfileView from "./components/ProfileView";
-
-import EmployeeDashboard from "./components/EmployeeDashboard";
-import NewLeadView from "./components/NewLeadView";
-import AttendanceView from "./components/AttendanceView";
-import TeamPerformanceView from "./components/TeamPerformanceView";
 import SalesDashboard from "./components/SalesDashboard/SalesDashboard";
 
-const ProtectedRoute = ({ children, allowedRoles }) => {
+const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
   const storedUser = localStorage.getItem("user");
 
-  if (!token) {
+  if (!token || !storedUser) {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && storedUser) {
-    try {
-      const user = JSON.parse(storedUser);
-      if (!allowedRoles.includes(user.role)) {
-        return <Navigate to="/dashboard" replace />;
-      }
-    } catch (e) {}
+  try {
+    const user = JSON.parse(storedUser);
+    if (user.role !== "Sales Department") {
+      localStorage.clear();
+      return <Navigate to="/login" replace />;
+    }
+  } catch (e) {
+    localStorage.clear();
+    return <Navigate to="/login" replace />;
   }
 
   return children;
@@ -52,26 +42,9 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="dashboard" element={<DashboardSelector />} />
-            <Route path="new-lead" element={<NewLeadView />} />
-            <Route path="my-leads" element={<MyLeadsView />} />
-            <Route path="follow-up" element={<FollowUpView />} />
-            <Route path="team-performance" element={<TeamPerformanceView />} />
-            <Route path="meetings" element={<MeetingsView />} />
-            <Route path="attendance" element={<AttendanceView />} />
-            <Route path="profile" element={<ProfileView />} />
-            
-            <Route
-              path="sales-dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["Sales Department"]}>
-                  <SalesDashboard />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route path="employees" element={<EmployeeList />} />
-            <Route path="add-employee" element={<AddEmployee />} />
+            <Route path="dashboard" element={<SalesDashboard />} />
+            <Route path="sales-dashboard" element={<SalesDashboard />} />
+            <Route path="*" element={<Navigate to="dashboard" replace />} />
           </Route>
         </Routes>
       </Router>

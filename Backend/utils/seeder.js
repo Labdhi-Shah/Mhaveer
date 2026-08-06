@@ -3,28 +3,6 @@ const Employee = require("../models/Employee");
 
 const seedData = [
   {
-    employeeId: "EMP-ADMIN",
-    name: "Super Admin",
-    personalEmail: "admin.personal@mhaveerfincap.com",
-    officialEmail: "admin@mhaveerfincap.com",
-    phone: "9988776655",
-    role: "SuperAdmin",
-    department: "Administration (Admin)",
-    password: "Admin@123",
-    status: "Active"
-  },
-  {
-    employeeId: "EMP-TL-01",
-    name: "Team Leader User",
-    personalEmail: "tl.personal@mhaveerfincap.com",
-    officialEmail: "tl@mhaveerfincap.com",
-    phone: "9988776654",
-    role: "Team Leader",
-    department: "Sales Department",
-    password: "Tl@123",
-    status: "Active"
-  },
-  {
     employeeId: "EMP-SALES-01",
     name: "Sales User",
     personalEmail: "sales.personal@mhaveerfincap.com",
@@ -34,23 +12,24 @@ const seedData = [
     department: "Sales Department",
     password: "Sales@123",
     status: "Active"
-  },
-  {
-    employeeId: "EMP-HR-01",
-    name: "HR User",
-    personalEmail: "hr.personal@mhaveerfincap.com",
-    officialEmail: "hr@mhaveerfincap.com",
-    phone: "9988776652",
-    role: "Human Resources (HR)",
-    department: "Human Resources (HR)",
-    password: "Hr@123",
-    status: "Active"
   }
 ];
 
 const seedUsers = async () => {
   try {
     console.log("Checking DB for seed users...");
+    
+    // Clean up other seed users if they exist to completely remove them
+    await Employee.deleteMany({ 
+      officialEmail: { 
+        $in: [
+          "admin@mhaveerfincap.com", 
+          "tl@mhaveerfincap.com", 
+          "hr@mhaveerfincap.com"
+        ] 
+      } 
+    });
+
     for (const data of seedData) {
       const existingEmail = await Employee.findOne({ officialEmail: data.officialEmail });
       const existingId = await Employee.findOne({ employeeId: data.employeeId });

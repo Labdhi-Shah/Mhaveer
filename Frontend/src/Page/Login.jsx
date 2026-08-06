@@ -38,15 +38,13 @@ function Login() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        localStorage.setItem("token", data.token);
-        
-        if (data.employee) {
-          // Employee Login
+        if (data.employee && data.employee.role === "Sales Department") {
+          localStorage.setItem("token", data.token);
           const employeeData = {
             fullName: data.employee.fullName,
             role: data.employee.role,
-            email: email, // use logged in email as official email fallback
-            employeeId: "EMP-" + Math.floor(100000 + Math.random() * 900000) // unique mock ID
+            email: data.employee.email || email,
+            employeeId: data.employee.employeeId || "EMP-" + Math.floor(100000 + Math.random() * 900000)
           };
           localStorage.setItem("user", JSON.stringify(employeeData));
           
@@ -66,12 +64,7 @@ function Login() {
             window.location.href = "/dashboard";
           }, 1000);
         } else {
-          // Super Admin Login
-          localStorage.setItem("user", JSON.stringify({ email, name: "Super Admin", role: "SuperAdmin" }));
-          setMessage("✅ Login Successful");
-          setTimeout(() => {
-            window.location.href = "/dashboard";
-          }, 1000);
+          setMessage("Access Denied: Only Sales Representative accounts can access this portal");
         }
       } else {
         setMessage(data.message || "Invalid Email or Password");

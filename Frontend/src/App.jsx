@@ -16,11 +16,23 @@ import AttendanceView from "./components/AttendanceView";
 import TeamPerformanceView from "./components/TeamPerformanceView";
 import SalesDashboard from "./components/SalesDashboard/SalesDashboard";
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, allowedRoles }) => {
   const token = localStorage.getItem("token");
+  const storedUser = localStorage.getItem("user");
+
   if (!token) {
     return <Navigate to="/login" replace />;
   }
+
+  if (allowedRoles && storedUser) {
+    try {
+      const user = JSON.parse(storedUser);
+      if (!allowedRoles.includes(user.role)) {
+        return <Navigate to="/dashboard" replace />;
+      }
+    } catch (e) {}
+  }
+
   return children;
 };
 
@@ -48,7 +60,15 @@ export default function App() {
             <Route path="meetings" element={<MeetingsView />} />
             <Route path="attendance" element={<AttendanceView />} />
             <Route path="profile" element={<ProfileView />} />
-            <Route path="sales-dashboard" element={<SalesDashboard />} />
+            
+            <Route
+              path="sales-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["Sales Department"]}>
+                  <SalesDashboard />
+                </ProtectedRoute>
+              }
+            />
 
             <Route path="employees" element={<EmployeeList />} />
             <Route path="add-employee" element={<AddEmployee />} />

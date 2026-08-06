@@ -24,12 +24,14 @@ export default function Sidebar({ isOpen, onClose }) {
   const isSuperAdmin = roleCategory === "Admin";
   const isManager = roleCategory === "Manager";
   const isTeamLeader = roleCategory === "Team Leader";
-  const isEmployee = roleCategory === "Employee";
+  const isSales = user?.role === "Sales Department";
+  const isEmployee = roleCategory === "Employee" && !isSales;
 
   const getPortalLabel = () => {
     if (isSuperAdmin) return "ADMIN PANEL";
     if (isManager) return "MANAGER PORTAL";
     if (isTeamLeader) return "TEAM LEADER PORTAL";
+    if (isSales) return "SALES PORTAL";
     return "EMPLOYEE PORTAL";
   };
 
@@ -52,18 +54,35 @@ export default function Sidebar({ isOpen, onClose }) {
           </p>
 
           <div className="space-y-1.5">
-            {/* Common Dashboard for everyone */}
-            <button
-              onClick={() => handleNavigation("/dashboard")}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                location.pathname === "/dashboard"
-                  ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-              }`}
-            >
-              <LayoutDashboard size={18} />
-              Dashboard
-            </button>
+            {/* Common Dashboard for non-Sales */}
+            {!isSales && (
+              <button
+                onClick={() => handleNavigation("/dashboard")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                  location.pathname === "/dashboard"
+                    ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                }`}
+              >
+                <LayoutDashboard size={18} />
+                Dashboard
+              </button>
+            )}
+
+            {/* Sales Dashboard for Sales role only */}
+            {isSales && (
+              <button
+                onClick={() => handleNavigation("/dashboard")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                  location.pathname === "/dashboard"
+                    ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                }`}
+              >
+                <LayoutDashboard size={18} />
+                Sales Dashboard
+              </button>
+            )}
 
             {/* Management specific options (Admin only) */}
             {isSuperAdmin && (
@@ -173,18 +192,6 @@ export default function Sidebar({ isOpen, onClose }) {
                 >
                   <ClipboardList size={18} />
                   Attendance
-                </button>
-
-                <button
-                  onClick={() => handleNavigation("/sales-dashboard")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                    location.pathname === "/sales-dashboard"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                  }`}
-                >
-                  <FileText size={18} />
-                  Sales Dashboard
                 </button>
               </>
             )}

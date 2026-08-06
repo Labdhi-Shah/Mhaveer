@@ -8,12 +8,17 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const teamPerformanceRoutes = require("./routes/teamPerformanceRoutes");
 const leadRoutes = require("./routes/leadRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
+const customerRoutes = require("./routes/customerRoutes");
+const path = require("path");
 dotenv.config();
 
 const app = express();
 
 // Database Connection
-connectDB();
+connectDB().then(() => {
+  const seedUsers = require("./utils/seeder");
+  seedUsers();
+});
 
 // Middleware
 const allowedOrigins = process.env.ALLOWED_ORIGINS
@@ -28,6 +33,7 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/employees", employeeRoutes);
@@ -35,6 +41,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/team-performance", teamPerformanceRoutes);
 app.use("/api/leads", leadRoutes);
 app.use("/api/attendance", attendanceRoutes);
+app.use("/api/customers", customerRoutes);
 const adminRoutes = require("./routes/adminRoutes");
 app.use("/api/admin", adminRoutes);
 

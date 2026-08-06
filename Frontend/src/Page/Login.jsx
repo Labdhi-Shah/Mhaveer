@@ -43,10 +43,11 @@ function Login() {
         if (data.employee) {
           // Employee Login
           const employeeData = {
+            id: data.employee.id,
             fullName: data.employee.fullName,
             role: data.employee.role,
-            email: email, // use logged in email as official email fallback
-            employeeId: "EMP-" + Math.floor(100000 + Math.random() * 900000) // unique mock ID
+            email: data.employee.email || email,
+            employeeId: data.employee.employeeId || "EMP-" + Math.floor(100000 + Math.random() * 900000)
           };
           localStorage.setItem("user", JSON.stringify(employeeData));
           
@@ -63,10 +64,16 @@ function Login() {
           
           setMessage("✅ Login Successful");
           setTimeout(() => {
-            window.location.href = "/dashboard";
+            if (data.employee.role === "Sales Department") {
+              window.location.href = "/sales/dashboard";
+            } else if (data.employee.role === "Human Resources (HR)") {
+              window.location.href = "/hr/dashboard";
+            } else {
+              window.location.href = "/dashboard";
+            }
           }, 1000);
         } else {
-          // Super Admin Login
+          // Super Admin Login (Fallback)
           localStorage.setItem("user", JSON.stringify({ email, name: "Super Admin", role: "SuperAdmin" }));
           setMessage("✅ Login Successful");
           setTimeout(() => {
@@ -80,7 +87,6 @@ function Login() {
       console.log(error);
       setMessage("Server Error");
     }
-
     setLoading(false);
   };
 

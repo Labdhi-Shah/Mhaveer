@@ -24,12 +24,14 @@ export default function Sidebar({ isOpen, onClose }) {
   const isSuperAdmin = roleCategory === "Admin";
   const isManager = roleCategory === "Manager";
   const isTeamLeader = roleCategory === "Team Leader";
-  const isEmployee = roleCategory === "Employee";
+  const isHR = user?.role === "Human Resources (HR)";
+  const isEmployee = roleCategory === "Employee" && !isHR;
 
   const getPortalLabel = () => {
     if (isSuperAdmin) return "ADMIN PANEL";
     if (isManager) return "MANAGER PORTAL";
     if (isTeamLeader) return "TEAM LEADER PORTAL";
+    if (isHR) return "HR PORTAL";
     return "EMPLOYEE PORTAL";
   };
 
@@ -54,9 +56,9 @@ export default function Sidebar({ isOpen, onClose }) {
           <div className="space-y-1.5">
             {/* Common Dashboard for everyone */}
             <button
-              onClick={() => handleNavigation("/dashboard")}
+              onClick={() => handleNavigation(isHR ? "/hr/dashboard" : "/dashboard")}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                location.pathname === "/dashboard"
+                location.pathname === "/dashboard" || location.pathname === "/hr/dashboard"
                   ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
                   : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
               }`}
@@ -64,6 +66,23 @@ export default function Sidebar({ isOpen, onClose }) {
               <LayoutDashboard size={18} />
               Dashboard
             </button>
+
+            {/* HR Specific Options */}
+            {isHR && (
+              <>
+                <button
+                  onClick={() => handleNavigation("/hr/attendance")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    location.pathname === "/hr/attendance"
+                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                  }`}
+                >
+                  <ClipboardList size={18} />
+                  Attendance
+                </button>
+              </>
+            )}
 
             {/* Management specific options (Admin only) */}
             {isSuperAdmin && (
@@ -173,18 +192,6 @@ export default function Sidebar({ isOpen, onClose }) {
                 >
                   <ClipboardList size={18} />
                   Attendance
-                </button>
-
-                <button
-                  onClick={() => handleNavigation("/sales-dashboard")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                    location.pathname === "/sales-dashboard"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                  }`}
-                >
-                  <FileText size={18} />
-                  Sales Dashboard
                 </button>
               </>
             )}

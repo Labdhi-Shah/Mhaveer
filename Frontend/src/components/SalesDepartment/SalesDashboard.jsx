@@ -1,303 +1,587 @@
-import React, { useState, useEffect } from "react";
-import {
-  TrendingUp,
-  Users,
-  UserPlus,
-  CheckCircle,
-  XCircle,
-  DollarSign,
-  Clock,
-  Calendar,
-  Activity,
-  Award
+import React, { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Phone, Calendar, Clock, DollarSign, Award, Briefcase, User, 
+  MapPin, CheckCircle, AlertCircle, Loader2, ArrowRight, Eye, Edit2, Trash2, X
 } from "lucide-react";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend
-} from "recharts";
-import { getLeads, getActivities, getPerformanceData, getRevenueData } from "./dummyData";
-import "./SalesDepartment.css";
+import api from "../../api";
+import { useAuth } from "../../context/AuthContext";
+import { getMergedLeadsAndStats } from "../../utils/hierarchy";
+
+const formatFriendlyDate = (dateStr) => {
+  if (!dateStr) return null;
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const month = months[d.getUTCMonth()];
+    const year = d.getUTCFullYear();
+    return `${day} ${month} ${year}`;
+  } catch (e) {
+    return dateStr;
+  }
+};
+
+const formatFriendlyTime = (timeStr) => {
+  if (!timeStr) return null;
+  const hhmm = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+  if (hhmm) {
+    let hh = parseInt(hhmm[1], 10);
+    const mm = hhmm[2];
+    const ampm = hh >= 12 ? "PM" : "AM";
+    hh = hh % 12;
+    hh = hh ? hh : 12;
+    return `${hh}:${mm} ${ampm}`;
+  }
+  if (timeStr.toLowerCase().includes("am") || timeStr.toLowerCase().includes("pm")) {
+    return timeStr;
+  }
+  try {
+    const d = new Date(timeStr);
+    if (!isNaN(d.getTime())) {
+      let hh = d.getHours();
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      const ampm = hh >= 12 ? "PM" : "AM";
+      hh = hh % 12;
+      hh = hh ? hh : 12;
+      return `${hh}:${mm} ${ampm}`;
+    }
+  } catch (e) {}
+  return timeStr;
+};
 
 export default function SalesDashboard() {
-  const [leads, setLeads] = useState([]);
-  const [activities, setActivities] = useState([]);
-  const [performanceData, setPerformanceData] = useState([]);
-  const [revenueData, setRevenueData] = useState([]);
+  const { user } = useAuth();
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    todaysCalls: 0,
+    interestedLeads: 0,
+    pendingFollowUps: 0,
+    todaysMeetings: 0
+  });
+  const [recentLeads, setRecentLeads] = useState([]);
+  const [recentLoading, setRecentLoading] = useState(true);
+  const [toast, setToast] = useState(null);
 
-  useEffect(() => {
-    setLeads(getLeads());
-    setActivities(getActivities());
-    setPerformanceData(getPerformanceData());
-    setRevenueData(getRevenueData());
-  }, []);
+  // Modals for Actions
+  const [viewLead, setViewLead] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
-  // Compute Stats
-  const totalLeads = leads.length;
-  const newLeads = leads.filter(l => l.stage === "New Lead").length;
-  const qualifiedLeads = leads.filter(l => l.stage === "Qualified").length;
-  const wonDeals = leads.filter(l => l.stage === "Won").length;
-  const lostDeals = leads.filter(l => l.stage === "Lost").length;
-  
-  // Format Currency
-  const formatINR = (num) => {
-    if (num >= 10000000) {
-      return (num / 10000000).toFixed(2) + " Cr";
-    } else if (num >= 100000) {
-      return (num / 100000).toFixed(2) + " L";
-    }
-    return "₹" + num.toLocaleString();
+  // Show toast utility
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
   };
 
-  // Sum Won Deals revenue
-  const totalWonRevenue = leads
-    .filter(l => l.stage === "Won")
-    .reduce((sum, lead) => sum + (lead.loanAmount || 0), 0);
+  // Fetch Dashboard Stats and Recent Leads
+  const fetchData = async () => {
+    try {
+      setStatsLoading(true);
+      setRecentLoading(true);
+      
+      const [statsRes, leadsRes] = await Promise.all([
+        api.get("/leads/stats"),
+        api.get("/leads?limit=100")
+      ]);
 
-  // Sales Target Progress
-  const targetRevenue = 50000000; // 5 Crores target
-  const targetPercent = Math.min(Math.round((totalWonRevenue / targetRevenue) * 100), 100);
+      const ownStats = statsRes.data.success ? statsRes.data.data : { todaysCalls: 0, interestedLeads: 0, pendingFollowUps: 0, todaysMeetings: 0 };
+      const ownLeadsRaw = leadsRes.data.success ? leadsRes.data.data : [];
+      const ownLeads = ownLeadsRaw.map(lead => ({
+        ...lead,
+        phone: lead.phoneNumber || lead.phone,
+        companyTurnover: lead.companyTurnover !== undefined ? lead.companyTurnover : lead.yearlyIncome,
+        address: lead.address !== undefined ? lead.address : lead.remarks
+      }));
 
-  // Filter meetings & followups
-  const upcomingMeetings = leads
-    .filter(l => l.meetingDate)
-    .slice(0, 4);
+      const { leads: mergedLeads, stats: mergedStats } = await getMergedLeadsAndStats(user, ownLeads, ownStats);
 
-  const latestFollowups = leads
-    .filter(l => l.followUpDate)
-    .slice(0, 4);
+      setStats(mergedStats);
+      setRecentLeads(mergedLeads.slice(0, 10));
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      showToast(error.response?.data?.message || "Failed to load dashboard data.", "error");
+    } finally {
+      setStatsLoading(false);
+      setRecentLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Handle Delete Lead
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+    try {
+      const res = await api.delete(`/leads/${deleteConfirm}`);
+      if (res.data.success) {
+        showToast("Lead deleted successfully!", "success");
+        setDeleteConfirm(null);
+        fetchData();
+      }
+    } catch (error) {
+      showToast("Failed to delete lead.", "error");
+    }
+  };
 
   return (
-    <div className="sales-stack">
-      {/* Title Banner */}
-      <div className="sales-title-banner">
-        <p>Sales Department Dashboard</p>
-        <h1>Welcome Back, Sales Representative</h1>
-      </div>
+    <div className="space-y-6">
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            className={`fixed top-20 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border ${
+              toast.type === "success" 
+                ? "bg-emerald-50 text-emerald-800 border-emerald-200" 
+                : "bg-rose-50 text-rose-800 border-rose-200"
+            }`}
+          >
+            {toast.type === "success" ? (
+              <CheckCircle className="text-emerald-600 shrink-0" size={20} />
+            ) : (
+              <AlertCircle className="text-rose-600 shrink-0" size={20} />
+            )}
+            <span className="text-sm font-bold">{toast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Stats Cards */}
-      <div className="sales-grid-stats">
-        <div className="sales-stat-card">
-          <div className="sales-stat-icon" style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}>
-            <Users size={18} />
-          </div>
-          <div>
-            <p className="sales-stat-label">Total Leads</p>
-            <h3 className="sales-stat-value">{totalLeads}</h3>
-          </div>
+      {/* Top Welcome Card */}
+      <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 border-l-8 border-l-[#0a2540]">
+        <div>
+          <p className="text-xs font-extrabold uppercase tracking-widest text-[#d4af37]">Reception & Front Desk</p>
+          <h1 className="text-xl sm:text-2xl font-black text-[#0a2540] mt-1">Sales Lead CRM Dashboard</h1>
         </div>
-
-        <div className="sales-stat-card">
-          <div className="sales-stat-icon" style={{ backgroundColor: "#fef3c7", color: "#d97706" }}>
-            <UserPlus size={18} />
-          </div>
-          <div>
-            <p className="sales-stat-label">New Leads</p>
-            <h3 className="sales-stat-value">{newLeads}</h3>
-          </div>
-        </div>
-
-        <div className="sales-stat-card">
-          <div className="sales-stat-icon" style={{ backgroundColor: "#f5f3ff", color: "#7c3aed" }}>
-            <TrendingUp size={18} />
-          </div>
-          <div>
-            <p className="sales-stat-label">Qualified</p>
-            <h3 className="sales-stat-value">{qualifiedLeads}</h3>
-          </div>
-        </div>
-
-        <div className="sales-stat-card">
-          <div className="sales-stat-icon" style={{ backgroundColor: "#ecfdf5", color: "#059669" }}>
-            <CheckCircle size={18} />
-          </div>
-          <div>
-            <p className="sales-stat-label">Won Deals</p>
-            <h3 className="sales-stat-value">{wonDeals}</h3>
-          </div>
-        </div>
-
-        <div className="sales-stat-card">
-          <div className="sales-stat-icon" style={{ backgroundColor: "#fef2f2", color: "#dc2626" }}>
-            <XCircle size={18} />
-          </div>
-          <div>
-            <p className="sales-stat-label">Lost Deals</p>
-            <h3 className="sales-stat-value">{lostDeals}</h3>
-          </div>
-        </div>
-
-        <div className="sales-stat-card">
-          <div className="sales-stat-icon" style={{ backgroundColor: "#fef3c7", color: "#d4af37" }}>
-            <DollarSign size={18} />
-          </div>
-          <div>
-            <p className="sales-stat-label">Monthly Rev.</p>
-            <h3 className="sales-stat-value" style={{ fontSize: "1.1rem" }}>{formatINR(totalWonRevenue)}</h3>
-          </div>
+        <div className="text-xs text-slate-500 font-medium bg-slate-50 border border-slate-100 rounded-xl px-4 py-2">
+          Logged in location: <span className="font-bold text-[#0a2540]">Main Corporate Branch</span>
         </div>
       </div>
 
-      {/* Target Progress Bar */}
-      <div className="sales-target-card">
-        <div className="sales-target-header">
-          <h4 className="sales-target-title">Monthly Sales Target Progress</h4>
-          <span className="sales-target-percentage">{targetPercent}% Achieved</span>
-        </div>
-        <div className="sales-progress-track">
-          <div className="sales-progress-fill" style={{ width: `${targetPercent}%` }}></div>
-        </div>
-        <div className="sales-target-footer">
-          <span>Won: {formatINR(totalWonRevenue)}</span>
-          <span>Target: {formatINR(targetRevenue)}</span>
-        </div>
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { title: "Today's Calls", value: stats.todaysCalls || 0, color: "border-t-[#0a2540]", iconBg: "bg-blue-50 text-[#0a2540]", icon: <Phone size={22} /> },
+          { title: "Interested Leads", value: stats.interestedLeads || 0, color: "border-t-emerald-500", iconBg: "bg-emerald-50 text-emerald-600", icon: <Award size={22} /> },
+          { title: "Pending Follow-ups", value: stats.pendingFollowUps || 0, color: "border-t-[#d4af37]", iconBg: "bg-amber-50 text-[#d4af37]", icon: <Clock size={22} /> },
+          { title: "Today's Meetings", value: stats.todaysMeetings || 0, color: "border-t-purple-500", iconBg: "bg-purple-50 text-purple-600", icon: <Calendar size={22} /> }
+        ].map((card, idx) => (
+          <div key={idx} className={`bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-t-4 ${card.color} flex items-center justify-between`}>
+            <div>
+              <p className="text-slate-400 text-[10px] font-extrabold uppercase tracking-wide">{card.title}</p>
+              <h2 className="text-2xl sm:text-3xl font-black text-[#0a2540] mt-1">
+                {statsLoading ? (
+                  <Loader2 className="animate-spin text-slate-300" size={24} />
+                ) : (
+                  card.value
+                )}
+              </h2>
+            </div>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${card.iconBg}`}>
+              {card.icon}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Two Column Grid */}
-      <div className="sales-dash-columns">
-        {/* Main Charts Col */}
-        <div className="sales-dash-main-col">
-          {/* Revenue Chart */}
-          <div className="sales-chart-card">
-            <h4 className="sales-chart-title">Revenue Progress Trend (INR Crores)</h4>
-            <div className="sales-chart-container">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#d4af37" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#d4af37" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
-                  <YAxis stroke="#64748b" fontSize={11} tickFormatter={(v) => `₹${v}Cr`} />
-                  <Tooltip formatter={(v) => [`₹${v} Cr`, "Revenue"]} />
-                  <Area type="monotone" dataKey="Revenue" stroke="#d4af37" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
-                </AreaChart>
-              </ResponsiveContainer>
+      {/* Main Layout for CRM Actions and Leads Table */}
+      <div className="space-y-6">
+        {/* Recent CRM Actions Panel */}
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between h-fit w-full">
+          <div>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+              <h3 className="text-md font-black text-[#0a2540] flex items-center gap-2">
+                <CheckCircle size={18} className="text-emerald-500" />
+                Recent CRM Actions
+              </h3>
             </div>
-          </div>
 
-          {/* Performance Chart */}
-          <div className="sales-chart-card">
-            <h4 className="sales-chart-title">Weekly Sales Performance (Leads vs Conversions)</h4>
-            <div className="sales-chart-container">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={performanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
-                  <YAxis stroke="#64748b" fontSize={11} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: "11px" }} />
-                  <Bar dataKey="Leads" fill="#0a2540" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Conversions" fill="#d4af37" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-
-        {/* Side Column Widgets */}
-        <div className="sales-dash-side-col">
-          {/* Upcoming Meetings */}
-          <div className="sales-widget-card">
-            <div className="sales-widget-header">
-              <h4 className="sales-widget-title">
-                <Calendar size={16} className="text-[#d4af37]" /> Upcoming Client Consultations
-              </h4>
-            </div>
-            <div className="sales-widget-list">
-              {upcomingMeetings.length === 0 ? (
-                <div style={{ fontSize: "11px", color: "#94a3b8", textAlign: "center", padding: "10px" }}>
-                  No upcoming meetings scheduled.
-                </div>
-              ) : (
-                upcomingMeetings.map((meeting) => (
-                  <div className="sales-row-item" key={meeting._id}>
-                    <div className="sales-row-info">
-                      <p className="sales-row-title">{meeting.companyName}</p>
-                      <p className="sales-row-subtitle">
-                        Contact: {meeting.contactPerson} | {meeting.loanType}
-                      </p>
-                      <p className="sales-row-subtitle" style={{ color: "#d4af37", fontWeight: 700 }}>
-                        {meeting.meetingDate} at {meeting.meetingTime || "N/A"}
-                      </p>
+            {recentLoading ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <Loader2 className="animate-spin text-[#0a2540]" size={28} />
+                <p className="text-[10px] text-slate-400 font-bold uppercase">Retrieving Leads...</p>
+              </div>
+            ) : recentLeads.length === 0 ? (
+              <div className="text-center py-12 text-slate-400 text-xs">
+                No recent leads created.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {recentLeads.map((lead) => (
+                  <div key={lead._id} className="p-3 bg-slate-50 hover:bg-slate-100/70 border border-slate-100 rounded-2xl flex flex-col justify-between gap-2 transition">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-mono text-[10px] font-black text-slate-400">{lead.leadId}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold ${
+                          lead.interested === "Yes" ? "bg-emerald-100 text-emerald-800" :
+                          lead.interested === "No" ? "bg-rose-100 text-rose-800" :
+                          "bg-amber-100 text-amber-800"
+                        }`}>
+                          {lead.interested}
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-[#0a2540] truncate">{lead.companyName}</h4>
+                        <p className="text-[10px] text-slate-500 font-medium">Contact: {lead.contactPerson}</p>
+                      </div>
                     </div>
-                    <span className="sales-row-badge-pill upcoming">Consultation</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Latest Followups */}
-          <div className="sales-widget-card">
-            <div className="sales-widget-header">
-              <h4 className="sales-widget-title">
-                <Clock size={16} className="text-[#d4af37]" /> Latest Follow-ups Due
-              </h4>
-            </div>
-            <div className="sales-widget-list">
-              {latestFollowups.length === 0 ? (
-                <div style={{ fontSize: "11px", color: "#94a3b8", textAlign: "center", padding: "10px" }}>
-                  No follow-ups due.
-                </div>
-              ) : (
-                latestFollowups.map((follow) => (
-                  <div className="sales-row-item" key={follow._id}>
-                    <div className="sales-row-info">
-                      <p className="sales-row-title">{follow.companyName}</p>
-                      <p className="sales-row-subtitle">Ph: {follow.phone}</p>
-                      <p className="sales-row-subtitle" style={{ fontStyle: "italic" }}>
-                        Call back: {follow.followUpDate} at {follow.followUpTime || "N/A"}
-                      </p>
+                    <div className="flex items-center justify-between border-t border-slate-100/70 pt-2 mt-1">
+                      <span className="text-[10px] font-extrabold text-[#d4af37]">{lead.loanType}</span>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => setViewLead(lead)} 
+                          className="p-1 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg text-slate-500 hover:text-[#0a2540] transition cursor-pointer"
+                          title="Quick View"
+                        >
+                          <Eye size={12} />
+                        </button>
+                        <button 
+                          onClick={() => setDeleteConfirm(lead._id)}
+                          className="p-1 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                          title="Delete Lead"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </div>
-                    <span
-                      className="sales-row-badge-pill"
-                      style={{
-                        backgroundColor: follow.interested === "Yes" ? "#ecfdf5" : "#fffbeb",
-                        color: follow.interested === "Yes" ? "#065f46" : "#b45309"
-                      }}
-                    >
-                      {follow.interested || "Pending"}
-                    </span>
                   </div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
+        </div>
 
-          {/* Recent Activities */}
-          <div className="sales-widget-card">
-            <div className="sales-widget-header">
-              <h4 className="sales-widget-title">
-                <Activity size={16} className="text-[#d4af37]" /> Sales Activities Log
-              </h4>
+        {/* Latest Leads Log */}
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm overflow-hidden w-full">
+          <h3 className="text-lg font-black text-[#0a2540] mb-5">Latest Leads Log</h3>
+          
+          {recentLoading ? (
+            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#0a2540]" size={28} /></div>
+          ) : recentLeads.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 text-xs">No leads logged.</div>
+          ) : (
+            <div className="overflow-x-auto scrollbar-thin">
+              <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
+                <thead>
+                  <tr className="bg-[#0a2540] text-[#d4af37] font-extrabold uppercase whitespace-nowrap">
+                    <th className="py-3 px-4 rounded-l-xl">LEAD ID</th>
+                    <th className="py-3 px-4">COMPANY NAME</th>
+                    <th className="py-3 px-4">CONTACT PERSON</th>
+                    <th className="py-3 px-4">PHONE NUMBER</th>
+                    <th className="py-3 px-4">LOAN TYPE</th>
+                    <th className="py-3 px-4 text-center">CIBIL</th>
+                    <th className="py-3 px-4 text-center">INTERESTED</th>
+                    <th className="py-3 px-4 text-center">CALL STATUS</th>
+                    <th className="py-3 px-4 text-center">MEETING</th>
+                    <th className="py-3 px-4 text-center">FOLLOW-UP</th>
+                    <th className="py-3 px-4 text-center rounded-r-xl">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700 whitespace-nowrap">
+                  {recentLeads.map((lead) => (
+                    <tr key={lead._id} className="hover:bg-slate-50 transition">
+                      <td className="py-3.5 px-4 font-mono font-black text-[#0a2540]">{lead.leadId}</td>
+                      <td className="py-3.5 px-4 font-bold text-[#0a2540]">{lead.companyName}</td>
+                      <td className="py-3.5 px-4 font-medium text-slate-800">{lead.contactPerson}</td>
+                      <td className="py-3.5 px-4 text-slate-600">{lead.phone}</td>
+                      <td className="py-3.5 px-4 font-extrabold text-slate-500">{lead.loanType}</td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                          lead.cibilScore >= 750 ? "bg-emerald-50 text-emerald-700" :
+                          lead.cibilScore >= 650 ? "bg-amber-50 text-amber-700" :
+                          "bg-rose-50 text-rose-700"
+                        }`}>
+                          {lead.cibilScore}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-black ${
+                          lead.interested === "Yes" ? "bg-emerald-100 text-emerald-800" :
+                          lead.interested === "No" ? "bg-rose-100 text-rose-800" :
+                          "bg-amber-100 text-amber-800"
+                        }`}>
+                          {lead.interested}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-center font-bold text-slate-600">{lead.callStatus}</td>
+                      <td className="py-3.5 px-4 text-center text-slate-500">
+                        {lead.meetingDate ? `${lead.meetingDate} ${lead.meetingTime || ""}` : "N/A"}
+                      </td>
+                      <td className="py-3.5 px-4 text-center text-slate-500">
+                        {lead.followUpDate ? `${lead.followUpDate} ${lead.followUpTime || ""}` : "N/A"}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <div className="flex justify-center gap-1.5">
+                          <button 
+                            onClick={() => setViewLead(lead)}
+                            className="p-1 text-slate-400 hover:text-[#0a2540] hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                            title="View Details"
+                          >
+                            <Eye size={14} />
+                          </button>
+                          <button 
+                            onClick={() => setDeleteConfirm(lead._id)}
+                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                            title="Delete Lead"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div className="sales-widget-list">
-              {activities.map((act) => (
-                <div className="sales-activity-item" key={act.id}>
-                  <div className="sales-activity-icon-wrap">
-                    <Activity size={12} />
+          )}
+        </div>
+      </div>
+
+      {/* Action Modals */}
+      {/* 1. View Lead Details Modal */}
+      {viewLead && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 print:hidden">
+          {/* Backdrop overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setViewLead(null)}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+          />
+
+          {/* Modal Container */}
+          <motion.div
+            initial={{ scale: 0.95, y: 20, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            exit={{ scale: 0.95, y: 20, opacity: 0 }}
+            transition={{ type: "spring", duration: 0.4, bounce: 0.15 }}
+            className="bg-white rounded-[18px] shadow-2xl max-w-[900px] w-full max-h-[80vh] flex flex-col border border-slate-200 overflow-hidden z-50 text-left"
+          >
+            {/* Sticky Header */}
+            <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#0a2540]/5 rounded-xl flex items-center justify-center text-[#0a2540]">
+                  <Briefcase size={20} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-[#0a2540]">Lead Profile</h3>
+                    <span className="font-mono text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">{viewLead.leadId}</span>
                   </div>
-                  <div className="sales-activity-content">
-                    <p className="sales-activity-desc">{act.text}</p>
-                    <span className="sales-activity-time">{act.time}</span>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Mhaveer Fincap CRM</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                  viewLead.interested === "Yes" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                  viewLead.interested === "No" ? "bg-rose-50 text-rose-700 border border-rose-200" :
+                  "bg-amber-50 text-amber-700 border border-amber-200"
+                }`}>
+                  {viewLead.interested}
+                </span>
+                <button
+                  onClick={() => setViewLead(null)}
+                  className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 transition cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-slate-50/50">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                
+                {/* Left Side (3 cols): Company Information & Remarks */}
+                <div className="md:col-span-3 space-y-6">
+                  {/* Company Info Card */}
+                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-4">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
+                      <User size={14} className="text-[#0a2540]" /> Company & Contact Information
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="sm:col-span-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Company Name</span>
+                        <p className="font-extrabold text-[#0a2540] text-sm mt-0.5">{viewLead.companyName || "N/A"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Contact Person</span>
+                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.contactPerson || "N/A"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Phone Number</span>
+                        <p className="font-bold text-slate-700 text-xs mt-0.5 flex items-center gap-1.5">
+                           {viewLead.phone || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">City</span>
+                        <p className="font-bold text-slate-700 text-xs mt-0.5">{viewLead.city || "N/A"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">State</span>
+                        <p className="font-bold text-slate-700 text-xs mt-0.5">{viewLead.state || "N/A"}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Address Card */}
+                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-3">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
+                      Address
+                    </h4>
+                    <div className="bg-slate-50/50 border border-slate-100/80 rounded-xl p-3.5 min-h-[90px] text-xs leading-relaxed text-slate-600 whitespace-pre-wrap font-medium">
+                      {viewLead.address ? viewLead.address : <span className="text-slate-400 italic">No Address Specified</span>}
+                    </div>
                   </div>
                 </div>
-              ))}
+
+                {/* Right Side (2 cols): Loan, Status, Meeting & Follow-up */}
+                <div className="md:col-span-2 space-y-6">
+                  {/* Loan & Financial Details Card */}
+                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-4">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
+                      <DollarSign size={14} className="text-emerald-500" /> Loan & Financials
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Loan Type</span>
+                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.loanType || "N/A"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CIBIL Score</span>
+                        <p className={`font-black text-xs mt-0.5 ${
+                          viewLead.cibilScore >= 750 ? "text-emerald-600" :
+                          viewLead.cibilScore >= 650 ? "text-amber-500" :
+                          "text-rose-500"
+                        }`}>
+                          {viewLead.cibilScore || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Loan Required</span>
+                        <p className="font-black text-emerald-600 text-xs mt-0.5">
+                          {viewLead.loanAmount ? `₹${viewLead.loanAmount.toLocaleString("en-IN")}` : "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Company Turnover</span>
+                        <p className="font-black text-slate-700 text-xs mt-0.5">
+                          {viewLead.companyTurnover ? `₹${viewLead.companyTurnover.toLocaleString("en-IN")}` : "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Call & Lead Status Card */}
+                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-4">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
+                      Status Overview
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Interested</span>
+                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.interested || "N/A"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Call Status</span>
+                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.callStatus || "N/A"}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Meeting Information Card */}
+                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-3">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
+                      <Calendar size={14} className="text-[#0a2540]" /> Meeting Details
+                    </h4>
+                    {viewLead.meetingDate ? (
+                      <div className="flex gap-4 items-center">
+                        <div className="w-9 h-9 bg-slate-50 rounded-lg flex items-center justify-center text-slate-500 shrink-0">
+                          <Calendar size={16} />
+                        </div>
+                        <div>
+                          <p className="font-extrabold text-slate-700 text-xs">{formatFriendlyDate(viewLead.meetingDate)}</p>
+                          <p className="text-[10px] font-bold text-slate-400 mt-0.5 flex items-center gap-1">
+                            <Clock size={10} /> {formatFriendlyTime(viewLead.meetingTime) || "Time Not Specified"}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-slate-400 text-xs italic py-1">No Meeting Scheduled</p>
+                    )}
+                  </div>
+
+                  {/* Follow-up Information highlighted card */}
+                  <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${
+                    viewLead.followUpDate 
+                      ? "bg-amber-50/60 border-amber-200/50 text-[#0a2540]" 
+                      : "bg-white border-slate-100 text-slate-700"
+                  }`}>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100/50 pb-2">
+                      <Clock size={14} className="text-amber-500" /> Follow-up Schedule
+                    </h4>
+                    {viewLead.followUpDate ? (
+                      <div className="flex gap-4 items-center">
+                        <div className="w-9 h-9 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-600 shrink-0">
+                          <Clock size={16} />
+                        </div>
+                        <div>
+                          <p className="font-extrabold text-slate-700 text-xs">{formatFriendlyDate(viewLead.followUpDate)}</p>
+                          <p className="text-[10px] font-bold text-slate-500 mt-0.5 flex items-center gap-1">
+                            <Clock size={10} /> {formatFriendlyTime(viewLead.followUpTime) || "Time Not Specified"}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-slate-400 text-xs italic py-1">No Follow-up Scheduled</p>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Sticky Footer */}
+            <div className="sticky bottom-0 bg-slate-50 border-t border-slate-100 px-6 py-4 flex items-center justify-end gap-3 z-10 shrink-0">
+              <button 
+                onClick={() => setViewLead(null)}
+                className="px-6 py-2.5 bg-[#0a2540] hover:bg-[#0a2540]/90 text-white rounded-xl font-bold transition text-xs shadow-sm cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* 2. Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full border border-slate-200 overflow-hidden">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-12 h-12 bg-rose-50 border border-rose-200 text-rose-500 rounded-2xl flex items-center justify-center mx-auto">
+                <Trash2 size={24} />
+              </div>
+              <h3 className="text-md font-black text-[#0a2540]">Confirm Delete</h3>
+              <p className="text-xs text-slate-500">Are you sure you want to delete this lead? This action cannot be undone.</p>
+            </div>
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end">
+              <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-slate-600 font-bold transition text-xs">
+                Cancel
+              </button>
+              <button onClick={handleDelete} className="px-4 py-2 bg-rose-600 hover:bg-rose-700 rounded-xl text-white font-bold transition text-xs">
+                Delete
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

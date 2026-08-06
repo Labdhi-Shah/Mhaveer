@@ -4,6 +4,9 @@ import { Eye, EyeOff } from "lucide-react";
 import logoSvg from "../../assets/logo.svg";
 import "./SalesDepartment.css";
 
+const rawAPI = import.meta.env.VITE_API_URL || "https://mhaveer.onrender.com";
+const API = rawAPI.endsWith("/") ? rawAPI.slice(0, -1) : rawAPI;
+
 export default function SalesLogin() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -29,7 +32,7 @@ export default function SalesLogin() {
     return "";
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setEmailError("");
     setPasswordError("");
@@ -44,33 +47,59 @@ export default function SalesLogin() {
       return;
     }
 
-    setLoading(true);
-    setStatusMessage("Signing in...");
-    setStatusType("success");
-
-    // Simulate API delay
-    setTimeout(() => {
-      // Store mock user token and info
-      localStorage.setItem("sales_token", "mock-sales-jwt-token-12345");
-      localStorage.setItem(
-        "sales_user",
-        JSON.stringify({
-          name: "Sales Officer",
-          email: email,
-          role: "Sales Representative",
-          employeeId: "SLS-40291",
-          branch: "Corporate Gujarat"
-        })
-      );
-      
-      setStatusMessage("✅ Login Successful! Redirecting...");
+    try {
+      setLoading(true);
+      setStatusMessage("Signing in...");
       setStatusType("success");
-      
-      setTimeout(() => {
+
+      const response = await fetch(`${API}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        if (data.employee && data.employee.role === "Sales Department") {
+          localStorage.setItem("token", data.token);
+          localStorage.setItem(
+            "user",
+            JSON.stringify({
+              id: data.employee.id,
+              name: data.employee.name,
+              fullName: data.employee.fullName,
+              email: data.employee.email || email,
+              role: data.employee.role,
+              employeeId: data.employee.employeeId || "SLS-40291",
+              branch: "Corporate Gujarat"
+            })
+          );
+
+          setStatusMessage("✅ Login Successful! Redirecting...");
+          setStatusType("success");
+          setTimeout(() => {
+            setLoading(false);
+            window.location.href = "/sales/dashboard";
+          }, 800);
+        } else {
+          setStatusMessage("Access Denied: Only Sales Representative accounts can access this portal");
+          setStatusType("error");
+          setLoading(false);
+        }
+      } else {
+        setStatusMessage(data.message || "Invalid Email or Password");
+        setStatusType("error");
         setLoading(false);
-        navigate("/sales/dashboard", { replace: true });
-      }, 800);
-    }, 1000);
+      }
+    } catch (err) {
+      console.error(err);
+      setStatusMessage("Server Error");
+      setStatusType("error");
+      setLoading(false);
+    }
   };
 
   const handleForgotPassword = (e) => {

@@ -15,7 +15,8 @@ import {
   User,
   Settings as SettingsIcon,
   LogOut,
-  X
+  X,
+  FileText
 } from "lucide-react";
 import logoSvg from "../../assets/logo.svg";
 import "./SalesDepartment.css";
@@ -36,7 +37,7 @@ export default function SalesLayout() {
   });
 
   useEffect(() => {
-    const stored = localStorage.getItem("sales_user");
+    const stored = localStorage.getItem("user");
     if (stored) {
       try {
         setUser(JSON.parse(stored));
@@ -59,6 +60,7 @@ export default function SalesLayout() {
     if (path.endsWith("/dashboard")) return "Sales Department Dashboard";
     if (path.endsWith("/leads")) return "Sales Leads Management";
     if (path.endsWith("/customers")) return "Valued Customers Directory";
+    if (path.endsWith("/registration")) return "Customer Registration & Loan Application";
     if (path.endsWith("/follow-up")) return "Call Back Follow-ups";
     if (path.endsWith("/meetings")) return "Scheduled Meetings Log";
     if (path.endsWith("/pipeline")) return "Interactive Sales Pipeline";
@@ -69,8 +71,8 @@ export default function SalesLayout() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("sales_token");
-    localStorage.removeItem("sales_user");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     navigate("/sales/login", { replace: true });
   };
 
@@ -84,6 +86,7 @@ export default function SalesLayout() {
   const menuItems = [
     { label: "Dashboard", path: "/sales/dashboard", icon: <LayoutDashboard size={18} /> },
     { label: "Leads", path: "/sales/leads", icon: <Users size={18} /> },
+    { label: "Customer Registration", path: "/sales/registration", icon: <FileText size={18} /> },
     { label: "Customers", path: "/sales/customers", icon: <FolderHeart size={18} /> },
     { label: "Follow Up", path: "/sales/follow-up", icon: <Clock size={18} /> },
     { label: "Meetings", path: "/sales/meetings", icon: <Calendar size={18} /> },

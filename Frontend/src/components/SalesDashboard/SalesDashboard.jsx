@@ -15,7 +15,6 @@ const REQUIRED_DOCUMENTS = [
 ];
 
 export default function SalesDashboard() {
-
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [toast, setToast] = useState(null);
@@ -57,7 +56,7 @@ export default function SalesDashboard() {
       ...prev,
       [docId]: fileInfo
     }));
-
+    
     // Find the title for the uploaded document to customize the message
     const docTitle = REQUIRED_DOCUMENTS.find(d => d.id === docId)?.title || "Document";
     showToast(`${docTitle} uploaded successfully.`, "success");
@@ -69,7 +68,7 @@ export default function SalesDashboard() {
       delete updated[docId];
       return updated;
     });
-
+    
     const docTitle = REQUIRED_DOCUMENTS.find(d => d.id === docId)?.title || "Document";
     showToast(`${docTitle} removed.`, "success");
   };
@@ -140,10 +139,11 @@ export default function SalesDashboard() {
       {/* Toast Alert popup */}
       {toast && (
         <div
-          className={`fixed top-20 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border animate-bounce ${toast.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+          className={`fixed top-20 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border animate-bounce ${
+            toast.type === "success" 
+              ? "bg-emerald-50 text-emerald-800 border-emerald-200" 
               : "bg-rose-50 text-rose-800 border-rose-200"
-            }`}
+          }`}
         >
           {toast.type === "success" ? (
             <CheckCircle className="text-emerald-600 shrink-0" size={20} />
@@ -202,7 +202,7 @@ export default function SalesDashboard() {
             <div className="completion-percentage-notice">
               Uploaded: <span style={{ color: "#0a2540", fontWeight: 900 }}>{uploadedCount} / {REQUIRED_DOCUMENTS.length}</span> ({percentComplete}%)
             </div>
-
+            
             <button
               type="submit"
               className="btn-submit"
@@ -226,7 +226,7 @@ export default function SalesDashboard() {
             <p>
               Your loan application documents have been received. The credit analysis department will initiate verification shortly.
             </p>
-
+            
             <div className="success-modal-summary">
               <h4>Uploaded Files Summary</h4>
               <ul className="summary-list">

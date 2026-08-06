@@ -21,7 +21,7 @@ export default function SalesProfile() {
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
+    const stored = localStorage.getItem("sales_user");
     if (stored) {
       try {
         setUser(JSON.parse(stored));
@@ -48,7 +48,7 @@ export default function SalesProfile() {
       reader.onloadend = () => {
         const updated = { ...user, avatar: reader.result };
         setUser(updated);
-        localStorage.setItem("user", JSON.stringify(updated));
+        localStorage.setItem("sales_user", JSON.stringify(updated));
         showToast("Profile image updated successfully!", "success");
       };
       reader.readAsDataURL(file);

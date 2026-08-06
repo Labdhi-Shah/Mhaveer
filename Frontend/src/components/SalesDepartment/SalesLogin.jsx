@@ -69,7 +69,7 @@ export default function SalesLogin() {
             "user",
             JSON.stringify({
               id: data.employee.id,
-              name: data.employee.name,
+              name: data.employee.name || data.employee.fullName,
               fullName: data.employee.fullName,
               email: data.employee.email || email,
               role: data.employee.role,
@@ -82,7 +82,7 @@ export default function SalesLogin() {
           setStatusType("success");
           setTimeout(() => {
             setLoading(false);
-            window.location.href = "/sales/dashboard";
+            navigate("/sales/dashboard", { replace: true });
           }, 800);
         } else {
           setStatusMessage("Access Denied: Only Sales Representative accounts can access this portal");

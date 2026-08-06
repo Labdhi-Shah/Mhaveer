@@ -14,6 +14,7 @@ import EmployeeDashboard from "./components/EmployeeDashboard";
 import NewLeadView from "./components/NewLeadView";
 import AttendanceView from "./components/AttendanceView";
 import TeamPerformanceView from "./components/TeamPerformanceView";
+import SalesDashboard from "./components/SalesDashboard/SalesDashboard";
 
 // Import Sales Department Module Components
 import SalesLogin from "./components/SalesDepartment/SalesLogin";
@@ -21,7 +22,6 @@ import SalesLayout from "./components/SalesDepartment/SalesLayout";
 import SalesDashboardPage from "./components/SalesDepartment/SalesDashboard";
 import SalesLeads from "./components/SalesDepartment/SalesLeads";
 import SalesCustomers from "./components/SalesDepartment/SalesCustomers";
-import SalesRegistration from "./components/SalesDepartment/SalesRegistration";
 import SalesFollowUp from "./components/SalesDepartment/SalesFollowUp";
 import SalesMeetings from "./components/SalesDepartment/SalesMeetings";
 import SalesPipeline from "./components/SalesDepartment/SalesPipeline";
@@ -81,7 +81,7 @@ export default function App() {
             <Route path="dashboard" element={<SalesDashboardPage />} />
             <Route path="leads" element={<SalesLeads />} />
             <Route path="customers" element={<SalesCustomers />} />
-            <Route path="registration" element={<SalesRegistration />} />
+            <Route path="registration" element={<SalesDashboard />} />
             <Route path="follow-up" element={<SalesFollowUp />} />
             <Route path="meetings" element={<SalesMeetings />} />
             <Route path="pipeline" element={<SalesPipeline />} />

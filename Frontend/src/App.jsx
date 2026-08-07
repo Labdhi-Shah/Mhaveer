@@ -119,7 +119,7 @@ export default function App() {
             <Route
               path="team-leader-dashboard"
               element={
-                <RoleProtectedRoute allowedRoles={["Team Leader"]}>
+                <RoleProtectedRoute allowedRoles={["Team Leader", "Manager", "Telecalling / Lead Generation", "Reception / Front Desk", "Employee", "Operations Department", "Legal Department", "Accounts & Finance", "Collections & Recovery", "Customer Support", "Marketing", "IT Department", "Insurance Department"]}>
                   <EmployeeDashboard />
                 </RoleProtectedRoute>
               }

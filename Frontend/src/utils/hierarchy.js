@@ -32,7 +32,7 @@ export const getUserRoleCategory = (user) => {
   if (!user) return "Employee";
   const roleStr = typeof user === "string" ? user : (user.role || "");
   const role = roleStr.toLowerCase();
-  if (role === "superadmin" || role === "admin") return "Admin";
+  if (role === "superadmin" || role === "admin" || role.includes("admin")) return "Admin";
   if (
     role === "manager" ||
     role === "branch manager" ||

@@ -37,6 +37,12 @@ export default function DashboardView() {
           <p className="text-xs font-extrabold uppercase tracking-widest text-[#d4af37]">Executive Overview</p>
           <h1 className="text-xl sm:text-2xl font-black text-[#0a2540]">Super Admin Dashboard</h1>
         </div>
+        <button
+          onClick={() => navigate("/add-employee")}
+          className="bg-[#d4af37] hover:bg-[#c39e2d] text-[#0a2540] px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition shadow-md whitespace-nowrap"
+        >
+          Add New Employee
+        </button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">

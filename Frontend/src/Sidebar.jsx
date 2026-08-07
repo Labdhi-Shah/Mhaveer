@@ -28,7 +28,7 @@ export default function Sidebar({ isOpen, onClose }) {
   const isEmployee = roleCategory === "Employee" && !isSales;
 
   const getPortalLabel = () => {
-    if (isSuperAdmin) return "ADMIN PANEL";
+    if (isSuperAdmin) return "NAVIGATION";
     if (isManager) return "MANAGER PORTAL";
     if (isTeamLeader) return "TEAM LEADER PORTAL";
     if (isSales) return "SALES PORTAL";

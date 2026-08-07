@@ -4,9 +4,6 @@ import { AuthProvider } from "./context/AuthContext";
 import DashboardLayout from "./components/DashboardLayout";
 import SalesDashboard from "./components/SalesDashboard/SalesDashboard";
 import EmployeeDashboard from "./components/EmployeeDashboard";
-import DashboardView from "./DashboardView";
-import EmployeeList from "./EmployeeList";
-import AddEmployee from "./AddEmployee";
 import TeamPerformanceView from "./components/TeamPerformanceView";
 import NewLeadView from "./components/NewLeadView";
 import MyLeadsView from "./components/MyLeadsView";
@@ -14,6 +11,7 @@ import FollowUpView from "./components/FollowUpView";
 import MeetingsView from "./components/MeetingsView";
 import AttendanceView from "./components/AttendanceView";
 import ProfileView from "./components/ProfileView";
+import AdminDashboard from "./Page/AdminDashboard";
 
 // Checks if the user is authenticated (token exists in localStorage)
 const ProtectedRoute = ({ children }) => {
@@ -99,7 +97,37 @@ export default function App() {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           
-
+          {/* Top-level Admin Routes (Restoring original AdminDashboard exactly) */}
+          <Route
+            path="/admin-dashboard"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["Admin"]}>
+                  <AdminDashboard />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employees"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["Admin"]}>
+                  <AdminDashboard />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-employee"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["Admin"]}>
+                  <AdminDashboard />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/"
@@ -134,31 +162,6 @@ export default function App() {
               element={
                 <RoleProtectedRoute allowedRoles={["HR"]}>
                   <EmployeeDashboard />
-                </RoleProtectedRoute>
-              }
-            />
-
-            <Route
-              path="admin-dashboard"
-              element={
-                <RoleProtectedRoute allowedRoles={["Admin"]}>
-                  <DashboardView />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="employees"
-              element={
-                <RoleProtectedRoute allowedRoles={["Admin"]}>
-                  <EmployeeList />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="add-employee"
-              element={
-                <RoleProtectedRoute allowedRoles={["Admin"]}>
-                  <AddEmployee />
                 </RoleProtectedRoute>
               }
             />

@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Users, ArrowRight, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "./api";
-export default function DashboardView() {
+export default function DashboardView({ onOpenForm }) {
   const navigate = useNavigate();
   const [stats, setStats] = useState({ totalEmployees: 0, activeEmployees: 0, inactiveEmployees: 0 });
   const [recentEmployees, setRecentEmployees] = useState([]);
@@ -38,7 +38,7 @@ export default function DashboardView() {
           <h1 className="text-xl sm:text-2xl font-black text-[#0a2540]">Super Admin Dashboard</h1>
         </div>
         <button
-          onClick={() => navigate("/add-employee")}
+          onClick={onOpenForm || (() => navigate("/add-employee"))}
           className="bg-[#d4af37] hover:bg-[#c39e2d] text-[#0a2540] px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition shadow-md whitespace-nowrap"
         >
           Add New Employee

@@ -17,7 +17,7 @@ const seedData = [
     employeeId: "EMP-TL-01",
     name: "Team Leader User",
     personalEmail: "tl.personal@mhaveerfincap.com",
-    officialEmail: "tl.mhaveer@mhaveerfincap.com",
+    officialEmail: "tl@mhaveerfincap.com",
     phone: "9988776654",
     role: "Team Leader",
     department: "Sales Department",
@@ -28,7 +28,7 @@ const seedData = [
     employeeId: "EMP-HR-01",
     name: "HR User",
     personalEmail: "hr.personal@mhaveerfincap.com",
-    officialEmail: "hr.mhaveer@mhaveerfincap.com",
+    officialEmail: "hr@mhaveerfincap.com",
     phone: "9988776655",
     role: "Human Resources (HR)",
     department: "HR Department",
@@ -39,11 +39,11 @@ const seedData = [
     employeeId: "EMP-ADMIN-01",
     name: "Admin User",
     personalEmail: "admin.personal@mhaveerfincap.com",
-    officialEmail: "admin.mhaveer@mhaveerfincap.com",
+    officialEmail: "admin@mhaveerfincap.com",
     phone: "9988776656",
     role: "Administration (Admin)",
     department: "Administration",
-    password: "Admin@123",
+    password: "123456",
     status: "Active"
   }
 ];
@@ -54,15 +54,30 @@ const seedUsers = async () => {
     
     // Clean up seed users if they exist to completely remove them first, preventing duplicates or outdated values
     await Employee.deleteMany({ 
-      officialEmail: { 
-        $in: [
-          "sales@mhaveerfincap.com",
-          "admin.mhaveer@mhaveerfincap.com", 
-          "tl.mhaveer@mhaveerfincap.com", 
-          "hr.mhaveer@mhaveerfincap.com"
-        ] 
-      } 
+      $or: [
+        { officialEmail: { 
+          $in: [
+            "sales@mhaveerfincap.com",
+            "admin@mhaveerfincap.com", 
+            "tl@mhaveerfincap.com", 
+            "hr@mhaveerfincap.com",
+            "admin.mhaveer@mhaveerfincap.com",
+            "tl.mhaveer@mhaveerfincap.com",
+            "hr.mhaveer@mhaveerfincap.com"
+          ] 
+        } },
+        { employeeId: {
+          $in: [
+            "EMP-SALES-01",
+            "EMP-TL-01",
+            "EMP-HR-01",
+            "EMP-ADMIN-01"
+          ]
+        } }
+      ]
     });
+
+
 
 
     for (const data of seedData) {

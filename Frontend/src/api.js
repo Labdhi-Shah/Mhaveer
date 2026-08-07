@@ -33,10 +33,13 @@ api.interceptors.response.use(
     // Auto-logout on 401 Unauthorized
     if (error.response && error.response.status === 401) {
       localStorage.removeItem("token");
-      localStorage.removeItem("employee");
-      window.location.href = "/";
+      localStorage.removeItem("user");
+      localStorage.removeItem("loginTime");
+      localStorage.removeItem("attendanceId");
+      window.location.href = "/login";
       return Promise.reject(error);
     }
+
 
     // Auto-retry network errors or 5xx server errors (Render cold starts)
     if (!config || !config.retry) {

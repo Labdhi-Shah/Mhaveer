@@ -12,6 +12,39 @@ const seedData = [
     department: "Sales Department",
     password: "Sales@123",
     status: "Active"
+  },
+  {
+    employeeId: "EMP-TL-01",
+    name: "Team Leader User",
+    personalEmail: "tl.personal@mhaveerfincap.com",
+    officialEmail: "tl.mhaveer@mhaveerfincap.com",
+    phone: "9988776654",
+    role: "Team Leader",
+    department: "Sales Department",
+    password: "TL@123",
+    status: "Active"
+  },
+  {
+    employeeId: "EMP-HR-01",
+    name: "HR User",
+    personalEmail: "hr.personal@mhaveerfincap.com",
+    officialEmail: "hr.mhaveer@mhaveerfincap.com",
+    phone: "9988776655",
+    role: "Human Resources (HR)",
+    department: "HR Department",
+    password: "HR@123",
+    status: "Active"
+  },
+  {
+    employeeId: "EMP-ADMIN-01",
+    name: "Admin User",
+    personalEmail: "admin.personal@mhaveerfincap.com",
+    officialEmail: "admin.mhaveer@mhaveerfincap.com",
+    phone: "9988776656",
+    role: "Administration (Admin)",
+    department: "Administration",
+    password: "Admin@123",
+    status: "Active"
   }
 ];
 
@@ -19,16 +52,18 @@ const seedUsers = async () => {
   try {
     console.log("Checking DB for seed users...");
     
-    // Clean up other seed users if they exist to completely remove them
+    // Clean up seed users if they exist to completely remove them first, preventing duplicates or outdated values
     await Employee.deleteMany({ 
       officialEmail: { 
         $in: [
-          "admin@mhaveerfincap.com", 
-          "tl@mhaveerfincap.com", 
-          "hr@mhaveerfincap.com"
+          "sales@mhaveerfincap.com",
+          "admin.mhaveer@mhaveerfincap.com", 
+          "tl.mhaveer@mhaveerfincap.com", 
+          "hr.mhaveer@mhaveerfincap.com"
         ] 
       } 
     });
+
 
     for (const data of seedData) {
       const existingEmail = await Employee.findOne({ officialEmail: data.officialEmail });
@@ -52,3 +87,4 @@ const seedUsers = async () => {
 };
 
 module.exports = seedUsers;
+

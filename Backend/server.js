@@ -1,6 +1,7 @@
+const dotenv = require("dotenv");
+dotenv.config();
 const express = require("express");
 const cors = require("cors");
-const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
@@ -10,7 +11,7 @@ const leadRoutes = require("./routes/leadRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const path = require("path");
-dotenv.config();
+
 
 const app = express();
 

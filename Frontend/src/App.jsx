@@ -14,6 +14,7 @@ import FollowUpView from "./components/FollowUpView";
 import MeetingsView from "./components/MeetingsView";
 import AttendanceView from "./components/AttendanceView";
 import ProfileView from "./components/ProfileView";
+import AdminDashboard from "./Page/AdminDashboard";
 
 // Checks if the user is authenticated (token exists in localStorage)
 const ProtectedRoute = ({ children }) => {
@@ -96,6 +97,38 @@ export default function App() {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           
+          {/* Top-level Admin Routes (Restoring original AdminDashboard exactly) */}
+          <Route
+            path="/admin-dashboard"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["Admin"]}>
+                  <AdminDashboard />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employees"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["Admin"]}>
+                  <AdminDashboard />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-employee"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["Admin"]}>
+                  <AdminDashboard />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/"
             element={
@@ -132,32 +165,6 @@ export default function App() {
                 </RoleProtectedRoute>
               }
             />
-            <Route
-              path="admin-dashboard"
-              element={
-                <RoleProtectedRoute allowedRoles={["Admin"]}>
-                  <DashboardView />
-                </RoleProtectedRoute>
-              }
-            />
-
-            {/* Administrative management routes */}
-            <Route
-              path="employees"
-              element={
-                <RoleProtectedRoute allowedRoles={["Admin"]}>
-                  <EmployeeList />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="add-employee"
-              element={
-                <RoleProtectedRoute allowedRoles={["Admin"]}>
-                  <AddEmployee />
-                </RoleProtectedRoute>
-              }
-            />
 
             {/* Team performance routes */}
             <Route
@@ -184,4 +191,5 @@ export default function App() {
       </Router>
     </AuthProvider>
   );
-}
+}
+

@@ -41,7 +41,7 @@ const seedData = [
     personalEmail: "admin.personal@mhaveerfincap.com",
     officialEmail: "admin@mhaveerfincap.com",
     phone: "9988776656",
-    role: "Administration (Admin)",
+    role: "SuperAdmin",
     department: "Administration",
     password: "123456",
     status: "Active"

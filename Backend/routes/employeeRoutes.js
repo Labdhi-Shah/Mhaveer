@@ -11,7 +11,14 @@ const {
 
 router.use(authMiddleware);
 
-router.route("/").post(createEmployee).get(getEmployees);
-router.route("/:id").get(getEmployeeById).put(updateEmployee).delete(deleteEmployee);
+router.route("/")
+  .post(authMiddleware.authorize("Administration (Admin)", "Admin", "SuperAdmin", "Human Resources (HR)", "HR"), createEmployee)
+  .get(getEmployees);
+
+router.route("/:id")
+  .get(getEmployeeById)
+  .put(authMiddleware.authorize("Administration (Admin)", "Admin", "SuperAdmin", "Human Resources (HR)", "HR"), updateEmployee)
+  .delete(authMiddleware.authorize("Administration (Admin)", "Admin", "SuperAdmin"), deleteEmployee);
 
 module.exports = router;
+

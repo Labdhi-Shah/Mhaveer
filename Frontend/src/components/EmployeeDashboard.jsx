@@ -158,7 +158,7 @@ export default function EmployeeDashboard() {
       {/* Top Welcome Card */}
       <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 border-l-8 border-l-[#0a2540]">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-widest text-[#d4af37]">Reception & Front Desk</p>
+          <p className="text-xs font-extrabold uppercase tracking-widest text-[#d4af37]">{user?.role || "Reception & Front Desk"}</p>
           <h1 className="text-xl sm:text-2xl font-black text-[#0a2540] mt-1">Lead Management CRM Dashboard</h1>
         </div>
         <div className="text-xs text-slate-500 font-medium bg-slate-50 border border-slate-100 rounded-xl px-4 py-2">

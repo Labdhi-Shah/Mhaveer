@@ -39,43 +39,39 @@ function Login() {
 
       if (response.ok && data.success) {
         localStorage.setItem("token", data.token);
-
-        if (data.employee) {
-          // Employee Login
-          const employeeData = {
-            fullName: data.employee.fullName,
-            role: data.employee.role,
-            email: email, // use logged in email as official email fallback
-            employeeId: "EMP-" + Math.floor(100000 + Math.random() * 900000) // unique mock ID
-          };
-          localStorage.setItem("user", JSON.stringify(employeeData));
-
-          // Start the working timer using server time
-          if (data.loginTime) {
-            localStorage.setItem("loginTime", data.loginTime);
-          } else if (!localStorage.getItem("loginTime")) {
-            localStorage.setItem("loginTime", new Date().toISOString());
-          }
-
-          if (data.attendanceId) {
-            localStorage.setItem("attendanceId", data.attendanceId);
-          }
-
-          setMessage("✅ Login Successful");
-          setTimeout(() => {
-            window.location.href = "/dashboard";
-          }, 1000);
-        } else {
-          // Super Admin Login
-          localStorage.setItem("user", JSON.stringify({ email, name: "Super Admin", role: "SuperAdmin" }));
-          setMessage("✅ Login Successful");
-          setTimeout(() => {
-            window.location.href = "/dashboard";
-          }, 1000);
+        const userData = data.employee ? {
+          fullName: data.employee.name || data.employee.fullName,
+          role: data.employee.role,
+          email: data.employee.officialEmail || data.employee.email || email,
+          employeeId: data.employee.employeeId || "EMP-" + Math.floor(100000 + Math.random() * 900000)
+        } : {
+          fullName: "Super Admin",
+          role: "Administration (Admin)",
+          email: email,
+          employeeId: "EMP-ADMIN-01"
+        };
+        
+        localStorage.setItem("user", JSON.stringify(userData));
+        
+        // Start the working timer using server time
+        if (data.loginTime) {
+          localStorage.setItem("loginTime", data.loginTime);
+        } else if (!localStorage.getItem("loginTime")) {
+          localStorage.setItem("loginTime", new Date().toISOString());
         }
+        
+        if (data.attendanceId) {
+          localStorage.setItem("attendanceId", data.attendanceId);
+        }
+        
+        setMessage("✅ Login Successful");
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 1000);
       } else {
         setMessage(data.message || "Invalid Email or Password");
       }
+
     } catch (error) {
       console.log(error);
       setMessage("Server Error");

@@ -6,6 +6,29 @@ const Attendance = require("../models/Attendance");
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
+  // Super Admin Check
+  if (email === "admin@mhaveerfincap.com" && password === "123456") {
+    const token = jwt.sign(
+      { email, role: "SuperAdmin" },
+      process.env.JWT_SECRET || "supersecretkey",
+      { expiresIn: "1d" }
+    );
+
+    return res.json({
+      success: true,
+      token,
+      message: "Login Success",
+      employee: {
+        id: "admin-1",
+        fullName: "Super Admin",
+        name: "Super Admin",
+        email: "admin@mhaveerfincap.com",
+        officialEmail: "admin@mhaveerfincap.com",
+        role: "SuperAdmin"
+      }
+    });
+  }
+
   // Employee Check
   try {
     const employee = await Employee.findOne({ officialEmail: email });

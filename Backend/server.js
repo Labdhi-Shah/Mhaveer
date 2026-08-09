@@ -16,10 +16,7 @@ const path = require("path");
 const app = express();
 
 // Database Connection
-connectDB().then(() => {
-  const seedUsers = require("./utils/seeder");
-  seedUsers();
-});
+connectDB();
 
 // Middleware
 const allowedOrigins = process.env.ALLOWED_ORIGINS

@@ -85,7 +85,7 @@ export default function Sidebar({ isOpen, onClose }) {
                     }`}
                 >
                   <LayoutDashboard size={18} />
-                  Sales Dashboard
+                  Dashboard
                 </button>
 
                 <button
@@ -159,40 +159,6 @@ export default function Sidebar({ isOpen, onClose }) {
             {(isManager || isTeamLeader || isEmployee) && (
               <>
                 <button
-                  onClick={() => handleNavigation("/new-lead")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/new-lead"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                    }`}
-                >
-                  <PlusCircle size={18} />
-                  New Lead
-                </button>
-
-                <button
-                  onClick={() => handleNavigation("/my-leads")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/my-leads"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                    }`}
-                >
-                  <FolderHeart size={18} />
-                  My Leads
-                </button>
-
-                <button
-                  onClick={() => handleNavigation("/follow-up")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/follow-up"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                    }`}
-                >
-                  <Clock size={18} />
-                  Follow-up
-                </button>
-
-
-                <button
                   onClick={() => handleNavigation("/meetings")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/meetings"
                       ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
@@ -200,7 +166,7 @@ export default function Sidebar({ isOpen, onClose }) {
                     }`}
                 >
                   <Calendar size={18} />
-                  Meetings
+                  Meeting
                 </button>
 
                 <button

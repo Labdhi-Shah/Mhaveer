@@ -304,15 +304,14 @@ export default function MeetingsView() {
                       {currentStatus === "Completed" && <option value="Completed">Completed</option>}
                     </select>
 
-                    {currentStatus === "Confirm" && (
+                    {currentStatus !== "Completed" && (
                       <button
                         onClick={() => {
                           updateMeetingStatus(lead._id, "Completed");
                         }}
                         className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1 shadow-sm shrink-0"
                       >
-                        <Check size={12} />
-                        Submit
+                        Submit/Complete
                       </button>
                     )}
                   </div>

@@ -39,16 +39,11 @@ function Login() {
 
       if (response.ok && data.success) {
         localStorage.setItem("token", data.token);
-        const userData = data.employee ? {
+        const userData = {
           fullName: data.employee.name || data.employee.fullName,
           role: data.employee.role,
           email: data.employee.officialEmail || data.employee.email || email,
-          employeeId: data.employee.employeeId || "EMP-" + Math.floor(100000 + Math.random() * 900000)
-        } : {
-          fullName: "Super Admin",
-          role: "Administration (Admin)",
-          email: email,
-          employeeId: "EMP-ADMIN-01"
+          employeeId: data.employee.employeeId
         };
         
         localStorage.setItem("user", JSON.stringify(userData));

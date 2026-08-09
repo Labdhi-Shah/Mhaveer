@@ -42,7 +42,7 @@ const RoleProtectedRoute = ({ children, allowedRoles }) => {
       if (userRole === targetRole) return true;
       if (targetRole === 'admin' && (userRole === 'administration (admin)' || userRole === 'superadmin' || userRole === 'admin')) return true;
       if (targetRole === 'hr' && (userRole === 'human resources (hr)' || userRole === 'hr')) return true;
-      if (targetRole === 'sales' && (userRole === 'sales department' || userRole === 'sales')) return true;
+      if (targetRole === 'sales' && (userRole === 'sales department' || userRole === 'sales' || userRole.includes('kyc'))) return true;
       if (targetRole === 'team leader' && (userRole === 'team leader' || userRole === 'tl' || userRole === 'teamleader')) return true;
       return userRole.includes(targetRole) || targetRole.includes(userRole);
     });
@@ -75,7 +75,7 @@ const DashboardRedirect = () => {
     return <Navigate to="/login" replace />;
   }
 
-  if (role === "sales department" || role === "sales") {
+  if (role === "sales department" || role === "sales" || role.includes("kyc")) {
     return <Navigate to="/sales-dashboard" replace />;
   } else if (role === "team leader" || role === "tl" || role === "teamleader") {
     return <Navigate to="/team-leader-dashboard" replace />;

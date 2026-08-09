@@ -24,7 +24,8 @@ export default function Sidebar({ isOpen, onClose }) {
   const isSuperAdmin = roleCategory === "Admin";
   const isManager = roleCategory === "Manager";
   const isTeamLeader = roleCategory === "Team Leader";
-  const isSales = user?.role === "Sales Department";
+  const userRoleStr = user?.role?.toLowerCase() || "";
+  const isSales = userRoleStr === "sales department" || userRoleStr === "sales" || userRoleStr.includes("kyc");
   const isEmployee = roleCategory === "Employee" && !isSales;
 
   const getPortalLabel = () => {

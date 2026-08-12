@@ -175,9 +175,10 @@ exports.getEmployees = async (req, res) => {
       name: emp.name,
       fullName: emp.name,
       personalEmail: emp.personalEmail,
-      email: emp.personalEmail, // API requirement: Do not return officialEmail here, send personalEmail to frontend table
+      email: emp.personalEmail,
       phone: emp.phone,
       role: emp.role,
+      department: emp.department || "",
       status: emp.status
     }));
 

@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
-import { getUserRoleCategory } from "./utils/hierarchy";
+import { getDepartmentRoute, getUserDepartment, getUserRole } from "./utils/hierarchy";
 
 export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
@@ -19,33 +19,44 @@ export default function Sidebar({ isOpen, onClose }) {
     }
   };
 
-  const roleCategory = getUserRoleCategory(user);
-
-  const isSuperAdmin = roleCategory === "Admin";
-  const isManager = roleCategory === "Manager";
-  const isTeamLeader = roleCategory === "Team Leader";
-  const userRoleStr = user?.role?.toLowerCase() || "";
-  const isSales = userRoleStr === "sales department" || userRoleStr === "sales" || userRoleStr.includes("kyc");
-  const isEmployee = roleCategory === "Employee" && !isSales;
+  const department = getUserDepartment(user);
+  const role = getUserRole(user);
+  const isAdmin = department === "Admin" || role === "Admin";
+  const isManager = role === "Manager";
+  const isTeamLeader = role === "Team Leader";
+  const isSales = department === "Sales";
+  const isTelecalling = department === "Telecalling";
+  const isLeads = department === "Leads";
+  const isEmployee = !isAdmin && !isManager && !isTeamLeader;
+  const rawDepartment = user?.department || user?.dept || user?.departmentName || "";
+  const isKyc = rawDepartment.toLowerCase().includes("kyc") || rawDepartment.toLowerCase().includes("compliance");
+  const dashboardRoute = getDepartmentRoute(user);
 
   const getPortalLabel = () => {
-    if (isSuperAdmin) return "NAVIGATION";
+    if (isAdmin) return "NAVIGATION";
+    if (isSales) return "SALES PORTAL";
+    if (isTelecalling) return "TELECALLING PORTAL";
+    if (isLeads) return "LEADS PORTAL";
     if (isManager) return "MANAGER PORTAL";
     if (isTeamLeader) return "TEAM LEADER PORTAL";
-    if (isSales) return "SALES PORTAL";
     return "EMPLOYEE PORTAL";
   };
 
-  const isDashboardActive = 
+  const isDashboardActive =
     location.pathname === "/dashboard" ||
     location.pathname === "/admin-dashboard" ||
-    location.pathname === "/sales-dashboard" ||
-    location.pathname === "/team-leader-dashboard" ||
-    location.pathname === "/hr-dashboard";
+    location.pathname === "/sales/manager" ||
+    location.pathname === "/sales/team-leader" ||
+    location.pathname === "/sales/employee" ||
+    location.pathname === "/telecalling/manager" ||
+    location.pathname === "/telecalling/team-leader" ||
+    location.pathname === "/telecalling/employee" ||
+    location.pathname === "/leads/manager" ||
+    location.pathname === "/leads/team-leader" ||
+    location.pathname === "/leads/employee";
 
   return (
     <>
-      {/* Mobile Sidebar Backdrop overlay */}
       {isOpen && (
         <div
           onClick={onClose}
@@ -62,38 +73,19 @@ export default function Sidebar({ isOpen, onClose }) {
           </p>
 
           <div className="space-y-1.5">
-            {/* Common Dashboard for non-Sales */}
-            {!isSales && (
-              <button
-                onClick={() => handleNavigation("/dashboard")}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                  isDashboardActive
-                    ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                }`}
-              >
-                <LayoutDashboard size={18} />
-                Dashboard
-              </button>
-            )}
+            <button
+              onClick={() => handleNavigation(dashboardRoute)}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                isDashboardActive
+                  ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+              }`}
+            >
+              <LayoutDashboard size={18} />
+              {isSales ? "Sales Dashboard" : isTelecalling ? "Telecalling Dashboard" : isLeads ? "Leads Dashboard" : "Dashboard"}
+            </button>
 
-            {/* Sales Dashboard for Sales role only */}
-            {isSales && (
-              <button
-                onClick={() => handleNavigation("/dashboard")}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                  isDashboardActive
-                    ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                }`}
-              >
-                <LayoutDashboard size={18} />
-                Sales Dashboard
-              </button>
-            )}
-
-            {/* Management specific options (Admin only) */}
-            {isSuperAdmin && (
+            {isAdmin && (
               <>
                 <button
                   onClick={() => handleNavigation("/employees")}
@@ -121,7 +113,6 @@ export default function Sidebar({ isOpen, onClose }) {
               </>
             )}
 
-            {/* Management and Team Leader specific options */}
             {(isManager || isTeamLeader) && (
               <>
                 <button
@@ -138,8 +129,7 @@ export default function Sidebar({ isOpen, onClose }) {
               </>
             )}
 
-            {/* Employee specific options (Manager, Team Leader, Employee) */}
-            {(isManager || isTeamLeader || isEmployee) && (
+            {(isManager || isTeamLeader || isEmployee) && !isKyc && (
               <>
                 <button
                   onClick={() => handleNavigation("/new-lead")}
@@ -176,8 +166,11 @@ export default function Sidebar({ isOpen, onClose }) {
                   <Clock size={18} />
                   Follow-up
                 </button>
+              </>
+            )}
 
-
+            {(isManager || isTeamLeader || isEmployee || isSales || isTelecalling || isLeads) && (
+              <>
                 <button
                   onClick={() => handleNavigation("/meetings")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
@@ -205,8 +198,6 @@ export default function Sidebar({ isOpen, onClose }) {
             )}
           </div>
         </div>
-
-
       </aside>
     </>
   );

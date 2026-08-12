@@ -2,8 +2,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from "./Page/Login";
 import { AuthProvider } from "./context/AuthContext";
 import DashboardLayout from "./components/DashboardLayout";
-import SalesDashboard from "./components/SalesDashboard/SalesDashboard";
-import EmployeeDashboard from "./components/EmployeeDashboard";
 import TeamPerformanceView from "./components/TeamPerformanceView";
 import NewLeadView from "./components/NewLeadView";
 import MyLeadsView from "./components/MyLeadsView";
@@ -12,8 +10,9 @@ import MeetingsView from "./components/MeetingsView";
 import AttendanceView from "./components/AttendanceView";
 import ProfileView from "./components/ProfileView";
 import AdminDashboard from "./Page/AdminDashboard";
+import DepartmentRoleDashboard from "./components/DepartmentRoleDashboard";
+import { getDepartmentRoute, getUserDepartment, getUserRole } from "./utils/hierarchy";
 
-// Checks if the user is authenticated (token exists in localStorage)
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
   const storedUser = localStorage.getItem("user");
@@ -26,66 +25,51 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Checks if the authenticated user has one of the allowed roles
-const RoleProtectedRoute = ({ children, allowedRoles }) => {
+const DepartmentRoleProtectedRoute = ({ children, allowedDepartments = [], allowedRoles = [], excludedDepartments = [] }) => {
   const storedUser = localStorage.getItem("user");
   if (!storedUser) {
     return <Navigate to="/login" replace />;
   }
 
-  let isAuthorized;
   try {
     const user = JSON.parse(storedUser);
-    const userRole = user.role ? user.role.toLowerCase() : "";
-    isAuthorized = allowedRoles.some(role => {
-      const targetRole = role.toLowerCase();
-      if (userRole === targetRole) return true;
-      if (targetRole === 'admin' && (userRole === 'administration (admin)' || userRole === 'superadmin' || userRole === 'admin')) return true;
-      if (targetRole === 'hr' && (userRole === 'human resources (hr)' || userRole === 'hr')) return true;
-      if (targetRole === 'sales' && (userRole === 'sales department' || userRole === 'sales' || userRole.includes('kyc'))) return true;
-      if (targetRole === 'team leader' && (userRole === 'team leader' || userRole === 'tl' || userRole === 'teamleader')) return true;
-      return userRole.includes(targetRole) || targetRole.includes(userRole);
-    });
+    const userDepartment = getUserDepartment(user);
+    const rawDepartment = user.department || user.dept || user.departmentName || "";
+    const userRole = getUserRole(user);
+    
+    if (excludedDepartments.length > 0) {
+      const isExcluded = excludedDepartments.some(dep => rawDepartment.toLowerCase().includes(dep.toLowerCase()));
+      if (isExcluded) {
+        return <Navigate to={getDepartmentRoute(user)} replace />;
+      }
+    }
+
+    const departmentAllowed = allowedDepartments.length === 0 || allowedDepartments.includes(userDepartment);
+    const roleAllowed = allowedRoles.length === 0 || allowedRoles.includes(userRole);
+
+    if (!departmentAllowed || !roleAllowed) {
+      return <Navigate to={getDepartmentRoute(user)} replace />;
+    }
+
+    return children;
   } catch {
     localStorage.clear();
     return <Navigate to="/login" replace />;
   }
-
-  if (!isAuthorized) {
-    // If not authorized for this specific dashboard/view, redirect to their main dashboard entrypoint
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return children;
 };
 
-// Redirects /dashboard entrypoint to their respective role-specific dashboard
 const DashboardRedirect = () => {
   const storedUser = localStorage.getItem("user");
   if (!storedUser) {
     return <Navigate to="/login" replace />;
   }
 
-  let role;
   try {
     const user = JSON.parse(storedUser);
-    role = user.role ? user.role.toLowerCase() : "";
+    return <Navigate to={getDepartmentRoute(user)} replace />;
   } catch {
     localStorage.clear();
     return <Navigate to="/login" replace />;
-  }
-
-  if (role === "sales department" || role === "sales" || role.includes("kyc")) {
-    return <Navigate to="/sales-dashboard" replace />;
-  } else if (role === "team leader" || role === "tl" || role === "teamleader") {
-    return <Navigate to="/team-leader-dashboard" replace />;
-  } else if (role === "human resources (hr)" || role === "hr") {
-    return <Navigate to="/hr-dashboard" replace />;
-  } else if (role === "administration (admin)" || role === "admin" || role === "superadmin") {
-    return <Navigate to="/admin-dashboard" replace />;
-  } else {
-    // Fallback dashboard
-    return <Navigate to="/team-leader-dashboard" replace />;
   }
 };
 
@@ -96,15 +80,14 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
-          
-          {/* Top-level Admin Routes (Restoring original AdminDashboard exactly) */}
+
           <Route
             path="/admin-dashboard"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={["Admin"]}>
+                <DepartmentRoleProtectedRoute allowedDepartments={["Admin"]} allowedRoles={["Admin"]}>
                   <AdminDashboard />
-                </RoleProtectedRoute>
+                </DepartmentRoleProtectedRoute>
               </ProtectedRoute>
             }
           />
@@ -112,9 +95,9 @@ export default function App() {
             path="/employees"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={["Admin"]}>
+                <DepartmentRoleProtectedRoute allowedDepartments={["Admin"]} allowedRoles={["Admin"]}>
                   <AdminDashboard />
-                </RoleProtectedRoute>
+                </DepartmentRoleProtectedRoute>
               </ProtectedRoute>
             }
           />
@@ -122,9 +105,9 @@ export default function App() {
             path="/add-employee"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={["Admin"]}>
+                <DepartmentRoleProtectedRoute allowedDepartments={["Admin"]} allowedRoles={["Admin"]}>
                   <AdminDashboard />
-                </RoleProtectedRoute>
+                </DepartmentRoleProtectedRoute>
               </ProtectedRoute>
             }
           />
@@ -137,54 +120,141 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            {/* Entry point that redirects according to user role */}
             <Route path="dashboard" element={<DashboardRedirect />} />
 
-            {/* Role-specific dashboard routes */}
+            <Route
+              path="sales/manager"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Sales"]} allowedRoles={["Manager"]}>
+                  <DepartmentRoleDashboard />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+            <Route
+              path="sales/team-leader"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Sales"]} allowedRoles={["Team Leader"]}>
+                  <DepartmentRoleDashboard />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+            <Route
+              path="sales/employee"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Sales"]} allowedRoles={["Employee"]}>
+                  <DepartmentRoleDashboard />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+
+            <Route
+              path="telecalling/manager"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Telecalling"]} allowedRoles={["Manager"]}>
+                  <DepartmentRoleDashboard />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+            <Route
+              path="telecalling/team-leader"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Telecalling"]} allowedRoles={["Team Leader"]}>
+                  <DepartmentRoleDashboard />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+            <Route
+              path="telecalling/employee"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Telecalling"]} allowedRoles={["Employee"]}>
+                  <DepartmentRoleDashboard />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+
+            <Route
+              path="leads/manager"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Leads"]} allowedRoles={["Manager"]}>
+                  <DepartmentRoleDashboard />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+            <Route
+              path="leads/team-leader"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Leads"]} allowedRoles={["Team Leader"]}>
+                  <DepartmentRoleDashboard />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+            <Route
+              path="leads/employee"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Leads"]} allowedRoles={["Employee"]}>
+                  <DepartmentRoleDashboard />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+
             <Route
               path="sales-dashboard"
               element={
-                <RoleProtectedRoute allowedRoles={["Sales"]}>
-                  <SalesDashboard />
-                </RoleProtectedRoute>
+                <DepartmentRoleProtectedRoute allowedDepartments={["Sales"]}>
+                  <DepartmentRoleDashboard />
+                </DepartmentRoleProtectedRoute>
               }
             />
             <Route
               path="team-leader-dashboard"
               element={
-                <RoleProtectedRoute allowedRoles={["Team Leader", "Manager", "Telecalling / Lead Generation", "Reception / Front Desk", "Employee", "Operations Department", "Legal Department", "Accounts & Finance", "Collections & Recovery", "Customer Support", "Marketing", "IT Department", "Insurance Department"]}>
-                  <EmployeeDashboard />
-                </RoleProtectedRoute>
+                <DepartmentRoleProtectedRoute allowedDepartments={["Telecalling", "Sales", "Leads"]} allowedRoles={["Manager", "Team Leader"]}>
+                  <DepartmentRoleDashboard />
+                </DepartmentRoleProtectedRoute>
               }
             />
             <Route
               path="hr-dashboard"
-              element={
-                <RoleProtectedRoute allowedRoles={["HR"]}>
-                  <EmployeeDashboard />
-                </RoleProtectedRoute>
-              }
+              element={<Navigate to="/dashboard" replace />}
             />
 
-            {/* Team performance routes */}
             <Route
               path="team-performance"
               element={
-                <RoleProtectedRoute allowedRoles={["Team Leader", "Manager", "Admin"]}>
+                <DepartmentRoleProtectedRoute allowedDepartments={["Telecalling", "Sales", "Leads"]} allowedRoles={["Manager", "Team Leader", "Admin"]}>
                   <TeamPerformanceView />
-                </RoleProtectedRoute>
+                </DepartmentRoleProtectedRoute>
               }
             />
 
-            {/* General CRM routes */}
-            <Route path="new-lead" element={<NewLeadView />} />
-            <Route path="my-leads" element={<MyLeadsView />} />
-            <Route path="follow-up" element={<FollowUpView />} />
+            <Route 
+              path="new-lead" 
+              element={
+                <DepartmentRoleProtectedRoute excludedDepartments={["KYC", "Compliance"]}>
+                  <NewLeadView />
+                </DepartmentRoleProtectedRoute>
+              } 
+            />
+            <Route 
+              path="my-leads" 
+              element={
+                <DepartmentRoleProtectedRoute excludedDepartments={["KYC", "Compliance"]}>
+                  <MyLeadsView />
+                </DepartmentRoleProtectedRoute>
+              } 
+            />
+            <Route 
+              path="follow-up" 
+              element={
+                <DepartmentRoleProtectedRoute excludedDepartments={["KYC", "Compliance"]}>
+                  <FollowUpView />
+                </DepartmentRoleProtectedRoute>
+              } 
+            />
             <Route path="meetings" element={<MeetingsView />} />
             <Route path="attendance" element={<AttendanceView />} />
             <Route path="profile" element={<ProfileView />} />
 
-            {/* Wildcard fallback redirects to core dashboard entrypoint */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>
         </Routes>
@@ -192,4 +262,4 @@ export default function App() {
     </AuthProvider>
   );
 }
-
+

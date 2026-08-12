@@ -10,6 +10,7 @@ const teamPerformanceRoutes = require("./routes/teamPerformanceRoutes");
 const leadRoutes = require("./routes/leadRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const customerRoutes = require("./routes/customerRoutes");
+const meetingRoutes = require("./routes/meetingRoutes");
 const path = require("path");
 
 
@@ -40,6 +41,7 @@ app.use("/api/team-performance", teamPerformanceRoutes);
 app.use("/api/leads", leadRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/customers", customerRoutes);
+app.use("/api/meetings", meetingRoutes);
 const adminRoutes = require("./routes/adminRoutes");
 app.use("/api/admin", adminRoutes);
 

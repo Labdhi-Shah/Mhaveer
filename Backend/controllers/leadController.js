@@ -1,5 +1,6 @@
 const Lead = require("../models/Lead");
 const Employee = require("../models/Employee");
+const Meeting = require("../models/Meeting");
 
 // @desc    Create a new lead
 // @route   POST /api/leads
@@ -41,6 +42,25 @@ exports.createLead = async (req, res) => {
 
     const lead = new Lead(leadData);
     await lead.save();
+
+    // If meeting details exist, create a corresponding Meeting record automatically
+    if (lead.meetingDate) {
+      const meeting = new Meeting({
+        title: "Initial Consultation",
+        leadId: lead._id,
+        customerName: lead.contactPerson || lead.companyName,
+        customerPhone: lead.phoneNumber,
+        date: lead.meetingDate,
+        time: lead.meetingTime || "10:00 AM",
+        location: lead.address || "",
+        type: "Consultation",
+        status: "Scheduled",
+        notes: `Created from New Lead Entry. Interested: ${lead.interested}`,
+        employeeId: lead.employeeId,
+        employeeName: lead.employeeName,
+      });
+      await meeting.save();
+    }
 
     res.status(201).json({
       success: true,
@@ -199,6 +219,31 @@ exports.updateLead = async (req, res) => {
       new: true,
       runValidators: true,
     });
+
+    if (lead.meetingDate) {
+      let meeting = await Meeting.findOne({ leadId: lead._id });
+      if (meeting) {
+        meeting.date = lead.meetingDate;
+        meeting.time = lead.meetingTime || meeting.time;
+        await meeting.save();
+      } else {
+        const newMeeting = new Meeting({
+          title: "Initial Consultation",
+          leadId: lead._id,
+          customerName: lead.contactPerson || lead.companyName,
+          customerPhone: lead.phoneNumber,
+          date: lead.meetingDate,
+          time: lead.meetingTime || "10:00 AM",
+          location: lead.address || "",
+          type: "Consultation",
+          status: "Scheduled",
+          notes: `Created from Lead Update. Interested: ${lead.interested}`,
+          employeeId: lead.employeeId,
+          employeeName: lead.employeeName,
+        });
+        await newMeeting.save();
+      }
+    }
 
     res.status(200).json({
       success: true,

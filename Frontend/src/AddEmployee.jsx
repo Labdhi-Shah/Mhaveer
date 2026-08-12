@@ -2,119 +2,26 @@ import { useState, useEffect } from "react";
 import api from "./api";
 import { Loader2, CheckCircle, Copy, X } from "lucide-react";
 
-// 18 Main Roles with their Responsibilities
+const DEPARTMENTS = ["Sales", "Telecalling", "Leads", "Admin"];
+const ROLES = ["Manager", "Team Leader", "Employee"];
+
 const ROLE_DATA = {
-  "Reception / Front Desk": [
-    "Visitor management",
-    "Call handling",
-    "Document collection"
-  ],
-  "Sales Department": [
-    "Generate leads",
-    "Meet customers",
-    "Explain loan products",
-    "Achieve sales targets"
-  ],
-  "Relationship Manager (RM)": [
-    "Customer relationship management",
-    "Cross-selling loans and insurance",
-    "Follow-ups"
-  ],
-  "Telecalling / Lead Generation": [
-    "Cold calling",
-    "Appointment scheduling",
-    "Lead qualification"
-  ],
-  "Credit / Underwriting": [
-    "Income assessment",
-    "  check",
-    "Document verification",
-    "Loan eligibility analysis"
-  ],
-  "Operations Department": [
-    "Loan file processing",
-    "Documentation",
-    "Disbursement coordination"
-  ],
-  "Legal Department": [
-    "Legal document verification",
-    "Property legal checks (secured loans)",
-    "Agreement preparation"
-  ],
-  "Technical / Valuation": [
-    "Property inspection",
-    "Property valuation",
-    "Technical reports"
-  ],
-  "KYC & Compliance": [
-    "Aadhaar/PAN verification",
-    "AML compliance",
-    "Regulatory compliance"
-  ],
-  "Accounts & Finance": [
-    "Payments",
-    "Vendor management",
-    "Commission payout",
-    "GST and bookkeeping"
-  ],
-  "Collections & Recovery": [
-    "EMI follow-up",
-    "Recovery of overdue payments",
-    "NPA management"
-  ],
-  "Customer Support": [
-    "Resolve customer queries",
-    "Complaint handling",
-    "Service requests"
-  ],
-  "Human Resources (HR)": [
-    "Recruitment",
-    "Attendance",
-    "Payroll",
-    "Employee training"
-  ],
-  "Administration (Admin)": [
-    "Office management",
-    "Asset management",
-    "Stationery and facilities"
-  ],
-  "Marketing": [
-    "Digital marketing",
-    "Social media",
-    "Campaigns",
-    "Brand promotion"
-  ],
-  "IT Department": [
-    "CRM management",
-    "System maintenance",
-    "User support",
-    "Data backup and security"
-  ],
-  "Insurance Department": [
-    "Life insurance",
-    "Health insurance",
-    "General insurance",
-    "Policy servicing"
+  "Manager": [
+    "Department oversight",
+    "Team supervision",
+    "Performance tracking"
   ],
   "Team Leader": [
     "Team performance monitoring",
     "Lead distribution and review",
     "Team attendance and support"
   ],
-  "Manager": [
-    "Branch oversight",
-    "Operations management",
-    "Regional reporting"
-  ],
-  "Management": [
-    "Branch Manager",
-    "Operations Manager",
-    "Regional Manager",
-    "Director / CEO"
+  "Employee": [
+    "Daily execution",
+    "Lead handling",
+    "Attendance and reporting"
   ]
 };
-
-const ROLES = Object.keys(ROLE_DATA);
 
 export default function AddEmployee() {
   const [form, setForm] = useState({
@@ -208,12 +115,15 @@ export default function AddEmployee() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.department) {
+      setError("Please select a department.");
+      return;
+    }
     if (!form.role) {
-      setError("Please select a role / department.");
+      setError("Please select a role.");
       return;
     }
 
-    // Prevent submission if phone validation fails
     const isPhoneValid = validatePhone(form.phone);
     if (!isPhoneValid) {
       setError("Please correct the phone number error before submitting.");
@@ -391,10 +301,31 @@ export default function AddEmployee() {
           />
         </div>
 
+        {/* Department Selection */}
+        <div>
+          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">
+            Department *
+          </label>
+          <select
+            name="department"
+            value={form.department}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer"
+          >
+            <option value="" disabled>-- Select Department --</option>
+            {DEPARTMENTS.map((dept, idx) => (
+              <option key={idx} value={dept}>
+                {dept}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Role Selection Dropdown */}
         <div>
           <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">
-            Role / Department *
+            Role *
           </label>
           <select
             name="role"
@@ -403,7 +334,7 @@ export default function AddEmployee() {
             required
             className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer"
           >
-            <option value="" disabled>-- Select Role / Department --</option>
+            <option value="" disabled>-- Select Role --</option>
             {ROLES.map((r, idx) => (
               <option key={idx} value={r}>
                 {r}
@@ -412,31 +343,7 @@ export default function AddEmployee() {
           </select>
         </div>
 
-        {/* Department Selection (For Managers and Team Leaders) */}
-        {form.role && ["Manager", "Management", "Team Leader"].includes(form.role) && (
-          <div>
-            <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">
-              Which Department? *
-            </label>
-            <select
-              name="department"
-              value={form.department}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer"
-            >
-              <option value="" disabled>-- Select Department --</option>
-              {ROLES.filter(r => !["Manager", "Management", "Team Leader"].includes(r)).map((r, idx) => (
-                <option key={idx} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {/* Manager Selection Dropdown */}
-        {form.role && !["Management", "Manager"].includes(form.role) && (
+        {form.role && form.role !== "Manager" && (
           <div>
             <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">
               Assign Manager (Optional)
@@ -448,17 +355,18 @@ export default function AddEmployee() {
               className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer"
             >
               <option value="">-- No Manager --</option>
-              {managers.map((m) => (
-                <option key={m._id} value={m._id}>
-                  {m.fullName} ({m.employeeId}) {m.department ? `- ${m.department}` : ''}
-                </option>
-              ))}
+              {managers
+                .filter((m) => !form.department || !m.department || m.department === form.department)
+                .map((m) => (
+                  <option key={m._id} value={m._id}>
+                    {m.fullName} ({m.employeeId}) {m.department ? `- ${m.department}` : ''}
+                  </option>
+                ))}
             </select>
           </div>
         )}
 
-        {/* Team Leader Selection Dropdown */}
-        {form.role && !["Management", "Manager", "Team Leader"].includes(form.role) && (
+        {form.role && form.role === "Employee" && (
           <div>
             <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">
               Assign Team Leader (Optional)
@@ -470,11 +378,13 @@ export default function AddEmployee() {
               className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer"
             >
               <option value="">-- No Team Leader --</option>
-              {teamLeaders.map((tl) => (
-                <option key={tl._id} value={tl._id}>
-                  {tl.fullName} ({tl.employeeId}) {tl.department ? `- ${tl.department}` : ''}
-                </option>
-              ))}
+              {teamLeaders
+                .filter((tl) => !form.department || !tl.department || tl.department === form.department)
+                .map((tl) => (
+                  <option key={tl._id} value={tl._id}>
+                    {tl.fullName} ({tl.employeeId}) {tl.department ? `- ${tl.department}` : ''}
+                  </option>
+                ))}
             </select>
           </div>
         )}

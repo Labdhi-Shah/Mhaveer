@@ -41,7 +41,9 @@ function Login() {
         localStorage.setItem("token", data.token);
         const userData = {
           fullName: data.employee.name || data.employee.fullName,
+          name: data.employee.name || data.employee.fullName,
           role: data.employee.role,
+          department: data.employee.department || "",
           email: data.employee.officialEmail || data.employee.email || email,
           employeeId: data.employee.employeeId
         };

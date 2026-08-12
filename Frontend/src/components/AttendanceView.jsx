@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
 import {
-  Clock, Calendar, User, Search, Filter, AlertCircle, ChevronLeft, ChevronRight, X, Activity, Briefcase, ClipboardList
+  Clock, Calendar, User, Search, Filter, AlertCircle, ChevronLeft, ChevronRight, X, Activity, Briefcase, ClipboardList, CheckCircle, Loader2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -14,6 +14,9 @@ export default function AttendanceView() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [records, setRecords] = useState([]);
+  const [todayRecord, setTodayRecord] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [toast, setToast] = useState(null);
   const [stats, setStats] = useState({
     today: "00:00",
     thisWeek: "00:00",
@@ -132,9 +135,44 @@ export default function AttendanceView() {
     }
   };
 
+  const fetchTodayAttendance = async () => {
+    try {
+      const res = await api.get("/attendance/today");
+      if (res.data.success && res.data.data) {
+        setTodayRecord(res.data.data);
+      } else {
+        setTodayRecord(null);
+      }
+    } catch (error) {
+      console.error("Failed to fetch today's attendance:", error);
+    }
+  };
+
   useEffect(() => {
     fetchAttendance();
+    fetchTodayAttendance();
   }, [user, page, filterRange, searchTerm]);
+
+  const handleAttendanceAction = async (action) => {
+    if (actionLoading) return;
+    setActionLoading(true);
+    try {
+      const endpoint = `/attendance/${action}`;
+      const res = await api.post(endpoint);
+      if (res.data.success) {
+        setToast({ message: res.data.message || `Successfully ${action}ed!`, type: "success" });
+        setTimeout(() => setToast(null), 3000);
+        fetchTodayAttendance();
+        fetchAttendance(); // Refresh records
+      }
+    } catch (error) {
+      console.error(`Failed to ${action} attendance:`, error);
+      setToast({ message: error.response?.data?.message || `Failed to ${action}`, type: "error" });
+      setTimeout(() => setToast(null), 3000);
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const calculateStats = (data) => {
     // This is a naive calculation for the current fetched page. 
@@ -200,6 +238,27 @@ export default function AttendanceView() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-500">
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            className={`fixed top-20 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border ${
+              toast.type === "success" 
+                ? "bg-emerald-50 text-emerald-800 border-emerald-200" 
+                : "bg-rose-50 text-rose-800 border-rose-200"
+            }`}
+          >
+            {toast.type === "success" ? (
+              <CheckCircle className="text-emerald-600 shrink-0" size={20} />
+            ) : (
+              <AlertCircle className="text-rose-600 shrink-0" size={20} />
+            )}
+            <span className="text-sm font-bold">{toast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
@@ -210,6 +269,79 @@ export default function AttendanceView() {
           <p className="text-sm font-semibold text-slate-500 mt-1">
             Track and monitor employee work sessions and hours.
           </p>
+        </div>
+
+        {/* Action Panel for Check In / Out */}
+        <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+          <div className="flex flex-col">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Today's Status</span>
+            <span className={`text-sm font-black ${
+              !todayRecord ? "text-slate-500" :
+              todayRecord.status === "Working" ? "text-emerald-600" :
+              todayRecord.status === "Completed" ? "text-slate-600" :
+              todayRecord.status === "On Break" ? "text-amber-500" : "text-[#0a2540]"
+            }`}>
+              {todayRecord ? todayRecord.status : "Not Started"}
+            </span>
+            {todayRecord && todayRecord.startTime && (
+              <span className="text-[10px] font-bold text-slate-500 mt-0.5">
+                In: {formatTime(todayRecord.startTime)}
+              </span>
+            )}
+          </div>
+          
+          <div className="h-10 w-px bg-slate-200 mx-2"></div>
+          
+          <div className="flex gap-2">
+            {(!todayRecord || todayRecord.status === "Not Started") && (
+              <button
+                onClick={() => handleAttendanceAction('start')}
+                disabled={actionLoading}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-sm disabled:opacity-50"
+              >
+                {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <Clock size={16} />}
+                Check In
+              </button>
+            )}
+
+            {todayRecord && todayRecord.status === "Working" && (
+              <>
+                <button
+                  onClick={() => handleAttendanceAction('pause')}
+                  disabled={actionLoading}
+                  className="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-sm disabled:opacity-50"
+                >
+                  {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <Clock size={16} />}
+                  Break
+                </button>
+                <button
+                  onClick={() => handleAttendanceAction('stop')}
+                  disabled={actionLoading}
+                  className="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-sm disabled:opacity-50"
+                >
+                  {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <X size={16} />}
+                  Check Out
+                </button>
+              </>
+            )}
+
+            {todayRecord && todayRecord.status === "On Break" && (
+              <button
+                onClick={() => handleAttendanceAction('resume')}
+                disabled={actionLoading}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-sm disabled:opacity-50"
+              >
+                {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <Clock size={16} />}
+                Resume Work
+              </button>
+            )}
+            
+            {todayRecord && todayRecord.status === "Completed" && (
+              <div className="bg-slate-100 text-slate-500 px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-2">
+                <CheckCircle size={16} /> Session Completed
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

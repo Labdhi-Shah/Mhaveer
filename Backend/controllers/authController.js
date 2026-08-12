@@ -14,9 +14,15 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
+    const adminToken = jwt.sign(
+      { id: "admin-1", email: "admin@mhaveerfincap.com", role: "SuperAdmin", department: "Admin", name: "Super Admin" },
+      process.env.JWT_SECRET || "supersecretkey",
+      { expiresIn: "1d" }
+    );
+
     return res.json({
       success: true,
-      token,
+      token: adminToken,
       message: "Login Success",
       employee: {
         id: "admin-1",
@@ -24,7 +30,8 @@ exports.login = async (req, res) => {
         name: "Super Admin",
         email: "admin@mhaveerfincap.com",
         officialEmail: "admin@mhaveerfincap.com",
-        role: "SuperAdmin"
+        role: "SuperAdmin",
+        department: "Admin"
       }
     });
   }
@@ -46,7 +53,13 @@ exports.login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: employee._id, email: employee.officialEmail, role: employee.role, name: employee.name },
+      {
+        id: employee._id,
+        email: employee.officialEmail,
+        role: employee.role,
+        department: employee.department || "",
+        name: employee.name
+      },
       process.env.JWT_SECRET || "supersecretkey",
       { expiresIn: "1d" }
     );
@@ -57,10 +70,12 @@ exports.login = async (req, res) => {
       message: "Login Success",
       employee: {
         id: employee._id,
-        fullName: employee.name, // keep fullName for frontend compatibility
+        fullName: employee.name,
         name: employee.name,
         email: employee.officialEmail,
-        role: employee.role
+        officialEmail: employee.officialEmail,
+        role: employee.role,
+        department: employee.department || "",
       }
     });
   } catch (error) {

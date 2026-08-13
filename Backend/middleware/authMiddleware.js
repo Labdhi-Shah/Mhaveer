@@ -89,4 +89,3 @@ const authorizeDepartmentRole = ({ departments = [], roles = [] } = {}) => {
 module.exports = authMiddleware;
 authMiddleware.authorize = authorize;
 authMiddleware.authorizeDepartmentRole = authorizeDepartmentRole;
-

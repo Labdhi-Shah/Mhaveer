@@ -1,7 +1,7 @@
 import EmployeeDashboard from "../components/EmployeeDashboard";
 import SalesDashboard from "../components/SalesDashboard/SalesDashboard";
 import { useAuth } from "../context/AuthContext";
-import { getUserDepartment, getUserRole } from "../utils/hierarchy";
+import { resolveDepartmentDashboard, getUserDepartment, getUserRole } from "../utils/hierarchy";
 
 const panelHeader = (label, title) => (
   <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-8 border-l-[#0a2540] mb-6">
@@ -33,21 +33,18 @@ export const TelecallingEmployeeDashboard = () => (
 
 export const SalesManagerDashboard = () => (
   <>
-    {panelHeader("Sales Panel", "Sales Manager Dashboard")}
     <SalesDashboard />
   </>
 );
 
 export const SalesTeamLeaderDashboard = () => (
   <>
-    {panelHeader("Sales Panel", "Sales Team Leader Dashboard")}
     <SalesDashboard />
   </>
 );
 
 export const SalesEmployeeDashboard = () => (
   <>
-    {panelHeader("Sales Panel", "Sales Employee Dashboard")}
     <SalesDashboard />
   </>
 );
@@ -73,30 +70,26 @@ export const LeadsEmployeeDashboard = () => (
   </>
 );
 
+const GenericDepartmentDashboard = ({ department, role }) => (
+  <>
+    {panelHeader(`${department} Panel`, `${department} ${role} Dashboard`)}
+    <EmployeeDashboard />
+  </>
+);
+
 export default function DepartmentRoleDashboard() {
   const { user } = useAuth();
-  const department = getUserDepartment(user);
-  const role = getUserRole(user);
-
-  if (department === "Sales") {
-    if (role === "Manager") return <SalesManagerDashboard />;
-    if (role === "Team Leader") return <SalesTeamLeaderDashboard />;
-    return <SalesEmployeeDashboard />;
+  switch (resolveDepartmentDashboard(getUserDepartment(user), getUserRole(user))) {
+    case "sales-manager": return <SalesManagerDashboard />;
+    case "sales-team-leader": return <SalesTeamLeaderDashboard />;
+    case "sales-employee": return <SalesEmployeeDashboard />;
+    case "telecalling-manager": return <TelecallingManagerDashboard />;
+    case "telecalling-team-leader": return <TelecallingTeamLeaderDashboard />;
+    case "telecalling-employee": return <TelecallingEmployeeDashboard />;
+    case "leads-manager": return <LeadsManagerDashboard />;
+    case "leads-team-leader": return <LeadsTeamLeaderDashboard />;
+    case "leads-employee": return <LeadsEmployeeDashboard />;
+    case "department-role": return <GenericDepartmentDashboard department={user.department} role={user.role} />;
+    default: return null;
   }
-
-  if (department === "Telecalling") {
-    if (role === "Manager") return <TelecallingManagerDashboard />;
-    if (role === "Team Leader") return <TelecallingTeamLeaderDashboard />;
-    return <TelecallingEmployeeDashboard />;
-  }
-
-  if (department === "Leads") {
-    if (role === "Manager") return <LeadsManagerDashboard />;
-    if (role === "Team Leader") return <LeadsTeamLeaderDashboard />;
-    return <LeadsEmployeeDashboard />;
-  }
-
-  if (role === "Manager") return <TelecallingManagerDashboard />;
-  if (role === "Team Leader") return <TelecallingTeamLeaderDashboard />;
-  return <TelecallingEmployeeDashboard />;
 }

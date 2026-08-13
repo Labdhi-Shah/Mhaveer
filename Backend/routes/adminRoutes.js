@@ -10,4 +10,3 @@ router.use(authMiddleware.authorize("Administration (Admin)", "Admin", "SuperAdm
 router.get("/attendance", getAdminAttendance);
 
 module.exports = router;
-

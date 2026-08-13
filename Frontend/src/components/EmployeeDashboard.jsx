@@ -155,17 +155,7 @@ export default function EmployeeDashboard() {
         )}
       </AnimatePresence>
 
-      {/* Top Welcome Card */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 border-l-8 border-l-[#0a2540]">
-        <div>
-          <p className="text-xs font-extrabold uppercase tracking-widest text-[#d4af37]">{user?.role || "Reception & Front Desk"}</p>
-          <h1 className="text-xl sm:text-2xl font-black text-[#0a2540] mt-1">Lead Management CRM Dashboard</h1>
-        </div>
-        <div className="text-xs text-slate-500 font-medium bg-slate-50 border border-slate-100 rounded-xl px-4 py-2">
-          Logged in location: <span className="font-bold text-[#0a2540]">Main Corporate Branch</span>
-        </div>
-      </div>
-
+      {/* Top Welcome Card removed as requested */}
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[

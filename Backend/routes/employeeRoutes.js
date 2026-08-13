@@ -21,4 +21,3 @@ router.route("/:id")
   .delete(authMiddleware.authorize("Administration (Admin)", "Admin", "SuperAdmin"), deleteEmployee);
 
 module.exports = router;
-

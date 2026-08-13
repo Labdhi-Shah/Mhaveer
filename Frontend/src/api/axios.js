@@ -1,6 +1,9 @@
 import axios from "axios";
 
 const rawBaseURL = import.meta.env.VITE_API_URL || "https://mhaveer.onrender.com";
+if (!import.meta.env.VITE_API_URL) {
+  console.warn("VITE_API_URL is not defined in environment variables. Using default fallback.");
+}
 const cleanBaseURL = rawBaseURL.endsWith("/") ? rawBaseURL.slice(0, -1) : rawBaseURL;
 
 const api = axios.create({

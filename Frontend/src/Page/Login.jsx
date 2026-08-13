@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logoSvg from '../assets/logo.svg';
-
-const rawAPI = import.meta.env.VITE_API_URL || "https://mhaveer.onrender.com";
-const API = rawAPI.endsWith("/") ? rawAPI.slice(0, -1) : rawAPI;
+import { useAuth } from "../context/AuthContext";
+const rawAPI = import.meta.env.VITE_API_URL;
+const API = rawAPI && rawAPI.endsWith("/") ? rawAPI.slice(0, -1) : (rawAPI || "");
 
 function Login() {
   const navigate = useNavigate();
+  const { setUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -49,6 +50,7 @@ function Login() {
         };
         
         localStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
         
         // Start the working timer using server time
         if (data.loginTime) {
@@ -63,8 +65,6 @@ function Login() {
         
         setMessage("✅ Login Successful");
         setTimeout(() => {
-          // Keep navigation inside the SPA so React Router can resolve the
-          // authenticated user's department-and-role dashboard.
           navigate("/dashboard");
         }, 1000);
       } else {

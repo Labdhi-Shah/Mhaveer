@@ -24,7 +24,12 @@ const virtualHtmlPlugin = () => {
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const url = req.url.split('?')[0];
-        if (url === '/' || url === '/index.html') {
+        const acceptsHtml = req.headers.accept?.includes('text/html');
+        const isSpaRoute = !url.includes('.') && acceptsHtml;
+
+        // index.html is supplied virtually, so browser routes also need to
+        // receive it before BrowserRouter can process the route.
+        if (url === '/' || url === '/index.html' || isSpaRoute) {
           try {
             const transformedHtml = await server.transformIndexHtml(req.url, htmlContent);
             res.statusCode = 200;

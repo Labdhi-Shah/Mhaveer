@@ -63,7 +63,9 @@ function Login() {
         
         setMessage("✅ Login Successful");
         setTimeout(() => {
-          window.location.href = "/dashboard";
+          // Keep navigation inside the SPA so React Router can resolve the
+          // authenticated user's department-and-role dashboard.
+          navigate("/dashboard");
         }, 1000);
       } else {
         setMessage(data.message || "Invalid Email or Password");

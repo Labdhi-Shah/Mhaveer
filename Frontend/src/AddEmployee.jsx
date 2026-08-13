@@ -249,8 +249,8 @@ export default function AddEmployee() {
             onChange={handlePhoneChange}
             placeholder="9876543210"
             className={`w-full px-4 py-2.5 bg-slate-100/70 border rounded-xl text-[#0a2540] outline-none transition ${phoneError
-                ? "border-rose-500 focus:border-rose-500"
-                : "border-slate-300 focus:border-[#d4af37]"
+              ? "border-rose-500 focus:border-rose-500"
+              : "border-slate-300 focus:border-[#d4af37]"
               }`}
           />
           {phoneError && (

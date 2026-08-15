@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Phone, Loader2, Award, Clock, AlertCircle, CheckCircle, MapPin, Eye, Plus, Edit2, Trash2, X, Filter } from "lucide-react";
+import { Calendar, Phone, Loader2, AlertCircle, CheckCircle, MapPin, Plus, X, Filter, ClipboardList } from "lucide-react";
 import api from "../api";
-import { useAuth } from "../context/AuthContext";
+import FillFormModal from "./FillFormModal";
 
 export default function MeetingsView() {
-  const { user } = useAuth();
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -13,6 +12,7 @@ export default function MeetingsView() {
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
@@ -120,22 +120,6 @@ export default function MeetingsView() {
     }
   };
 
-  const deleteMeeting = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this meeting?")) return;
-    setActionLoading(true);
-    try {
-      const res = await api.delete(`/meetings/${id}`);
-      if (res.data.success) {
-        showToast("Meeting deleted.");
-        fetchMeetings();
-      }
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to delete meeting.", "error");
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   const updateStatus = async (id, status) => {
     setActionLoading(true);
@@ -229,36 +213,45 @@ export default function MeetingsView() {
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-600">
-          <Filter size={16} /> Filters:
-        </div>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-purple-500/20"
+      {/* Fill Form & Filters Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <button
+          onClick={() => setIsFormOpen(true)}
+          className="bg-[#0a2540] hover:bg-[#0a2540]/90 text-[#d4af37] px-5 py-2.5 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition shadow-sm w-full md:w-auto shrink-0"
         >
-          <option value="All">All Statuses</option>
-          <option value="Scheduled">Scheduled</option>
-          <option value="Completed">Completed</option>
-          <option value="Rescheduled">Rescheduled</option>
-          <option value="Cancelled">Cancelled</option>
-        </select>
-        <input
-          type="date"
-          value={filterDate}
-          onChange={(e) => setFilterDate(e.target.value)}
-          className="bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-purple-500/20"
-        />
-        {(filterStatus !== "All" || filterDate !== "") && (
-          <button
-            onClick={() => { setFilterStatus("All"); setFilterDate(""); }}
-            className="text-xs text-rose-500 font-bold hover:underline"
+          <ClipboardList size={16} /> Fill Form
+        </button>
+
+        <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm w-full">
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-600">
+            <Filter size={16} /> Filters:
+          </div>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-purple-500/20"
           >
-            Clear Filters
-          </button>
-        )}
+            <option value="All">All Statuses</option>
+            <option value="Scheduled">Scheduled</option>
+            <option value="Completed">Completed</option>
+            <option value="Rescheduled">Rescheduled</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+          <input
+            type="date"
+            value={filterDate}
+            onChange={(e) => setFilterDate(e.target.value)}
+            className="bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-purple-500/20"
+          />
+          {(filterStatus !== "All" || filterDate !== "") && (
+            <button
+              onClick={() => { setFilterStatus("All"); setFilterDate(""); }}
+              className="text-xs text-rose-500 font-bold hover:underline"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -361,23 +354,7 @@ export default function MeetingsView() {
                      </button>
                   )}
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    disabled={actionLoading}
-                    onClick={() => openModal(meeting)}
-                    className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 transition flex items-center gap-1 uppercase tracking-wider disabled:opacity-50"
-                  >
-                    <Edit2 size={12} /> Edit
-                  </button>
-                  <button
-                    disabled={actionLoading}
-                    onClick={() => deleteMeeting(meeting._id)}
-                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition disabled:opacity-50"
-                    title="Delete"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
+                 {/* Edit and Delete action buttons removed */}
               </div>
             </div>
           ))}
@@ -548,6 +525,12 @@ export default function MeetingsView() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isFormOpen && (
+          <FillFormModal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
         )}
       </AnimatePresence>
     </div>

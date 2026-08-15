@@ -17,24 +17,13 @@ export default function MeetingsView() {
   
   // Selected Meeting state for Fill Form
   const [selectedMeeting, setSelectedMeeting] = useState(null);
-  const [formValidationError, setFormValidationError] = useState("");
 
-  const handleSelectMeeting = (meeting) => {
-    setFormValidationError("");
-    if (selectedMeeting?._id === meeting._id) {
-      setSelectedMeeting(null);
-    } else {
-      setSelectedMeeting(meeting);
-    }
-  };
-
-  const handleFillFormClick = () => {
-    if (!selectedMeeting || selectedMeeting.status !== "Scheduled") {
-      setFormValidationError("Please select a scheduled meeting to fill the form.");
+  const handleFillFormForCard = (meeting) => {
+    if (meeting.status !== "Scheduled") {
       showToast("Please select a scheduled meeting to fill the form.", "error");
       return;
     }
-    setFormValidationError("");
+    setSelectedMeeting(meeting);
     setIsFormOpen(true);
   };
   const [formData, setFormData] = useState({
@@ -268,50 +257,20 @@ export default function MeetingsView() {
         )}
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
-        {/* Left Side: Fill Form Button */}
-        <div className="w-full lg:w-auto shrink-0 flex flex-col gap-2">
-          <button
-            onClick={handleFillFormClick}
-            className={`px-6 py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition duration-300 shadow-sm w-full lg:w-auto ${
-              selectedMeeting?.status === "Scheduled"
-                ? "bg-[#0a2540] hover:bg-[#0a2540]/90 text-[#d4af37]"
-                : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
-            }`}
-          >
-            <ClipboardList size={16} /> Fill Form
-          </button>
-
-          {/* Validation Message */}
-          {formValidationError && (
-            <div className="text-[10px] text-rose-500 font-bold flex items-start gap-1.5 bg-rose-50 p-2.5 rounded-xl border border-rose-100 max-w-[200px]">
-              <AlertCircle size={12} className="shrink-0 mt-0.5" />
-              <span>{formValidationError}</span>
-            </div>
-          )}
+      {loading ? (
+        <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#0a2540]" size={32} /></div>
+      ) : filteredMeetings.length === 0 ? (
+        <div className="bg-white rounded-3xl border border-slate-200 p-8 text-center text-slate-400 text-xs shadow-sm flex flex-col items-center gap-3">
+          <Calendar size={32} className="text-slate-300" />
+          No meetings found for the selected criteria.
         </div>
-
-        {/* Right Side: Meeting Cards List */}
-        <div className="flex-1 w-full">
-          {loading ? (
-            <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#0a2540]" size={32} /></div>
-          ) : filteredMeetings.length === 0 ? (
-            <div className="bg-white rounded-3xl border border-slate-200 p-8 text-center text-slate-400 text-xs shadow-sm flex flex-col items-center gap-3">
-              <Calendar size={32} className="text-slate-300" />
-              No meetings found for the selected criteria.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredMeetings.map((meeting) => (
-                <div 
-                  key={meeting._id}
-                  onClick={() => handleSelectMeeting(meeting)}
-                  className={`cursor-pointer p-5 rounded-3xl border flex flex-col justify-between hover:shadow-md transition duration-300 ${
-                    selectedMeeting?._id === meeting._id
-                      ? "border-[#0a2540] bg-white ring-2 ring-[#0a2540]/30 shadow-md"
-                      : "bg-white border-slate-200 shadow-sm"
-                  }`}
-                >
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredMeetings.map((meeting) => (
+            <div 
+              key={meeting._id}
+              className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300"
+            >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                       <h3 className="text-sm font-black text-[#0a2540] truncate max-w-[70%]">{meeting.title}</h3>
@@ -379,27 +338,40 @@ export default function MeetingsView() {
 
                   {/* Action Buttons */}
                   <div className="border-t border-slate-100 pt-3 mt-4 flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex gap-2">
-                      {meeting.status === "Scheduled" && (
-                         <button
-                           disabled={actionLoading}
-                           onClick={() => updateStatus(meeting._id, "Completed")}
-                           className="p-1.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition disabled:opacity-50"
-                           title="Mark Completed"
-                         >
-                           <CheckCircle size={14} />
-                         </button>
-                      )}
-                      {meeting.status === "Scheduled" && (
-                         <button
-                           disabled={actionLoading}
-                           onClick={() => updateStatus(meeting._id, "Cancelled")}
-                           className="p-1.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition disabled:opacity-50"
-                           title="Cancel Meeting"
-                         >
-                           <X size={14} />
-                         </button>
-                      )}
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => handleFillFormForCard(meeting)}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-xs ${
+                          meeting.status === "Scheduled"
+                            ? "bg-[#0a2540] hover:bg-[#0a2540]/90 text-[#d4af37]"
+                            : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+                        }`}
+                      >
+                        <ClipboardList size={13} /> Fill Form
+                      </button>
+
+                      <div className="flex gap-1.5">
+                        {meeting.status === "Scheduled" && (
+                           <button
+                             disabled={actionLoading}
+                             onClick={() => updateStatus(meeting._id, "Completed")}
+                             className="p-1.5 text-[#10b981] bg-emerald-50 hover:bg-emerald-100 rounded-lg transition disabled:opacity-50"
+                             title="Mark Completed"
+                           >
+                             <CheckCircle size={14} />
+                           </button>
+                        )}
+                        {meeting.status === "Scheduled" && (
+                           <button
+                             disabled={actionLoading}
+                             onClick={() => updateStatus(meeting._id, "Cancelled")}
+                             className="p-1.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition disabled:opacity-50"
+                             title="Cancel Meeting"
+                           >
+                             <X size={14} />
+                           </button>
+                        )}
+                      </div>
                     </div>
                      {/* Edit and Delete action buttons removed */}
                   </div>
@@ -407,8 +379,6 @@ export default function MeetingsView() {
               ))}
             </div>
           )}
-        </div>
-      </div>
 
       {/* Modal for Create/Edit */}
       <AnimatePresence>

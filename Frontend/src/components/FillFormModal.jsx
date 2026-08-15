@@ -410,24 +410,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
             </div>
           )}
 
-          {/* Selected Customer Profile Context Card */}
-          {!isSubmitted && selectedMeeting && (
-            <div className="mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Application Context Client</p>
-                <h4 className="text-sm font-black text-[#0a2540]">
-                  {selectedMeeting.customerName || selectedMeeting.leadId?.contactPerson || selectedMeeting.leadId?.companyName || "N/A"}
-                </h4>
-                <p className="text-xs text-slate-500 font-medium">
-                  Phone: {selectedMeeting.customerPhone || selectedMeeting.leadId?.phoneNumber || "N/A"} 
-                  {selectedMeeting.leadId?.companyName && ` | Company: ${selectedMeeting.leadId.companyName}`}
-                </p>
-              </div>
-              <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-[10px] font-bold text-slate-600 self-start sm:self-center shrink-0">
-                Meeting: {selectedMeeting.date ? new Date(selectedMeeting.date).toLocaleDateString() : "N/A"} at {selectedMeeting.time || "N/A"}
-              </div>
-            </div>
-          )}
+
 
           {/* Stepper Content */}
           <AnimatePresence mode="wait">

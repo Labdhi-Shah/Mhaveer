@@ -269,19 +269,11 @@ export default function MeetingsView() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 items-start">
-        {/* Left Side: Fill Form Sidebar */}
-        <div className="w-full lg:w-80 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm shrink-0 flex flex-col gap-4">
-          <h3 className="text-sm font-black text-[#0a2540] uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-2">
-            <ClipboardList size={16} className="text-[#0a2540]" />
-            Form Actions
-          </h3>
-          <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
-            Select a meeting card with a <span className="text-purple-600 font-bold">Scheduled</span> status from the grid, then click below to fill the customer loan application.
-          </p>
-
+        {/* Left Side: Fill Form Button */}
+        <div className="w-full lg:w-auto shrink-0 flex flex-col gap-2">
           <button
             onClick={handleFillFormClick}
-            className={`w-full py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition duration-300 shadow-sm ${
+            className={`px-6 py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition duration-300 shadow-sm w-full lg:w-auto ${
               selectedMeeting?.status === "Scheduled"
                 ? "bg-[#0a2540] hover:bg-[#0a2540]/90 text-[#d4af37]"
                 : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
@@ -292,22 +284,9 @@ export default function MeetingsView() {
 
           {/* Validation Message */}
           {formValidationError && (
-            <div className="text-[10px] text-rose-500 font-bold flex items-start gap-1.5 bg-rose-50 p-3 rounded-xl border border-rose-100">
-              <AlertCircle size={14} className="shrink-0 mt-0.5" />
+            <div className="text-[10px] text-rose-500 font-bold flex items-start gap-1.5 bg-rose-50 p-2.5 rounded-xl border border-rose-100 max-w-[200px]">
+              <AlertCircle size={12} className="shrink-0 mt-0.5" />
               <span>{formValidationError}</span>
-            </div>
-          )}
-
-          {/* Selection indicator helper */}
-          {selectedMeeting && (
-            <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs space-y-1">
-              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Selected Client</p>
-              <p className="font-black text-[#0a2540] truncate">
-                {selectedMeeting.customerName || selectedMeeting.leadId?.contactPerson || "N/A"}
-              </p>
-              <p className="text-[10px] text-slate-500">
-                Status: <span className={`font-bold ${selectedMeeting.status === "Scheduled" ? "text-purple-600" : "text-slate-500"}`}>{selectedMeeting.status}</span>
-              </p>
             </div>
           )}
         </div>

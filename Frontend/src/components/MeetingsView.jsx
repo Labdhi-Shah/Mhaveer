@@ -14,6 +14,29 @@ export default function MeetingsView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState(null);
+  
+  // Selected Meeting state for Fill Form
+  const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [formValidationError, setFormValidationError] = useState("");
+
+  const handleSelectMeeting = (meeting) => {
+    setFormValidationError("");
+    if (selectedMeeting?._id === meeting._id) {
+      setSelectedMeeting(null);
+    } else {
+      setSelectedMeeting(meeting);
+    }
+  };
+
+  const handleFillFormClick = () => {
+    if (!selectedMeeting || selectedMeeting.status !== "Scheduled") {
+      setFormValidationError("Please select a scheduled meeting to fill the form.");
+      showToast("Please select a scheduled meeting to fill the form.", "error");
+      return;
+    }
+    setFormValidationError("");
+    setIsFormOpen(true);
+  };
   const [formData, setFormData] = useState({
     title: "",
     customerName: "",
@@ -213,153 +236,200 @@ export default function MeetingsView() {
         </button>
       </div>
 
-      {/* Fill Form & Filters Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <button
-          onClick={() => setIsFormOpen(true)}
-          className="bg-[#0a2540] hover:bg-[#0a2540]/90 text-[#d4af37] px-5 py-2.5 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition shadow-sm w-full md:w-auto shrink-0"
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-2 text-sm font-bold text-slate-600">
+          <Filter size={16} /> Filters:
+        </div>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-purple-500/20"
         >
-          <ClipboardList size={16} /> Fill Form
-        </button>
-
-        <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm w-full">
-          <div className="flex items-center gap-2 text-sm font-bold text-slate-600">
-            <Filter size={16} /> Filters:
-          </div>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-purple-500/20"
+          <option value="All">All Statuses</option>
+          <option value="Scheduled">Scheduled</option>
+          <option value="Completed">Completed</option>
+          <option value="Rescheduled">Rescheduled</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+        <input
+          type="date"
+          value={filterDate}
+          onChange={(e) => setFilterDate(e.target.value)}
+          className="bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-purple-500/20"
+        />
+        {(filterStatus !== "All" || filterDate !== "") && (
+          <button
+            onClick={() => { setFilterStatus("All"); setFilterDate(""); }}
+            className="text-xs text-rose-500 font-bold hover:underline"
           >
-            <option value="All">All Statuses</option>
-            <option value="Scheduled">Scheduled</option>
-            <option value="Completed">Completed</option>
-            <option value="Rescheduled">Rescheduled</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
-          <input
-            type="date"
-            value={filterDate}
-            onChange={(e) => setFilterDate(e.target.value)}
-            className="bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-purple-500/20"
-          />
-          {(filterStatus !== "All" || filterDate !== "") && (
-            <button
-              onClick={() => { setFilterStatus("All"); setFilterDate(""); }}
-              className="text-xs text-rose-500 font-bold hover:underline"
-            >
-              Clear Filters
-            </button>
+            Clear Filters
+          </button>
+        )}
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        {/* Left Side: Fill Form Sidebar */}
+        <div className="w-full lg:w-80 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm shrink-0 flex flex-col gap-4">
+          <h3 className="text-sm font-black text-[#0a2540] uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-2">
+            <ClipboardList size={16} className="text-[#0a2540]" />
+            Form Actions
+          </h3>
+          <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+            Select a meeting card with a <span className="text-purple-600 font-bold">Scheduled</span> status from the grid, then click below to fill the customer loan application.
+          </p>
+
+          <button
+            onClick={handleFillFormClick}
+            className={`w-full py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition duration-300 shadow-sm ${
+              selectedMeeting?.status === "Scheduled"
+                ? "bg-[#0a2540] hover:bg-[#0a2540]/90 text-[#d4af37]"
+                : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+            }`}
+          >
+            <ClipboardList size={16} /> Fill Form
+          </button>
+
+          {/* Validation Message */}
+          {formValidationError && (
+            <div className="text-[10px] text-rose-500 font-bold flex items-start gap-1.5 bg-rose-50 p-3 rounded-xl border border-rose-100">
+              <AlertCircle size={14} className="shrink-0 mt-0.5" />
+              <span>{formValidationError}</span>
+            </div>
+          )}
+
+          {/* Selection indicator helper */}
+          {selectedMeeting && (
+            <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Selected Client</p>
+              <p className="font-black text-[#0a2540] truncate">
+                {selectedMeeting.customerName || selectedMeeting.leadId?.contactPerson || "N/A"}
+              </p>
+              <p className="text-[10px] text-slate-500">
+                Status: <span className={`font-bold ${selectedMeeting.status === "Scheduled" ? "text-purple-600" : "text-slate-500"}`}>{selectedMeeting.status}</span>
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Right Side: Meeting Cards List */}
+        <div className="flex-1 w-full">
+          {loading ? (
+            <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#0a2540]" size={32} /></div>
+          ) : filteredMeetings.length === 0 ? (
+            <div className="bg-white rounded-3xl border border-slate-200 p-8 text-center text-slate-400 text-xs shadow-sm flex flex-col items-center gap-3">
+              <Calendar size={32} className="text-slate-300" />
+              No meetings found for the selected criteria.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filteredMeetings.map((meeting) => (
+                <div 
+                  key={meeting._id}
+                  onClick={() => handleSelectMeeting(meeting)}
+                  className={`cursor-pointer p-5 rounded-3xl border flex flex-col justify-between hover:shadow-md transition duration-300 ${
+                    selectedMeeting?._id === meeting._id
+                      ? "border-[#0a2540] bg-white ring-2 ring-[#0a2540]/30 shadow-md"
+                      : "bg-white border-slate-200 shadow-sm"
+                  }`}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <h3 className="text-sm font-black text-[#0a2540] truncate max-w-[70%]">{meeting.title}</h3>
+                      <span className={`text-[9px] font-black px-2 py-1 rounded-full uppercase tracking-wider ${getStatusBadge(meeting.status)}`}>
+                        {meeting.status}
+                      </span>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Client / Customer</p>
+                      <p className="text-sm font-black text-[#0a2540]">{meeting.customerName || meeting.leadId?.contactPerson || meeting.leadId?.companyName || "N/A"}</p>
+                    </div>
+
+                    <div className="space-y-1 bg-slate-50 border border-slate-100 p-3 rounded-2xl shadow-sm text-xs">
+                      <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Schedule</p>
+                      <p className="font-black text-[#0a2540] text-sm flex items-center gap-1.5 mt-0.5">
+                        <Calendar size={14} className="text-purple-500" />
+                        {meeting.date ? new Date(meeting.date).toLocaleDateString() : "N/A"} at {meeting.time || "N/A"}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                      <div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Phone</p>
+                        <p className="font-semibold text-slate-700 mt-0.5 flex items-center gap-1">
+                          <Phone size={10} className="text-slate-400"/> {meeting.leadId?.phoneNumber || meeting.customerPhone || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Type</p>
+                        <p className="font-bold text-[#0a2540] mt-0.5">{meeting.type}</p>
+                      </div>
+                    </div>
+
+                    {meeting.leadId && (
+                      <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 mt-2 pt-2">
+                        <div>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Company</p>
+                          <p className="font-semibold text-slate-700 mt-0.5 truncate">{meeting.leadId.companyName || "N/A"}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Loan / CIBIL</p>
+                          <p className="font-semibold text-slate-700 mt-0.5 truncate">
+                            {meeting.leadId.loanType || "N/A"} / {meeting.leadId.cibilScore || "N/A"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {(meeting.location || (meeting.leadId && meeting.leadId.city)) && (
+                      <div className="text-xs text-slate-600 flex items-start gap-1.5 bg-slate-50 p-2 rounded-xl border border-slate-100 mt-2">
+                        <MapPin size={12} className="text-slate-400 mt-0.5 shrink-0" />
+                        <span className="font-medium line-clamp-2">
+                          {meeting.location || `${meeting.leadId?.city || ""}, ${meeting.leadId?.state || ""}`}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {meeting.notes && (
+                      <div className="text-[11px] text-slate-500 mt-2 italic line-clamp-2 border-l-2 border-slate-200 pl-2">
+                        "{meeting.notes}"
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="border-t border-slate-100 pt-3 mt-4 flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex gap-2">
+                      {meeting.status === "Scheduled" && (
+                         <button
+                           disabled={actionLoading}
+                           onClick={() => updateStatus(meeting._id, "Completed")}
+                           className="p-1.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition disabled:opacity-50"
+                           title="Mark Completed"
+                         >
+                           <CheckCircle size={14} />
+                         </button>
+                      )}
+                      {meeting.status === "Scheduled" && (
+                         <button
+                           disabled={actionLoading}
+                           onClick={() => updateStatus(meeting._id, "Cancelled")}
+                           className="p-1.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition disabled:opacity-50"
+                           title="Cancel Meeting"
+                         >
+                           <X size={14} />
+                         </button>
+                      )}
+                    </div>
+                     {/* Edit and Delete action buttons removed */}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
-
-      {loading ? (
-        <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#0a2540]" size={32} /></div>
-      ) : filteredMeetings.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-slate-200 p-8 text-center text-slate-400 text-xs shadow-sm flex flex-col items-center gap-3">
-          <Calendar size={32} className="text-slate-300" />
-          No meetings found for the selected criteria.
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredMeetings.map((meeting) => (
-            <div key={meeting._id} className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <h3 className="text-sm font-black text-[#0a2540] truncate max-w-[70%]">{meeting.title}</h3>
-                  <span className={`text-[9px] font-black px-2 py-1 rounded-full uppercase tracking-wider ${getStatusBadge(meeting.status)}`}>
-                    {meeting.status}
-                  </span>
-                </div>
-
-                <div>
-                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Client / Customer</p>
-                  <p className="text-sm font-black text-[#0a2540]">{meeting.customerName || meeting.leadId?.contactPerson || meeting.leadId?.companyName || "N/A"}</p>
-                </div>
-
-                <div className="space-y-1 bg-slate-50 border border-slate-100 p-3 rounded-2xl shadow-sm text-xs">
-                  <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Schedule</p>
-                  <p className="font-black text-[#0a2540] text-sm flex items-center gap-1.5 mt-0.5">
-                    <Calendar size={14} className="text-purple-500" />
-                    {meeting.date ? new Date(meeting.date).toLocaleDateString() : "N/A"} at {meeting.time || "N/A"}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-xs pt-1">
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Phone</p>
-                    <p className="font-semibold text-slate-700 mt-0.5 flex items-center gap-1">
-                      <Phone size={10} className="text-slate-400"/> {meeting.leadId?.phoneNumber || meeting.customerPhone || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Type</p>
-                    <p className="font-bold text-[#0a2540] mt-0.5">{meeting.type}</p>
-                  </div>
-                </div>
-
-                {meeting.leadId && (
-                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 mt-2 pt-2">
-                    <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Company</p>
-                      <p className="font-semibold text-slate-700 mt-0.5 truncate">{meeting.leadId.companyName || "N/A"}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Loan / CIBIL</p>
-                      <p className="font-semibold text-slate-700 mt-0.5 truncate">
-                        {meeting.leadId.loanType || "N/A"} / {meeting.leadId.cibilScore || "N/A"}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {(meeting.location || (meeting.leadId && meeting.leadId.city)) && (
-                  <div className="text-xs text-slate-600 flex items-start gap-1.5 bg-slate-50 p-2 rounded-xl border border-slate-100 mt-2">
-                    <MapPin size={12} className="text-slate-400 mt-0.5 shrink-0" />
-                    <span className="font-medium line-clamp-2">
-                      {meeting.location || `${meeting.leadId?.city || ""}, ${meeting.leadId?.state || ""}`}
-                    </span>
-                  </div>
-                )}
-                
-                {meeting.notes && (
-                  <div className="text-[11px] text-slate-500 mt-2 italic line-clamp-2 border-l-2 border-slate-200 pl-2">
-                    "{meeting.notes}"
-                  </div>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="border-t border-slate-100 pt-3 mt-4 flex items-center justify-between">
-                <div className="flex gap-2">
-                  {meeting.status === "Scheduled" && (
-                     <button
-                       disabled={actionLoading}
-                       onClick={() => updateStatus(meeting._id, "Completed")}
-                       className="p-1.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition disabled:opacity-50"
-                       title="Mark Completed"
-                     >
-                       <CheckCircle size={14} />
-                     </button>
-                  )}
-                  {meeting.status === "Scheduled" && (
-                     <button
-                       disabled={actionLoading}
-                       onClick={() => updateStatus(meeting._id, "Cancelled")}
-                       className="p-1.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition disabled:opacity-50"
-                       title="Cancel Meeting"
-                     >
-                       <X size={14} />
-                     </button>
-                  )}
-                </div>
-                 {/* Edit and Delete action buttons removed */}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Modal for Create/Edit */}
       <AnimatePresence>
@@ -530,7 +600,11 @@ export default function MeetingsView() {
 
       <AnimatePresence>
         {isFormOpen && (
-          <FillFormModal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
+          <FillFormModal 
+            isOpen={isFormOpen} 
+            onClose={() => setIsFormOpen(false)} 
+            selectedMeeting={selectedMeeting} 
+          />
         )}
       </AnimatePresence>
     </div>

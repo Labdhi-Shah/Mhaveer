@@ -10,7 +10,7 @@ const LOAN_TYPES = [
   { id: "Personal Loan", title: "Personal Loan", icon: User, desc: "For personal expenses & cash needs" },
   { id: "Business Loan", title: "Business Loan", icon: Briefcase, desc: "To expand or fund your business" },
   { id: "Home Loan", title: "Home Loan", icon: Home, desc: "For buying or constructing a house" },
-  { id: "Loan Against Property (LAP)", title: "Loan Against Property", icon: Landmark, desc: "Unlock value from residential/commercial property" },
+  { id: "Property Loan", title: "Property Loan", icon: Landmark, desc: "Unlock value from residential/commercial property" },
   { id: "Insurance", title: "Insurance", icon: ShieldCheck, desc: "Secure your life, health, or assets" },
   { id: "Credit Cards", title: "Credit Cards", icon: CreditCard, desc: "Reward points & short-term credit" }
 ];
@@ -24,7 +24,7 @@ const DOCUMENTS_LIST = [
   { id: "businessDocs", title: "Business Documents", desc: "GST certificate or trade license", required: false, conditional: true }
 ];
 
-export default function FillFormModal({ isOpen, onClose }) {
+export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
   const [activeDocId, setActiveDocId] = useState(null);
@@ -34,6 +34,7 @@ export default function FillFormModal({ isOpen, onClose }) {
 
   // Form State
   const [loanType, setLoanType] = useState("");
+  const [propertyLoanType, setPropertyLoanType] = useState("");
   const [eligibility, setEligibility] = useState({
     age: "",
     income: "",
@@ -77,7 +78,11 @@ export default function FillFormModal({ isOpen, onClose }) {
 
   // Step 1 Validation
   const isStep1Valid = () => {
-    return !!loanType;
+    if (!loanType) return false;
+    if (loanType === "Property Loan") {
+      return !!propertyLoanType;
+    }
+    return true;
   };
 
   // Step 2 Validation
@@ -86,7 +91,7 @@ export default function FillFormModal({ isOpen, onClose }) {
     const incomeNum = parseFloat(eligibility.income);
     const cibilNum = parseInt(cibilScore, 10);
 
-    const isAgeValid = !isNaN(ageNum) && ageNum >= 18 && ageNum <= 100;
+    const isAgeValid = !isNaN(ageNum) && ageNum >= 18 && ageNum <= 60;
     const isIncomeValid = !isNaN(incomeNum) && incomeNum > 0;
     const isCibilValid = !isNaN(cibilNum) && cibilNum >= 700 && cibilNum <= 900;
 
@@ -123,6 +128,9 @@ export default function FillFormModal({ isOpen, onClose }) {
 
   const handleLoanTypeSelect = (typeId) => {
     setLoanType(typeId);
+    if (typeId !== "Property Loan") {
+      setPropertyLoanType("");
+    }
   };
 
   const handleEligibilityChange = (e) => {
@@ -252,6 +260,7 @@ export default function FillFormModal({ isOpen, onClose }) {
     // Reset State
     setCurrentStep(1);
     setLoanType("");
+    setPropertyLoanType("");
     setEligibility({
       age: "",
       income: "",
@@ -401,6 +410,25 @@ export default function FillFormModal({ isOpen, onClose }) {
             </div>
           )}
 
+          {/* Selected Customer Profile Context Card */}
+          {!isSubmitted && selectedMeeting && (
+            <div className="mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Application Context Client</p>
+                <h4 className="text-sm font-black text-[#0a2540]">
+                  {selectedMeeting.customerName || selectedMeeting.leadId?.contactPerson || selectedMeeting.leadId?.companyName || "N/A"}
+                </h4>
+                <p className="text-xs text-slate-500 font-medium">
+                  Phone: {selectedMeeting.customerPhone || selectedMeeting.leadId?.phoneNumber || "N/A"} 
+                  {selectedMeeting.leadId?.companyName && ` | Company: ${selectedMeeting.leadId.companyName}`}
+                </p>
+              </div>
+              <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-[10px] font-bold text-slate-600 self-start sm:self-center shrink-0">
+                Meeting: {selectedMeeting.date ? new Date(selectedMeeting.date).toLocaleDateString() : "N/A"} at {selectedMeeting.time || "N/A"}
+              </div>
+            </div>
+          )}
+
           {/* Stepper Content */}
           <AnimatePresence mode="wait">
             {isSubmitted ? (
@@ -493,6 +521,37 @@ export default function FillFormModal({ isOpen, onClose }) {
                     })}
                   </div>
 
+                  {/* Conditional Property Loan Type */}
+                  <AnimatePresence>
+                    {loanType === "Property Loan" && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3 mt-4 animate-fadeIn"
+                      >
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                          Property Loan Type *
+                        </label>
+                        <select
+                          value={propertyLoanType}
+                          onChange={(e) => setPropertyLoanType(e.target.value)}
+                          required
+                          className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20"
+                        >
+                          <option value="">Select Property Loan Type</option>
+                          <option value="Industrial Loan">Industrial Loan</option>
+                          <option value="Commercial Loan">Commercial Loan</option>
+                          <option value="Plot Loan">Plot Loan</option>
+                          <option value="Residential Loan">Residential Loan</option>
+                        </select>
+                        {!propertyLoanType && (
+                          <p className="text-[11px] text-rose-500 font-bold mt-1">Please select a Property Loan Type.</p>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   {!loanType && (
                     <div className="flex items-center gap-2 text-rose-500 text-xs font-bold bg-rose-50 p-3 rounded-xl border border-rose-100">
                       <AlertCircle size={14} />
@@ -536,8 +595,8 @@ export default function FillFormModal({ isOpen, onClose }) {
                         placeholder="e.g. 30"
                         className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20"
                       />
-                      {eligibility.age && (parseInt(eligibility.age, 10) < 18 || parseInt(eligibility.age, 10) > 100) && (
-                        <p className="text-[11px] text-rose-500 font-bold mt-1">Age must be between 18 and 100.</p>
+                      {eligibility.age && (parseInt(eligibility.age, 10) < 18 || parseInt(eligibility.age, 10) > 60) && (
+                        <p className="text-[11px] text-rose-500 font-bold mt-1">Age must be between 18 and 60 years.</p>
                       )}
                     </div>
 

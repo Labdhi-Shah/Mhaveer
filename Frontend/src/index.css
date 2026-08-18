@@ -27,3 +27,14 @@ textarea {
 #root {
   min-height: 100vh;
 }
+
+/* Hide number input spinners */
+.hide-spinners::-webkit-outer-spin-button,
+.hide-spinners::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.hide-spinners[type=number] {
+  -moz-appearance: textfield;
+}

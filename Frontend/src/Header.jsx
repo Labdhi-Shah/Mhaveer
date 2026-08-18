@@ -19,6 +19,7 @@ export default function Header({ onToggleSidebar }) {
   const [attendance, setAttendance] = useState(null);
   const [elapsed, setElapsed] = useState("00:00:00");
   const [loading, setLoading] = useState(false);
+  const [meetingCount, setMeetingCount] = useState(0);
 
   // Format Page Title
   const getPageTitle = () => {
@@ -52,7 +53,19 @@ export default function Header({ onToggleSidebar }) {
     if (user && !isSuperAdmin) {
       fetchAttendanceStatus();
     }
-  }, [user, isSuperAdmin]);
+    
+    // Add meeting notification logic for Sales
+    if (user && roleCategory === "Sales") {
+      api.get("/meetings")
+        .then(res => {
+          if (res.data.success) {
+            const newMeetings = res.data.data.filter(m => m.status === "Scheduled");
+            setMeetingCount(newMeetings.length);
+          }
+        })
+        .catch(err => console.error("Failed to fetch meeting count", err));
+    }
+  }, [user, isSuperAdmin, roleCategory]);
 
   useEffect(() => {
     if (!attendance || attendance.status === "Not Started") {
@@ -270,7 +283,13 @@ export default function Header({ onToggleSidebar }) {
         )}
         <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#d4af37] rounded-lg transition relative hidden sm:block" title="Notifications">
           <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#d4af37] rounded-full" />
+          {roleCategory === "Sales" && meetingCount > 0 ? (
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-bounce">
+              {meetingCount}
+            </span>
+          ) : (
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#d4af37] rounded-full" />
+          )}
         </button>
 
         <div className="h-6 w-px bg-slate-700" />

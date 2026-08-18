@@ -7,14 +7,14 @@ export const normalizeDepartment = (value) => {
   const raw = typeof value === "string" ? value.trim() : "";
   if (!raw) return "";
   const lower = raw.toLowerCase();
-  
+
   // Explicit Panel Mapping
   if (lower.includes("kyc") || lower.includes("compliance")) return "Sales";
   if (lower.includes("admin")) return "Admin";
   if (lower.includes("sales")) return "Sales";
-  if (lower.includes("telecalling") || lower.includes("lead generation")) return "Telecalling";
+  if (lower.includes("telecall") || lower.includes("tele caller") || lower.includes("lead generation")) return "Telecalling";
   if (lower.includes("lead")) return "Leads";
-  
+
   return raw;
 };
 
@@ -27,7 +27,7 @@ export const normalizeRole = (value) => {
   if (lower === "manager") return "Manager";
   if (lower === "team leader" || lower === "tl" || lower === "teamleader") return "Team Leader";
   if (lower === "employee" || lower === "front desk" || lower === "reception" || lower === "sales department" || lower === "sales" || lower.includes("hr") || lower.includes("support") || lower.includes("marketing") || lower.includes("operations") || lower.includes("legal") || lower.includes("finance") || lower.includes("insurance") || lower.includes("it department")) return "Employee";
-  return raw;
+  return "Employee";
 };
 
 export const getUserDepartment = (user) => {
@@ -37,7 +37,7 @@ export const getUserDepartment = (user) => {
   if (user.departmentName) return normalizeDepartment(user.departmentName);
   const roleText = typeof user.role === "string" ? user.role : "";
   if (roleText.toLowerCase().includes("sales")) return "Sales";
-  if (roleText.toLowerCase().includes("telecalling") || roleText.toLowerCase().includes("lead generation")) return "Telecalling";
+  if (roleText.toLowerCase().includes("telecall") || roleText.toLowerCase().includes("tele caller") || roleText.toLowerCase().includes("lead generation")) return "Telecalling";
   if (roleText.toLowerCase().includes("lead")) return "Leads";
   if (roleText.toLowerCase().includes("admin")) return "Admin";
   return "";

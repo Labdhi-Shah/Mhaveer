@@ -1,5 +1,6 @@
 import axios from "axios";
 
+//Backend URL for API requests. If not defined in environment variables, it defaults to the Render deployment URL.
 const rawBaseURL = import.meta.env.VITE_API_URL || "https://mhaveer.onrender.com";
 if (!import.meta.env.VITE_API_URL) {
   console.warn("VITE_API_URL is not defined in environment variables. Using default fallback.");

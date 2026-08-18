@@ -1,6 +1,7 @@
 const Lead = require("../models/Lead");
 const Employee = require("../models/Employee");
 const Meeting = require("../models/Meeting");
+const { assignMeetingToSalesEmployee } = require("../services/salesAssignmentService");
 
 // @desc    Create a new lead
 // @route   POST /api/leads
@@ -44,6 +45,7 @@ exports.createLead = async (req, res) => {
     await lead.save();
 
     // If meeting details exist, create a corresponding Meeting record automatically
+    // and trigger Sales department assignment
     if (lead.meetingDate) {
       const meeting = new Meeting({
         title: "Initial Consultation",
@@ -58,8 +60,15 @@ exports.createLead = async (req, res) => {
         notes: `Created from New Lead Entry. Interested: ${lead.interested}`,
         employeeId: lead.employeeId,
         employeeName: lead.employeeName,
+        department: req.user.department || "",
       });
       await meeting.save();
+      // Auto-assign to Sales employee (non-fatal if it fails)
+      try {
+        await assignMeetingToSalesEmployee(meeting);
+      } catch (assignErr) {
+        console.error("[SalesAssignment] Lead meeting assignment error:", assignErr.message);
+      }
     }
 
     res.status(201).json({
@@ -225,6 +234,9 @@ exports.updateLead = async (req, res) => {
       if (meeting) {
         meeting.date = lead.meetingDate;
         meeting.time = lead.meetingTime || meeting.time;
+        meeting.customerName = lead.contactPerson || lead.companyName;
+        meeting.customerPhone = lead.phoneNumber;
+        meeting.location = lead.address || "";
         await meeting.save();
       } else {
         const newMeeting = new Meeting({
@@ -240,8 +252,15 @@ exports.updateLead = async (req, res) => {
           notes: `Created from Lead Update. Interested: ${lead.interested}`,
           employeeId: lead.employeeId,
           employeeName: lead.employeeName,
+          department: req.user.department || "",
         });
         await newMeeting.save();
+        // Auto-assign to Sales employee (non-fatal)
+        try {
+          await assignMeetingToSalesEmployee(newMeeting);
+        } catch (assignErr) {
+          console.error("[SalesAssignment] Lead update meeting assignment error:", assignErr.message);
+        }
       }
     }
 

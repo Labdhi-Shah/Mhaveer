@@ -1,5 +1,25 @@
+/**
+ * DepartmentRoleDashboard.jsx
+ *
+ * Routes authenticated users to their department+role-specific dashboard.
+ * Architecture: Department → Panel → Role → Screen
+ *
+ * Sales:
+ *   Manager     → SalesManagerDashboard
+ *   Team Leader → SalesTeamLeaderDashboard
+ *   Employee    → SalesEmployeeDashboard
+ *   (all routed via SalesDashboard dispatcher)
+ *
+ * Telecalling:
+ *   Manager / Team Leader / Employee → EmployeeDashboard (with panel header)
+ *
+ * Leads:
+ *   Manager / Team Leader / Employee → EmployeeDashboard (with panel header)
+ */
+
 import EmployeeDashboard from "../components/EmployeeDashboard";
 import SalesDashboard from "../components/SalesDashboard/SalesDashboard";
+// import SalesManagerDashboard from "../components/SalesDashboard/SalesManagerDashboard";
 import { useAuth } from "../context/AuthContext";
 import { resolveDepartmentDashboard, getUserDepartment, getUserRole } from "../utils/hierarchy";
 
@@ -31,23 +51,12 @@ export const TelecallingEmployeeDashboard = () => (
   </>
 );
 
-export const SalesManagerDashboard = () => (
-  <>
-    <SalesDashboard />
-  </>
-);
-
-export const SalesTeamLeaderDashboard = () => (
-  <>
-    <SalesDashboard />
-  </>
-);
-
-export const SalesEmployeeDashboard = () => (
-  <>
-    <SalesDashboard />
-  </>
-);
+// Sales dashboards — all routed through the SalesDashboard role-dispatcher
+// which internally renders SalesManagerDashboard, SalesTeamLeaderDashboard,
+// or SalesEmployeeDashboard based on the authenticated user's role.
+export const SalesManagerDashboardWrapper = () => <SalesDashboard />;
+export const SalesTeamLeaderDashboardWrapper = () => <SalesDashboard />;
+export const SalesEmployeeDashboardWrapper = () => <SalesDashboard />;
 
 export const LeadsManagerDashboard = () => (
   <>
@@ -80,9 +89,9 @@ const GenericDepartmentDashboard = ({ department, role }) => (
 export default function DepartmentRoleDashboard() {
   const { user } = useAuth();
   switch (resolveDepartmentDashboard(getUserDepartment(user), getUserRole(user))) {
-    case "sales-manager": return <SalesManagerDashboard />;
-    case "sales-team-leader": return <SalesTeamLeaderDashboard />;
-    case "sales-employee": return <SalesEmployeeDashboard />;
+    case "sales-manager": return <SalesManagerDashboardWrapper />;
+    case "sales-team-leader": return <SalesTeamLeaderDashboardWrapper />;
+    case "sales-employee": return <SalesEmployeeDashboardWrapper />;
     case "telecalling-manager": return <TelecallingManagerDashboard />;
     case "telecalling-team-leader": return <TelecallingTeamLeaderDashboard />;
     case "telecalling-employee": return <TelecallingEmployeeDashboard />;

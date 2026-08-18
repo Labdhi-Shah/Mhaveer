@@ -3,7 +3,7 @@ const path = require("path");
 const multer = require("multer");
 const Customer = require("../models/Customer");
 
-// Multer Storage Configuration
+// ── Multer Storage ────────────────────────────────────────────────────────────
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = path.join(__dirname, "../uploads");
@@ -18,24 +18,40 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filter to validate format (PDF, PNG, JPG, JPEG)
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
-  const fileExtension = path.extname(file.originalname).toLowerCase();
   const allowedExtensions = [".pdf", ".jpeg", ".jpg", ".png"];
-
-  if (allowedTypes.includes(file.mimetype) && allowedExtensions.includes(fileExtension)) {
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (allowedTypes.includes(file.mimetype) && allowedExtensions.includes(ext)) {
     cb(null, true);
   } else {
     cb(new Error("Invalid format. Only PDF, PNG, JPG, and JPEG are allowed."), false);
   }
 };
 
+// Single-file uploader (used by existing uploadDocument route)
 const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+  storage,
+  fileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 }
 }).single("file");
+
+// Multi-file uploader for the Fill Form submission (one field per doc type)
+const FORM_DOC_FIELDS = [
+  { name: "aadhaar", maxCount: 1 },
+  { name: "pan", maxCount: 1 },
+  { name: "bankStatement", maxCount: 1 },
+  { name: "salaryOrItr", maxCount: 1 },
+  { name: "addressProof", maxCount: 1 },
+  { name: "businessDocs", maxCount: 1 },
+];
+
+const uploadFormDocs = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 }
+}).fields(FORM_DOC_FIELDS);
+
 
 // @desc    Register a new customer
 // @route   POST /api/customers
@@ -321,4 +337,137 @@ exports.deleteCustomer = async (req, res) => {
     console.error("Delete Customer Error:", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
+};
+
+// ──────────────────────────────────────────────────────────────────────────────
+// @desc   Submit the "Fill Form" for a meeting — creates Customer + uploads docs
+// @route  POST /api/customers/from-meeting
+// @access Sales Employee (authenticated)
+// ──────────────────────────────────────────────────────────────────────────────
+exports.submitMeetingForm = (req, res) => {
+  uploadFormDocs(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+
+    try {
+      const {
+        meetingId,
+        customerName,
+        customerPhone,
+        loanType,
+        propertyLoanType,
+        cibilScore,
+        // Eligibility fields (sent as eligibility_xxx keys)
+        eligibility_age,
+        eligibility_income,
+        eligibility_employmentType,
+        eligibility_companyName,
+        eligibility_govDepartment,
+        eligibility_businessName,
+        eligibility_annualTurnover,
+        eligibility_gstNumber,
+      } = req.body;
+
+      // Basic validation
+      if (!customerName || !loanType) {
+        // Cleanup any uploaded files
+        if (req.files) {
+          Object.values(req.files).flat().forEach((f) => {
+            if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
+          });
+        }
+        return res.status(400).json({
+          success: false,
+          message: "Customer name and loan type are required."
+        });
+      }
+
+      // Check if a form has already been submitted for this meeting
+      if (meetingId) {
+        const existingCustomer = await Customer.findOne({ meetingId });
+        if (existingCustomer) {
+          // Cleanup uploaded files
+          if (req.files) {
+            Object.values(req.files).flat().forEach((f) => {
+              if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
+            });
+          }
+          return res.status(400).json({
+            success: false,
+            message: "A form has already been submitted for this meeting."
+          });
+        }
+      }
+
+      // Build document map from uploaded files
+      const documents = {};
+      const DOC_FIELDS = ["aadhaar", "pan", "bankStatement", "salaryOrItr", "addressProof", "businessDocs"];
+      DOC_FIELDS.forEach((field) => {
+        if (req.files && req.files[field] && req.files[field][0]) {
+          const f = req.files[field][0];
+          documents[field] = {
+            filename: f.filename,
+            originalName: f.originalname,
+            path: f.path,
+            mimeType: f.mimetype,
+            size: f.size
+          };
+        }
+      });
+
+      // Create customer record
+      const customer = new Customer({
+        fullName: customerName,
+        phone: customerPhone || "",
+        email: "",
+        loanType,
+        propertyLoanType: propertyLoanType || "",
+        cibilScore: cibilScore || "",
+        meetingId: meetingId || null,
+        salesRepresentativeId: req.user.id,
+        salesRepresentativeName: req.user.name || req.user.fullName || "Sales Officer",
+        status: "Pending Verification",
+        eligibility: {
+          age: eligibility_age || "",
+          income: eligibility_income || "",
+          employmentType: eligibility_employmentType || "",
+          companyName: eligibility_companyName || "",
+          govDepartment: eligibility_govDepartment || "",
+          businessName: eligibility_businessName || "",
+          annualTurnover: eligibility_annualTurnover || "",
+          gstNumber: eligibility_gstNumber || "",
+        },
+        documents,
+      });
+
+      await customer.save();
+
+      console.log(`[FillForm] Customer application saved: ${customer._id} by ${req.user.name} for meeting ${meetingId || "N/A"}`);
+
+      // Update the associated meeting status to "Completed"
+      if (meetingId) {
+        const Meeting = require("../models/Meeting");
+        await Meeting.findByIdAndUpdate(meetingId, { status: "Completed" }, { new: true });
+        console.log(`[FillForm] Meeting ${meetingId} marked as Completed`);
+      }
+
+      res.status(201).json({
+        success: true,
+        message: "Application submitted successfully",
+        data: customer
+      });
+    } catch (error) {
+      console.error("Submit Meeting Form Error:", error);
+      // Cleanup uploaded files on DB error
+      if (req.files) {
+        Object.values(req.files).flat().forEach((f) => {
+          if (fs.existsSync(f.path)) {
+            try { fs.unlinkSync(f.path); } catch (_) { }
+          }
+        });
+      }
+      res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+  });
 };

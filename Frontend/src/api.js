@@ -11,8 +11,6 @@ const api = axios.create({
   withCredentials: true,
 });
 
-
-
 // jwt na token atomatic hendel thy che 
 api.interceptors.request.use(
   (config) => {

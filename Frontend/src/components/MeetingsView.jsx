@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Phone, Loader2, AlertCircle, CheckCircle, MapPin, Plus, X, Filter, ClipboardList } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import api from "../api";
 import FillFormModal from "./FillFormModal";
 
 export default function MeetingsView() {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isNewView = searchParams.get("type") === "new";
+
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -39,8 +44,16 @@ export default function MeetingsView() {
   });
 
   // Filter states
-  const [filterStatus, setFilterStatus] = useState("All");
+  const [filterStatus, setFilterStatus] = useState(isNewView ? "Scheduled" : "All");
   const [filterDate, setFilterDate] = useState("");
+
+  useEffect(() => {
+    if (searchParams.get("type") === "new") {
+      setFilterStatus("Scheduled");
+    } else if (searchParams.get("type") === "total") {
+      setFilterStatus("All");
+    }
+  }, [location.search]);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -99,6 +112,22 @@ export default function MeetingsView() {
         notes: ""
       });
     }
+    setIsModalOpen(true);
+  };
+
+  const handleReschedule = (meeting) => {
+    setEditingMeeting(meeting);
+    setFormData({
+      title: meeting.title || "",
+      customerName: meeting.customerName || "",
+      customerPhone: meeting.customerPhone || "",
+      date: meeting.date ? new Date(meeting.date).toISOString().split("T")[0] : "",
+      time: meeting.time || "",
+      location: meeting.location || "",
+      type: meeting.type || "Consultation",
+      status: "Rescheduled",
+      notes: meeting.notes || ""
+    });
     setIsModalOpen(true);
   };
 
@@ -217,12 +246,7 @@ export default function MeetingsView() {
             Manage your schedule, consultations, and face-to-face loan reviews.
           </p>
         </div>
-        <button
-          onClick={() => openModal()}
-          className="bg-[#0a2540] hover:bg-[#0a2540]/90 text-[#d4af37] px-5 py-2.5 rounded-xl font-black text-sm flex items-center gap-2 transition shadow-sm"
-        >
-          <Plus size={16} /> New Meeting
-        </button>
+
       </div>
 
       {/* Filters */}
@@ -339,37 +363,43 @@ export default function MeetingsView() {
                   {/* Action Buttons */}
                   <div className="border-t border-slate-100 pt-3 mt-4 flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => handleFillFormForCard(meeting)}
-                        className={`px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-xs ${
-                          meeting.status === "Scheduled"
-                            ? "bg-[#0a2540] hover:bg-[#0a2540]/90 text-[#d4af37]"
-                            : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
-                        }`}
-                      >
-                        <ClipboardList size={13} /> Fill Form
-                      </button>
+                      {(meeting.status === "Scheduled" || meeting.status === "Rescheduled") ? (
+                        <button
+                          onClick={() => handleFillFormForCard(meeting)}
+                          className="px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-xs bg-[#0a2540] hover:bg-[#0a2540]/90 text-[#d4af37]"
+                        >
+                          <ClipboardList size={13} /> Fill Form
+                        </button>
+                      ) : meeting.status === "Completed" ? (
+                        <div className="px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs bg-emerald-50 text-emerald-600 border border-emerald-200">
+                          <CheckCircle size={13} /> Form Submitted
+                        </div>
+                      ) : (
+                        <div className="px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs bg-slate-100 text-slate-400 border border-slate-200">
+                          {meeting.status}
+                        </div>
+                      )}
 
                       <div className="flex gap-1.5">
-                        {meeting.status === "Scheduled" && (
-                           <button
-                             disabled={actionLoading}
-                             onClick={() => updateStatus(meeting._id, "Completed")}
-                             className="p-1.5 text-[#10b981] bg-emerald-50 hover:bg-emerald-100 rounded-lg transition disabled:opacity-50"
-                             title="Mark Completed"
-                           >
-                             <CheckCircle size={14} />
-                           </button>
-                        )}
-                        {meeting.status === "Scheduled" && (
-                           <button
-                             disabled={actionLoading}
-                             onClick={() => updateStatus(meeting._id, "Cancelled")}
-                             className="p-1.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition disabled:opacity-50"
-                             title="Cancel Meeting"
-                           >
-                             <X size={14} />
-                           </button>
+                        {(meeting.status === "Scheduled" || meeting.status === "Rescheduled") && (
+                           <>
+                             <button
+                               disabled={actionLoading}
+                               onClick={() => handleReschedule(meeting)}
+                               className="p-1.5 text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-lg transition disabled:opacity-50"
+                               title="Reschedule Meeting"
+                             >
+                               <Calendar size={14} />
+                             </button>
+                             <button
+                               disabled={actionLoading}
+                               onClick={() => updateStatus(meeting._id, "Cancelled")}
+                               className="p-1.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition disabled:opacity-50"
+                               title="Cancel Meeting"
+                             >
+                               <X size={14} />
+                             </button>
+                           </>
                         )}
                       </div>
                     </div>
@@ -551,7 +581,10 @@ export default function MeetingsView() {
         {isFormOpen && (
           <FillFormModal 
             isOpen={isFormOpen} 
-            onClose={() => setIsFormOpen(false)} 
+            onClose={(wasSubmitted) => {
+              setIsFormOpen(false);
+              if (wasSubmitted) fetchMeetings();
+            }} 
             selectedMeeting={selectedMeeting} 
           />
         )}

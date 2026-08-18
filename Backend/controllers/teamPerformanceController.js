@@ -2,6 +2,20 @@ const Employee = require("../models/Employee");
 const Lead = require("../models/Lead");
 const mongoose = require("mongoose");
 
+const normalizeDepartment = (value = "") => {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!raw) return "";
+  const lower = raw.toLowerCase();
+  
+  if (lower.includes("kyc") || lower.includes("compliance")) return "Sales";
+  if (lower.includes("admin")) return "Admin";
+  if (lower.includes("sales")) return "Sales";
+  if (lower.includes("telecalling") || lower.includes("lead generation")) return "Telecalling";
+  if (lower.includes("lead")) return "Leads";
+  
+  return raw;
+};
+
 exports.getTeamPerformance = async (req, res) => {
   try {
     const userId = req.user.id; // from JWT
@@ -13,7 +27,9 @@ exports.getTeamPerformance = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    const { role, department, employeeId } = currentUser;
+    const { role, employeeId } = currentUser;
+    // Use the already normalized department from req.user
+    const normalizedDept = req.user.department;
 
     if (role === "Employee") {
       return res.status(403).json({ success: false, message: "Access denied" });
@@ -38,9 +54,6 @@ exports.getTeamPerformance = async (req, res) => {
       if (teamLeaderId) {
         // Manager drilled down to view Employees under a specific Team Leader
         const query = { teamLeaderId: String(teamLeaderId), role: { $nin: ["Admin", "Manager", "Team Leader"] } };
-        // We do not enforce query.department = department here because if the Manager 
-        // can view the Team Leader, they should be able to view all employees under them,
-        // even if the employee's department field is empty or mismatched.
         
         const employees = await Employee.find(query);
 
@@ -72,14 +85,44 @@ exports.getTeamPerformance = async (req, res) => {
       } else {
         // Default Manager View: Show Team Leaders
         const query = { role: "Team Leader" };
-        if (role !== "Admin" && department) {
-            query.department = department;
+        let teamLeaders = await Employee.find(query);
+        
+        if (role !== "Admin" && normalizedDept) {
+            teamLeaders = teamLeaders.filter(tl => normalizeDepartment(tl.department) === normalizedDept);
         }
 
-        const teamLeaders = await Employee.find(query);
-
         if (!teamLeaders.length) {
-          return res.json({ success: true, type: "Team Leader", data: [] });
+          // Fallback: If no Team Leaders are found, show all Employees directly
+          const empQuery = { role: { $nin: ["Admin", "Manager"] } };
+          let employees = await Employee.find(empQuery);
+          
+          if (role !== "Admin" && normalizedDept) {
+            employees = employees.filter(emp => normalizeDepartment(emp.department) === normalizedDept);
+          }
+          
+          if (!employees.length) {
+            return res.json({ success: true, type: "Employee", data: [] });
+          }
+          
+          const employeeIds = employees.map(emp => String(emp._id));
+          const leadsStats = await getLeadsStatsForEmployees(employeeIds, todayStart, todayEnd, weekStart, monthStart);
+
+          const result = employees.map(emp => {
+            const stats = leadsStats.find(stat => stat._id === String(emp._id)) || {};
+            return {
+              id: emp._id,
+              employeeId: emp.employeeId,
+              name: emp.name,
+              totalCalls: stats.totalCalls || 0,
+              todaysCalls: stats.todaysCalls || 0,
+              interestedLeads: stats.interestedLeads || 0,
+              pendingFollowUps: stats.pendingFollowUps || 0,
+              todaysMeetings: stats.todaysMeetings || 0,
+              lastActivity: stats.lastActivity || null
+            };
+          });
+
+          return res.json({ success: true, type: "Employee", data: result });
         }
 
         const tlIds = teamLeaders.map(tl => String(tl._id));

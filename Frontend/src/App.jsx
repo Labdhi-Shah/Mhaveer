@@ -48,7 +48,23 @@ const DepartmentRoleProtectedRoute = ({ children, allowedDepartments = [], allow
     const roleAllowed = allowedRoles.length === 0 || allowedRoles.includes(userRole);
 
     if (!departmentAllowed || !roleAllowed) {
-      return <Navigate to={getDepartmentRoute(user)} replace />;
+      const fallbackRoute = getDepartmentRoute(user);
+      if (window.location.pathname === fallbackRoute) {
+        return (
+          <div className="p-8 text-center">
+            <div className="bg-rose-50 border border-rose-200 text-rose-600 p-6 rounded-2xl inline-block max-w-lg">
+              <h2 className="text-xl font-black mb-2">Access Denied</h2>
+              <p className="text-sm font-medium">Your department/role does not have access to this page.</p>
+              <p className="text-xs mt-2 opacity-80">
+                Found Department: {userDepartment || "None"}<br/>
+                Found Role: {userRole || "None"}<br/>
+                Expected: {allowedDepartments.join(',')} / {allowedRoles.join(',')}
+              </p>
+            </div>
+          </div>
+        );
+      }
+      return <Navigate to={fallbackRoute} replace />;
     }
 
     return children;

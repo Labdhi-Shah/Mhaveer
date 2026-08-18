@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  X, ChevronRight, ChevronLeft, Upload, Camera, FileText, 
-  CheckCircle, AlertCircle, Trash2, Loader2, User, Briefcase, 
+import {
+  X, ChevronRight, ChevronLeft, Upload, Camera, FileText,
+  CheckCircle, AlertCircle, Trash2, Loader2, User, Briefcase,
   Home, Landmark, ShieldCheck, CreditCard, ArrowRight, RefreshCw, FolderOpen
 } from "lucide-react";
+import api from "../api";
+
 
 const LOAN_TYPES = [
   { id: "Personal Loan", title: "Personal Loan", icon: User, desc: "For personal expenses & cash needs" },
@@ -31,6 +33,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
   const [showMobileSourceSelector, setShowMobileSourceSelector] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   // Form State
   const [loanType, setLoanType] = useState("");
@@ -207,7 +210,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
         // Add file details
         const isPdf = file.type === "application/pdf";
         const previewUrl = isPdf ? null : URL.createObjectURL(file);
-        
+
         setUploadedFiles(prev => ({
           ...prev,
           [docId]: {
@@ -244,16 +247,56 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
   };
 
-  // Submit Handler
-  const handleFormSubmit = (e) => {
+  // Submit Handler — POSTs to /api/customers/from-meeting as multipart/form-data
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!isStep1Valid() || !isStep2Valid() || !isStep3Valid()) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setSubmitError("");
+
+    try {
+      const formData = new FormData();
+
+      // ── Meeting reference ────────────────────────────────────────────────
+      if (selectedMeeting?._id) formData.append("meetingId", selectedMeeting._id);
+      if (selectedMeeting?.customerName) formData.append("customerName", selectedMeeting.customerName);
+      if (selectedMeeting?.customerPhone) formData.append("customerPhone", selectedMeeting.customerPhone);
+
+      // ── Step 1: Loan type ─────────────────────────────────────────────────
+      formData.append("loanType", loanType);
+      if (propertyLoanType) formData.append("propertyLoanType", propertyLoanType);
+
+      // ── Step 2: Eligibility ───────────────────────────────────────────────
+      formData.append("cibilScore", cibilScore);
+      formData.append("eligibility_age", eligibility.age);
+      formData.append("eligibility_income", eligibility.income);
+      formData.append("eligibility_employmentType", eligibility.employmentType);
+      formData.append("eligibility_companyName", eligibility.companyName);
+      formData.append("eligibility_govDepartment", eligibility.govDepartment);
+      formData.append("eligibility_businessName", eligibility.businessName);
+      formData.append("eligibility_annualTurnover", eligibility.annualTurnover);
+      formData.append("eligibility_gstNumber", eligibility.gstNumber);
+
+      // ── Step 3: Documents (append raw File objects) ───────────────────────
+      Object.entries(uploadedFiles).forEach(([docId, fileObj]) => {
+        if (fileObj.rawFile) {
+          formData.append(docId, fileObj.rawFile, fileObj.name);
+        }
+      });
+
+      await api.post("/customers/from-meeting", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
       setIsSubmitted(true);
-    }, 2000);
+    } catch (err) {
+      console.error("[FillForm] Submit error:", err);
+      const msg = err?.response?.data?.message || "Submission failed. Please try again.";
+      setSubmitError(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleResetAndClose = () => {
@@ -279,8 +322,9 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
     setUploadedFiles({});
     setUploadErrors({});
     setUploadProgress({});
+    const wasSubmitted = isSubmitted;
     setIsSubmitted(false);
-    onClose();
+    onClose(wasSubmitted);
   };
 
   return (
@@ -328,8 +372,8 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
               Customer Loan Application Form
             </h3>
           </div>
-          <button 
-            onClick={handleResetAndClose} 
+          <button
+            onClick={handleResetAndClose}
             className="text-slate-400 hover:text-rose-500 transition p-1 rounded-lg hover:bg-slate-100"
           >
             <X size={20} />
@@ -338,20 +382,19 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
 
         {/* Form Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
-          
+
           {/* Stepper Header */}
           {!isSubmitted && (
             <div className="mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
               {/* Desktop Stepper */}
               <div className="hidden md:flex items-center justify-around">
                 <div className={`flex items-center gap-2.5 ${currentStep >= 1 ? "text-[#0a2540]" : "text-slate-400"}`}>
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${
-                    currentStep === 1 
-                      ? "bg-[#0a2540] text-[#d4af37] ring-4 ring-[#0a2540]/10" 
-                      : currentStep > 1 
-                        ? "bg-emerald-500 text-white" 
+                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${currentStep === 1
+                      ? "bg-[#0a2540] text-[#d4af37] ring-4 ring-[#0a2540]/10"
+                      : currentStep > 1
+                        ? "bg-emerald-500 text-white"
                         : "bg-slate-100 text-slate-400 border border-slate-200"
-                  }`}>
+                    }`}>
                     {currentStep > 1 ? "✓" : "01"}
                   </span>
                   <span className={`text-xs uppercase tracking-wider font-extrabold ${currentStep === 1 ? "text-[#0a2540]" : "text-slate-500"}`}>
@@ -360,13 +403,12 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                 </div>
                 <div className="flex-1 max-w-[60px] h-[2px] bg-slate-200 mx-2" />
                 <div className={`flex items-center gap-2.5 ${currentStep >= 2 ? "text-[#0a2540]" : "text-slate-400"}`}>
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${
-                    currentStep === 2 
-                      ? "bg-[#0a2540] text-[#d4af37] ring-4 ring-[#0a2540]/10" 
-                      : currentStep > 2 
-                        ? "bg-emerald-500 text-white" 
+                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${currentStep === 2
+                      ? "bg-[#0a2540] text-[#d4af37] ring-4 ring-[#0a2540]/10"
+                      : currentStep > 2
+                        ? "bg-emerald-500 text-white"
                         : "bg-slate-100 text-slate-400 border border-slate-200"
-                  }`}>
+                    }`}>
                     {currentStep > 2 ? "✓" : "02"}
                   </span>
                   <span className={`text-xs uppercase tracking-wider font-extrabold ${currentStep === 2 ? "text-[#0a2540]" : "text-slate-500"}`}>
@@ -375,11 +417,10 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                 </div>
                 <div className="flex-1 max-w-[60px] h-[2px] bg-slate-200 mx-2" />
                 <div className={`flex items-center gap-2.5 ${currentStep >= 3 ? "text-[#0a2540]" : "text-slate-400"}`}>
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${
-                    currentStep === 3 
-                      ? "bg-[#0a2540] text-[#d4af37] ring-4 ring-[#0a2540]/10" 
+                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${currentStep === 3
+                      ? "bg-[#0a2540] text-[#d4af37] ring-4 ring-[#0a2540]/10"
                       : "bg-slate-100 text-slate-400 border border-slate-200"
-                  }`}>
+                    }`}>
                     03
                   </span>
                   <span className={`text-xs uppercase tracking-wider font-extrabold ${currentStep === 3 ? "text-[#0a2540]" : "text-slate-500"}`}>
@@ -392,9 +433,9 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
               <div className="md:hidden flex items-center justify-between">
                 <span className="text-xs font-black text-[#0a2540] uppercase tracking-wider">
                   Step {currentStep} of 3: {
-                    currentStep === 1 ? "Loan Requirement" : 
-                    currentStep === 2 ? "Eligibility Check" : 
-                    "Document Collection"
+                    currentStep === 1 ? "Loan Requirement" :
+                      currentStep === 2 ? "Eligibility Check" :
+                        "Document Collection"
                   }
                 </span>
                 <span className="text-xs font-black text-[#0a2540] bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
@@ -402,7 +443,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                 </span>
               </div>
               <div className="md:hidden mt-3 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                <div 
+                <div
                   className="bg-[#0a2540] h-full transition-all duration-300"
                   style={{ width: `${(currentStep / 3) * 100}%` }}
                 />
@@ -475,7 +516,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                   <span className="block text-[11px] font-black text-slate-500 uppercase tracking-wider">
                     What type of loan does the customer need? *
                   </span>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {LOAN_TYPES.map((type) => {
                       const IconComp = type.icon;
@@ -484,15 +525,13 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                         <div
                           key={type.id}
                           onClick={() => handleLoanTypeSelect(type.id)}
-                          className={`cursor-pointer bg-white p-4 rounded-2xl border transition duration-300 shadow-sm flex items-start gap-4 hover:shadow ${
-                            isSelected 
-                              ? "border-[#0a2540] bg-[#0a2540]/5 ring-2 ring-[#0a2540]/10" 
+                          className={`cursor-pointer bg-white p-4 rounded-2xl border transition duration-300 shadow-sm flex items-start gap-4 hover:shadow ${isSelected
+                              ? "border-[#0a2540] bg-[#0a2540]/5 ring-2 ring-[#0a2540]/10"
                               : "border-slate-200 hover:border-[#0a2540]/30"
-                          }`}
+                            }`}
                         >
-                          <div className={`p-2.5 rounded-xl shrink-0 ${
-                            isSelected ? "bg-[#0a2540] text-[#d4af37]" : "bg-slate-100 text-slate-600"
-                          }`}>
+                          <div className={`p-2.5 rounded-xl shrink-0 ${isSelected ? "bg-[#0a2540] text-[#d4af37]" : "bg-slate-100 text-slate-600"
+                            }`}>
                             <IconComp size={20} />
                           </div>
                           <div>
@@ -573,10 +612,17 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                         type="number"
                         name="age"
                         required
+                        min="18"
+                        max="60"
                         value={eligibility.age}
                         onChange={handleEligibilityChange}
+                        onKeyDown={(e) => {
+                          if (['-', '+', 'e', 'E'].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
                         placeholder="e.g. 30"
-                        className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20"
+                        className="w-full hide-spinners bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20"
                       />
                       {eligibility.age && (parseInt(eligibility.age, 10) < 18 || parseInt(eligibility.age, 10) > 60) && (
                         <p className="text-[11px] text-rose-500 font-bold mt-1">Age must be between 18 and 60 years.</p>
@@ -596,10 +642,16 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                           type="number"
                           name="income"
                           required
+                          min="0"
                           value={eligibility.income}
                           onChange={handleEligibilityChange}
+                          onKeyDown={(e) => {
+                            if (['-', '+', 'e', 'E'].includes(e.key)) {
+                              e.preventDefault();
+                            }
+                          }}
                           placeholder="e.g. 600000"
-                          className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl pl-8 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20"
+                          className="w-full hide-spinners bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl pl-8 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20"
                         />
                       </div>
                       {eligibility.income && parseFloat(eligibility.income) <= 0 && (
@@ -637,10 +689,17 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                         type="number"
                         name="cibilScore"
                         required
+                        min="700"
+                        max="900"
                         value={cibilScore}
                         onChange={(e) => setCibilScore(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (['-', '+', 'e', 'E'].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
                         placeholder="e.g. 750 (700 - 900)"
-                        className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20"
+                        className="w-full hide-spinners bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20"
                       />
                       {cibilScore && (parseInt(cibilScore, 10) < 700 || parseInt(cibilScore, 10) > 900) && (
                         <p className="text-[11px] text-rose-500 font-bold mt-1 flex items-center gap-1">
@@ -734,10 +793,16 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                                 type="number"
                                 name="annualTurnover"
                                 required
+                                min="0"
                                 value={eligibility.annualTurnover}
                                 onChange={handleEligibilityChange}
+                                onKeyDown={(e) => {
+                                  if (['-', '+', 'e', 'E'].includes(e.key)) {
+                                    e.preventDefault();
+                                  }
+                                }}
                                 placeholder="e.g. 1500000"
-                                className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl pl-8 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20"
+                                className="w-full hide-spinners bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl pl-8 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20"
                               />
                             </div>
                             {eligibility.annualTurnover && parseFloat(eligibility.annualTurnover) <= 0 && (
@@ -791,7 +856,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                     const error = uploadErrors[doc.id];
 
                     return (
-                      <div 
+                      <div
                         key={doc.id}
                         className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"
                       >
@@ -810,7 +875,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                               </span>
                             )}
                           </div>
-                          
+
                           <p className="text-[11px] text-slate-400 mb-3 font-medium">{doc.desc}</p>
                         </div>
 
@@ -827,7 +892,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                                 <span>{progress}%</span>
                               </div>
                               <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                                <div 
+                                <div
                                   className="bg-[#0a2540] h-full transition-all duration-300"
                                   style={{ width: `${progress}%` }}
                                 />
@@ -838,10 +903,10 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                             <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center gap-3">
                               {/* Preview Thumbnail or PDF Icon */}
                               {fileInfo.previewUrl ? (
-                                <img 
-                                  src={fileInfo.previewUrl} 
-                                  alt="Preview" 
-                                  className="w-12 h-12 object-cover rounded-lg border border-slate-300 shadow-xs bg-white shrink-0" 
+                                <img
+                                  src={fileInfo.previewUrl}
+                                  alt="Preview"
+                                  className="w-12 h-12 object-cover rounded-lg border border-slate-300 shadow-xs bg-white shrink-0"
                                 />
                               ) : (
                                 <div className="w-12 h-12 bg-rose-50 text-rose-500 border border-rose-200 rounded-lg flex items-center justify-center shrink-0">
@@ -939,25 +1004,33 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                 Next <ChevronRight size={16} />
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={handleFormSubmit}
-                disabled={!isStep3Valid() || isSubmitting}
-                className="bg-[#0a2540] hover:bg-[#0a2540]/90 text-[#d4af37] px-6 py-2.5 rounded-xl font-black text-sm flex items-center gap-2 transition shadow-sm disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" /> Submitting...
-                  </>
-                ) : (
-                  <>
-                    Submit Form <ArrowRight size={16} />
-                  </>
+              <div className="flex flex-col gap-2 items-end">
+                {submitError && (
+                  <p className="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-3 py-2 rounded-xl w-full text-center">
+                    {submitError}
+                  </p>
                 )}
-              </button>
+                <button
+                  type="button"
+                  onClick={handleFormSubmit}
+                  disabled={!isStep3Valid() || isSubmitting}
+                  className="bg-[#0a2540] hover:bg-[#0a2540]/90 text-[#d4af37] px-6 py-2.5 rounded-xl font-black text-sm flex items-center gap-2 transition shadow-sm disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" /> Submitting...
+                    </>
+                  ) : (
+                    <>
+                      Submit Form <ArrowRight size={16} />
+                    </>
+                  )}
+                </button>
+              </div>
             )}
           </div>
         )}
+
       </motion.div>
 
       {/* Mobile Camera vs Files Bottom Sheet / Action Modal */}
@@ -984,7 +1057,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                 <h4 className="font-black text-base text-[#0a2540]">
                   Select Upload Source
                 </h4>
-                <button 
+                <button
                   onClick={() => setShowMobileSourceSelector(false)}
                   className="text-slate-400 p-1 hover:bg-slate-100 rounded-lg"
                 >

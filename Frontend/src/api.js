@@ -4,7 +4,8 @@ const rawBaseURL = import.meta.env.VITE_API_URL;
 if (!rawBaseURL) {
   console.warn("VITE_API_URL is not defined in environment variables.");
 }
-const cleanBaseURL = rawBaseURL.endsWith("/") ? rawBaseURL.slice(0, -1) : rawBaseURL;
+const cleanBaseURL = rawBaseURL && rawBaseURL.endsWith("/") ? rawBaseURL.slice(0, -1) : (rawBaseURL || "");
+
 
 const api = axios.create({
   baseURL: `${cleanBaseURL}/api`,

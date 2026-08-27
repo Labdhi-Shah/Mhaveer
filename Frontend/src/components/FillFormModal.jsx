@@ -737,7 +737,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                         )}
                       </motion.div>
                     )}
-                  </AnimatePresence>\n\n                  {!loanType && (
+                  </AnimatePresence>                 {!loanType && (
                     <div className="flex items-center gap-2 text-rose-500 text-xs font-bold bg-rose-50 p-3 rounded-xl border border-rose-100">
                       <AlertCircle size={14} />
                       Please select a loan type to proceed to the next step.

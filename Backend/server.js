@@ -24,6 +24,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",")
   : [
     "http://localhost:5173",
+    "http://localhost:5174",
     "http://192.168.29.244:5173",
     "https://mhaveer.vercel.app"
   ];

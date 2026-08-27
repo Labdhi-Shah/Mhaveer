@@ -44,6 +44,12 @@ const FORM_DOC_FIELDS = [
   { name: "salaryOrItr", maxCount: 1 },
   { name: "addressProof", maxCount: 1 },
   { name: "businessDocs", maxCount: 1 },
+  { name: "propertyDocs", maxCount: 1 },
+  { name: "passportPhoto", maxCount: 1 },
+  { name: "electricityBill", maxCount: 1 },
+  { name: "itr", maxCount: 1 },
+  { name: "gstCertificate", maxCount: 1 },
+  { name: "rationCard", maxCount: 1 },
 ];
 
 const uploadFormDocs = multer({
@@ -160,14 +166,9 @@ exports.uploadDocument = (req, res) => {
 
     const { id, docType } = req.params;
     const validDocTypes = [
-      "aadhaar",
-      "pan",
-      "passportPhoto",
-      "bankStatement",
-      "electricityBill",
-      "itr",
-      "gstCertificate",
-      "rationCard"
+      "aadhaar", "pan", "bankStatement", "salaryOrItr", "addressProof",
+      "businessDocs", "propertyDocs", "passportPhoto", "electricityBill",
+      "itr", "gstCertificate", "rationCard"
     ];
 
     if (!validDocTypes.includes(docType)) {
@@ -309,14 +310,9 @@ exports.deleteCustomer = async (req, res) => {
 
     // Clean up all documents on disk
     const docTypes = [
-      "aadhaar",
-      "pan",
-      "passportPhoto",
-      "bankStatement",
-      "electricityBill",
-      "itr",
-      "gstCertificate",
-      "rationCard"
+      "aadhaar", "pan", "bankStatement", "salaryOrItr", "addressProof",
+      "businessDocs", "propertyDocs", "passportPhoto", "electricityBill",
+      "itr", "gstCertificate", "rationCard"
     ];
 
     docTypes.forEach((docType) => {
@@ -402,7 +398,11 @@ exports.submitMeetingForm = (req, res) => {
 
       // Build document map from uploaded files
       const documents = {};
-      const DOC_FIELDS = ["aadhaar", "pan", "bankStatement", "salaryOrItr", "addressProof", "businessDocs"];
+      const DOC_FIELDS = [
+        "aadhaar", "pan", "bankStatement", "salaryOrItr", "addressProof",
+        "businessDocs", "propertyDocs", "passportPhoto", "electricityBill",
+        "itr", "gstCertificate", "rationCard"
+      ];
       DOC_FIELDS.forEach((field) => {
         if (req.files && req.files[field] && req.files[field][0]) {
           const f = req.files[field][0];

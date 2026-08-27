@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Phone, Loader2, AlertCircle, CheckCircle, MapPin, Plus, X, Filter, ClipboardList } from "lucide-react";
+import { Calendar, Phone, Loader2, AlertCircle, CheckCircle, MapPin, Plus, X, Filter, ClipboardList, Pencil } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import api from "../api";
 import FillFormModal from "./FillFormModal";
@@ -24,8 +24,8 @@ export default function MeetingsView() {
   const [selectedMeeting, setSelectedMeeting] = useState(null);
 
   const handleFillFormForCard = (meeting) => {
-    if (meeting.status !== "Scheduled") {
-      showToast("Please select a scheduled meeting to fill the form.", "error");
+    if (meeting.status !== "Scheduled" && meeting.status !== "Rescheduled") {
+      showToast("Please select a scheduled or rescheduled meeting to fill the form.", "error");
       return;
     }
     setSelectedMeeting(meeting);
@@ -383,6 +383,14 @@ export default function MeetingsView() {
                       <div className="flex gap-1.5">
                         {(meeting.status === "Scheduled" || meeting.status === "Rescheduled") && (
                            <>
+                             <button
+                               disabled={actionLoading}
+                               onClick={() => openModal(meeting)}
+                               className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition disabled:opacity-50"
+                               title="Edit Meeting"
+                             >
+                               <Pencil size={14} />
+                             </button>
                              <button
                                disabled={actionLoading}
                                onClick={() => handleReschedule(meeting)}

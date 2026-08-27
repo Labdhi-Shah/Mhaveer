@@ -17,27 +17,14 @@ const LOAN_TYPES = [
   { id: "Credit Cards", title: "Credit Cards", icon: CreditCard, desc: "Reward points & short-term credit" }
 ];
 
-const ALL_DOCUMENTS = {
-  aadhaar: { id: "aadhaar", title: "Aadhaar Card", desc: "Front & Back combined PDF/Image", required: true },
-  pan: { id: "pan", title: "PAN Card", desc: "Clear front-side scan", required: true },
-  bankStatement: { id: "bankStatement", title: "Bank Statements", desc: "Last 6 months PDF statements", required: true },
-  salaryOrItr: { id: "salaryOrItr", title: "Salary Slips", desc: "Recent 3 salary slips", required: true },
-  addressProof: { id: "addressProof", title: "Address Proof", desc: "Rent agreement, etc.", required: true },
-  businessDocs: { id: "businessDocs", title: "Business Proof", desc: "Trade license, Udyam Aadhaar", required: true },
-  propertyDocs: { id: "propertyDocs", title: "Property/Mortgage Documents", desc: "Sale deed, property tax receipt, NOC, etc.", required: true },
-  itr: { id: "itr", title: "Income Tax Return (ITR)", desc: "Recent ITR V", required: true },
-  gstCertificate: { id: "gstCertificate", title: "GST Certificate", desc: "Valid GST Registration", required: true },
-  electricityBill: { id: "electricityBill", title: "Electricity Bill", desc: "Recent utility bill for address proof", required: true }
-};
-
-const LOAN_DOCUMENTS_MAPPING = {
-  "Personal Loan": ["aadhaar", "pan", "bankStatement", "salaryOrItr"],
-  "Business Loan": ["aadhaar", "pan", "bankStatement", "itr", "gstCertificate", "businessDocs"],
-  "Home Loan": ["aadhaar", "pan", "bankStatement", "addressProof", "electricityBill"],
-  "Property Loan": ["aadhaar", "pan", "bankStatement", "addressProof", "propertyDocs"],
-  "Insurance": ["aadhaar", "pan", "bankStatement"],
-  "Credit Cards": ["aadhaar", "pan", "bankStatement", "salaryOrItr"]
-};
+const DOCUMENTS_LIST = [
+  { id: "aadhaar", title: "Aadhaar Card", desc: "Front & Back combined PDF/Image", required: true },
+  { id: "pan", title: "PAN Card", desc: "Clear front-side scan", required: true },
+  { id: "bankStatement", title: "Bank Statements", desc: "Last 6 months PDF statements", required: true },
+  { id: "salaryOrItr", title: "Salary Slips or ITR", desc: "Recent 3 salary slips or ITR V", required: true },
+  { id: "addressProof", title: "Address Proof", desc: "Electricity bill, rent agreement, etc.", required: true },
+  { id: "businessDocs", title: "Business Documents", desc: "GST certificate or trade license", required: false, conditional: true }
+];
 
 export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
   const [currentStep, setCurrentStep] = useState(1);
@@ -51,15 +38,6 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
   // Form State
   const [loanType, setLoanType] = useState("");
   const [propertyLoanType, setPropertyLoanType] = useState("");
-  const [propertyOwnershipType, setPropertyOwnershipType] = useState("");
-  const [propertyDetails, setPropertyDetails] = useState({ propertyType: "", address: "", estimatedValue: "" });
-  const [propertyOwners, setPropertyOwners] = useState([{ name: "", contact: "", pan: "", aadhaar: "" }]);
-
-  const [businessType, setBusinessType] = useState("");
-  const [businessDetails, setBusinessDetails] = useState({ name: "", type: "", vintage: "", turnover: "" });
-  const [proprietorDetails, setProprietorDetails] = useState({ name: "", pan: "", aadhaar: "" });
-  const [partners, setPartners] = useState([{ name: "", pan: "", aadhaar: "", share: "" }]);
-  const [directors, setDirectors] = useState([{ name: "", pan: "", aadhaar: "", din: "" }]);
   const [eligibility, setEligibility] = useState({
     age: "",
     income: "",
@@ -135,12 +113,14 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
     return isAgeValid && isIncomeValid && isCibilValid && isEmploymentValid;
   };
 
-  // Get active documents list (based on loanType)
+  // Get active documents list (based on conditional Business Documents)
   const getActiveDocuments = () => {
-    if (!loanType || !LOAN_DOCUMENTS_MAPPING[loanType]) {
-      return [];
-    }
-    return LOAN_DOCUMENTS_MAPPING[loanType].map(docId => ALL_DOCUMENTS[docId]);
+    return DOCUMENTS_LIST.filter(doc => {
+      if (doc.conditional) {
+        return eligibility.employmentType === "Business";
+      }
+      return true;
+    });
   };
 
   // Step 3 Validation
@@ -148,17 +128,6 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
     const activeDocs = getActiveDocuments();
     return activeDocs.every(doc => !!uploadedFiles[doc.id] && !uploadProgress[doc.id]);
   };
-
-  // Array Helpers
-  const updateArrayItem = (setter, index, field, value) => {
-    setter(prev => {
-      const newArr = [...prev];
-      newArr[index] = { ...newArr[index], [field]: value };
-      return newArr;
-    });
-  };
-  const addArrayItem = (setter, emptyObj) => setter(prev => [...prev, emptyObj]);
-  const removeArrayItem = (setter, index) => setter(prev => prev.filter((_, i) => i !== index));
 
   const handleLoanTypeSelect = (typeId) => {
     setLoanType(typeId);
@@ -421,10 +390,10 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
               <div className="hidden md:flex items-center justify-around">
                 <div className={`flex items-center gap-2.5 ${currentStep >= 1 ? "text-[#0a2540]" : "text-slate-400"}`}>
                   <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${currentStep === 1
-                    ? "bg-[#0a2540] text-[#d4af37] ring-4 ring-[#0a2540]/10"
-                    : currentStep > 1
-                      ? "bg-emerald-500 text-white"
-                      : "bg-slate-100 text-slate-400 border border-slate-200"
+                      ? "bg-[#0a2540] text-[#d4af37] ring-4 ring-[#0a2540]/10"
+                      : currentStep > 1
+                        ? "bg-emerald-500 text-white"
+                        : "bg-slate-100 text-slate-400 border border-slate-200"
                     }`}>
                     {currentStep > 1 ? "✓" : "01"}
                   </span>
@@ -435,10 +404,10 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                 <div className="flex-1 max-w-[60px] h-[2px] bg-slate-200 mx-2" />
                 <div className={`flex items-center gap-2.5 ${currentStep >= 2 ? "text-[#0a2540]" : "text-slate-400"}`}>
                   <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${currentStep === 2
-                    ? "bg-[#0a2540] text-[#d4af37] ring-4 ring-[#0a2540]/10"
-                    : currentStep > 2
-                      ? "bg-emerald-500 text-white"
-                      : "bg-slate-100 text-slate-400 border border-slate-200"
+                      ? "bg-[#0a2540] text-[#d4af37] ring-4 ring-[#0a2540]/10"
+                      : currentStep > 2
+                        ? "bg-emerald-500 text-white"
+                        : "bg-slate-100 text-slate-400 border border-slate-200"
                     }`}>
                     {currentStep > 2 ? "✓" : "02"}
                   </span>
@@ -449,8 +418,8 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                 <div className="flex-1 max-w-[60px] h-[2px] bg-slate-200 mx-2" />
                 <div className={`flex items-center gap-2.5 ${currentStep >= 3 ? "text-[#0a2540]" : "text-slate-400"}`}>
                   <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${currentStep === 3
-                    ? "bg-[#0a2540] text-[#d4af37] ring-4 ring-[#0a2540]/10"
-                    : "bg-slate-100 text-slate-400 border border-slate-200"
+                      ? "bg-[#0a2540] text-[#d4af37] ring-4 ring-[#0a2540]/10"
+                      : "bg-slate-100 text-slate-400 border border-slate-200"
                     }`}>
                     03
                   </span>
@@ -557,8 +526,8 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                           key={type.id}
                           onClick={() => handleLoanTypeSelect(type.id)}
                           className={`cursor-pointer bg-white p-4 rounded-2xl border transition duration-300 shadow-sm flex items-start gap-4 hover:shadow ${isSelected
-                            ? "border-[#0a2540] bg-[#0a2540]/5 ring-2 ring-[#0a2540]/10"
-                            : "border-slate-200 hover:border-[#0a2540]/30"
+                              ? "border-[#0a2540] bg-[#0a2540]/5 ring-2 ring-[#0a2540]/10"
+                              : "border-slate-200 hover:border-[#0a2540]/30"
                             }`}
                         >
                           <div className={`p-2.5 rounded-xl shrink-0 ${isSelected ? "bg-[#0a2540] text-[#d4af37]" : "bg-slate-100 text-slate-600"
@@ -574,170 +543,38 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                     })}
                   </div>
 
-                  {/* Dynamic UI based on Loan Type */}
+                  {/* Conditional Property Loan Type */}
                   <AnimatePresence>
-                    {/* PROPERTY LOAN UI */}
                     {loanType === "Property Loan" && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-4 overflow-hidden">
-
-                        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                          <h4 className="text-sm font-black text-[#0a2540] border-b pb-2 border-slate-100">Property Details</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Property Loan Type *</label>
-                              <select value={propertyLoanType} onChange={(e) => setPropertyLoanType(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20">
-                                <option value="">Select</option>
-                                <option value="Industrial Loan">Industrial</option>
-                                <option value="Commercial Loan">Commercial</option>
-                                <option value="Plot Loan">Plot</option>
-                                <option value="Residential Loan">Residential</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Property Type *</label>
-                              <input type="text" placeholder="e.g. Apartment, Land" value={propertyDetails.propertyType} onChange={e => setPropertyDetails({ ...propertyDetails, propertyType: e.target.value })} className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                            </div>
-                            <div className="md:col-span-2">
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Property Address *</label>
-                              <input type="text" placeholder="Full address of the property" value={propertyDetails.address} onChange={e => setPropertyDetails({ ...propertyDetails, address: e.target.value })} className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Estimated Value (₹) *</label>
-                              <input type="number" placeholder="e.g. 5000000" value={propertyDetails.estimatedValue} onChange={e => setPropertyDetails({ ...propertyDetails, estimatedValue: e.target.value })} className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Ownership Type *</label>
-                              <select value={propertyOwnershipType} onChange={e => {
-                                setPropertyOwnershipType(e.target.value);
-                                if (e.target.value === "Single Owner") setPropertyOwners([propertyOwners[0] || { name: "", contact: "", pan: "", aadhaar: "" }]);
-                                else if (e.target.value === "Joint Owner" && propertyOwners.length < 2) setPropertyOwners([...propertyOwners, { name: "", contact: "", pan: "", aadhaar: "" }]);
-                              }} className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20">
-                                <option value="">Select</option>
-                                <option value="Single Owner">Single Owner</option>
-                                <option value="Joint Owner">Joint Owner</option>
-                                <option value="Multiple Owners">Multiple Owners (2)</option>
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-
-                        {propertyOwnershipType && (
-                          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                            <h4 className="text-sm font-black text-[#0a2540] border-b pb-2 border-slate-100 flex justify-between items-center">
-                              <span>Property Owners</span>
-                              {propertyOwnershipType === "Multiple Owners" && (
-                                <button type="button" onClick={() => addArrayItem(setPropertyOwners, { name: "", contact: "", pan: "", aadhaar: "" })} className="text-xs bg-[#0a2540] text-[#d4af37] px-3 py-1 rounded-lg">Add Owner</button>
-                              )}
-                            </h4>
-                            {propertyOwners.map((owner, index) => (
-                              <div key={index} className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200 relative">
-                                {propertyOwnershipType === "Multiple Owners" && index > 1 && (
-                                  <button type="button" onClick={() => removeArrayItem(setPropertyOwners, index)} className="absolute top-3 right-3 text-rose-500 hover:text-rose-600"><X size={16} /></button>
-                                )}
-                                <h5 className="text-xs font-bold text-slate-500 uppercase">Owner {index + 1}</h5>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                  <input type="text" placeholder="Full Name *" value={owner.name} onChange={e => updateArrayItem(setPropertyOwners, index, 'name', e.target.value)} className="w-full bg-white border border-slate-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                                  <input type="text" placeholder="Contact Number *" value={owner.contact} onChange={e => updateArrayItem(setPropertyOwners, index, 'contact', e.target.value)} className="w-full bg-white border border-slate-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                                  <input type="text" placeholder="PAN *" value={owner.pan} onChange={e => updateArrayItem(setPropertyOwners, index, 'pan', e.target.value)} className="w-full bg-white border border-slate-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none uppercase focus:ring-2 focus:ring-[#0a2540]/20" />
-                                  <input type="text" placeholder="Aadhaar *" value={owner.aadhaar} onChange={e => updateArrayItem(setPropertyOwners, index, 'aadhaar', e.target.value)} className="w-full bg-white border border-slate-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3 mt-4 animate-fadeIn"
+                      >
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                          Property Loan Type *
+                        </label>
+                        <select
+                          value={propertyLoanType}
+                          onChange={(e) => setPropertyLoanType(e.target.value)}
+                          required
+                          className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20"
+                        >
+                          <option value="">Select Property Loan Type</option>
+                          <option value="Industrial Loan">Industrial Loan</option>
+                          <option value="Commercial Loan">Commercial Loan</option>
+                          <option value="Plot Loan">Plot Loan</option>
+                          <option value="Residential Loan">Residential Loan</option>
+                        </select>
+                        {!propertyLoanType && (
+                          <p className="text-[11px] text-rose-500 font-bold mt-1">Please select a Property Loan Type.</p>
                         )}
                       </motion.div>
                     )}
+                  </AnimatePresence>
 
-                    {/* BUSINESS LOAN UI */}
-                    {loanType === "Business Loan" && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-4 overflow-hidden">
-
-                        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                          <h4 className="text-sm font-black text-[#0a2540] border-b pb-2 border-slate-100">Business Details</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Business Type *</label>
-                              <select value={businessType} onChange={e => setBusinessType(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20">
-                                <option value="">Select</option>
-                                <option value="Proprietor">Proprietor</option>
-                                <option value="Partnership">Partnership</option>
-                                <option value="Company">Company / Pvt Ltd</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Business Name *</label>
-                              <input type="text" placeholder="e.g. Apex Corp" value={businessDetails.name} onChange={e => setBusinessDetails({ ...businessDetails, name: e.target.value })} className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Nature of Business *</label>
-                              <input type="text" placeholder="e.g. Manufacturing, Retail" value={businessDetails.type} onChange={e => setBusinessDetails({ ...businessDetails, type: e.target.value })} className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Annual Turnover (₹) *</label>
-                              <input type="number" placeholder="e.g. 10000000" value={businessDetails.turnover} onChange={e => setBusinessDetails({ ...businessDetails, turnover: e.target.value })} className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Vintage (Years) *</label>
-                              <input type="number" placeholder="e.g. 5" value={businessDetails.vintage} onChange={e => setBusinessDetails({ ...businessDetails, vintage: e.target.value })} className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                            </div>
-                          </div>
-                        </div>
-
-                        {businessType === "Proprietor" && (
-                          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                            <h4 className="text-sm font-black text-[#0a2540] border-b pb-2 border-slate-100">Proprietor Details</h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                              <input type="text" placeholder="Full Name *" value={proprietorDetails.name} onChange={e => setProprietorDetails({ ...proprietorDetails, name: e.target.value })} className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                              <input type="text" placeholder="PAN *" value={proprietorDetails.pan} onChange={e => setProprietorDetails({ ...proprietorDetails, pan: e.target.value })} className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none uppercase focus:ring-2 focus:ring-[#0a2540]/20" />
-                              <input type="text" placeholder="Aadhaar *" value={proprietorDetails.aadhaar} onChange={e => setProprietorDetails({ ...proprietorDetails, aadhaar: e.target.value })} className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                            </div>
-                          </div>
-                        )}
-
-                        {businessType === "Partnership" && (
-                          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                            <h4 className="text-sm font-black text-[#0a2540] border-b pb-2 border-slate-100 flex justify-between items-center">
-                              <span>Partners</span>
-                              <button type="button" onClick={() => addArrayItem(setPartners, { name: "", pan: "", aadhaar: "", share: "" })} className="text-xs bg-[#0a2540] text-[#d4af37] px-3 py-1 rounded-lg">Add Partner</button>
-                            </h4>
-                            {partners.map((partner, index) => (
-                              <div key={index} className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200 relative">
-                                {index > 0 && <button type="button" onClick={() => removeArrayItem(setPartners, index)} className="absolute top-3 right-3 text-rose-500 hover:text-rose-600"><X size={16} /></button>}
-                                <h5 className="text-xs font-bold text-slate-500 uppercase">Partner {index + 1}</h5>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                  <input type="text" placeholder="Full Name *" value={partner.name} onChange={e => updateArrayItem(setPartners, index, 'name', e.target.value)} className="w-full bg-white border border-slate-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                                  <input type="text" placeholder="Share (%) *" value={partner.share} onChange={e => updateArrayItem(setPartners, index, 'share', e.target.value)} className="w-full bg-white border border-slate-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                                  <input type="text" placeholder="PAN *" value={partner.pan} onChange={e => updateArrayItem(setPartners, index, 'pan', e.target.value)} className="w-full bg-white border border-slate-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none uppercase focus:ring-2 focus:ring-[#0a2540]/20" />
-                                  <input type="text" placeholder="Aadhaar *" value={partner.aadhaar} onChange={e => updateArrayItem(setPartners, index, 'aadhaar', e.target.value)} className="w-full bg-white border border-slate-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {businessType === "Company" && (
-                          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                            <h4 className="text-sm font-black text-[#0a2540] border-b pb-2 border-slate-100 flex justify-between items-center">
-                              <span>Directors</span>
-                              <button type="button" onClick={() => addArrayItem(setDirectors, { name: "", pan: "", aadhaar: "", din: "" })} className="text-xs bg-[#0a2540] text-[#d4af37] px-3 py-1 rounded-lg">Add Director</button>
-                            </h4>
-                            {directors.map((director, index) => (
-                              <div key={index} className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200 relative">
-                                {index > 0 && <button type="button" onClick={() => removeArrayItem(setDirectors, index)} className="absolute top-3 right-3 text-rose-500 hover:text-rose-600"><X size={16} /></button>}
-                                <h5 className="text-xs font-bold text-slate-500 uppercase">Director {index + 1}</h5>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                  <input type="text" placeholder="Full Name *" value={director.name} onChange={e => updateArrayItem(setDirectors, index, 'name', e.target.value)} className="w-full bg-white border border-slate-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                                  <input type="text" placeholder="DIN (Optional)" value={director.din} onChange={e => updateArrayItem(setDirectors, index, 'din', e.target.value)} className="w-full bg-white border border-slate-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                                  <input type="text" placeholder="PAN *" value={director.pan} onChange={e => updateArrayItem(setDirectors, index, 'pan', e.target.value)} className="w-full bg-white border border-slate-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none uppercase focus:ring-2 focus:ring-[#0a2540]/20" />
-                                  <input type="text" placeholder="Aadhaar *" value={director.aadhaar} onChange={e => updateArrayItem(setDirectors, index, 'aadhaar', e.target.value)} className="w-full bg-white border border-slate-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>\n\n                  {!loanType && (
+                  {!loanType && (
                     <div className="flex items-center gap-2 text-rose-500 text-xs font-bold bg-rose-50 p-3 rounded-xl border border-rose-100">
                       <AlertCircle size={14} />
                       Please select a loan type to proceed to the next step.

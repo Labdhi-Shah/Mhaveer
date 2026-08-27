@@ -45,14 +45,14 @@ const customerSchema = new mongoose.Schema(
 
     // ── Eligibility (from form step 2) ───────────────────────────────────────
     eligibility: {
-      age:              { type: String, default: "" },
-      income:           { type: String, default: "" },
-      employmentType:   { type: String, default: "" },
-      companyName:      { type: String, default: "" },
-      govDepartment:    { type: String, default: "" },
-      businessName:     { type: String, default: "" },
-      annualTurnover:   { type: String, default: "" },
-      gstNumber:        { type: String, default: "" }
+      age: { type: String, default: "" },
+      income: { type: String, default: "" },
+      employmentType: { type: String, default: "" },
+      companyName: { type: String, default: "" },
+      govDepartment: { type: String, default: "" },
+      businessName: { type: String, default: "" },
+      annualTurnover: { type: String, default: "" },
+      gstNumber: { type: String, default: "" }
     },
     cibilScore: {
       type: String,
@@ -86,19 +86,39 @@ const customerSchema = new mongoose.Schema(
 
     // ── Documents ────────────────────────────────────────────────────────────
     documents: {
-      aadhaar:       documentSchema,
-      pan:           documentSchema,
+      aadhaar: documentSchema,
+      pan: documentSchema,
       bankStatement: documentSchema,
-      salaryOrItr:   documentSchema,
-      addressProof:  documentSchema,
-      businessDocs:  documentSchema,
+      salaryOrItr: documentSchema,
+      addressProof: documentSchema,
+      businessDocs: documentSchema,
+      propertyDocs: documentSchema,
       // Legacy fields kept for backwards compatibility
-      passportPhoto:   documentSchema,
+      passportPhoto: documentSchema,
       electricityBill: documentSchema,
-      itr:             documentSchema,
-      gstCertificate:  documentSchema,
-      rationCard:      documentSchema
-    }
+      itr: documentSchema,
+      gstCertificate: documentSchema,
+      rationCard: documentSchema
+    },
+
+    // -- Common Fields --
+    loanPurpose: { type: String, default: "" },
+    preferredTenure: { type: String, default: "" },
+
+    // -- Dynamic Documents --
+    dynamicDocuments: [{
+      category: String,
+      documentType: String,
+      personIndex: { type: Number, default: -1 }, // Used if the document belongs to a specific owner/partner/director index
+      file: {
+        filename: String,
+        originalName: String,
+        path: String,
+        mimeType: String,
+        size: Number,
+        uploadedAt: { type: Date, default: Date.now }
+      }
+    }]
   },
   {
     timestamps: true

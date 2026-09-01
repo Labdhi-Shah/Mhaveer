@@ -27,7 +27,7 @@ export default function CreditFilesList() {
   };
 
   const filteredFiles = files.filter(f => 
-    f.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    f.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     f.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     f.creditStatus?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -78,9 +78,9 @@ export default function CreditFilesList() {
                 filteredFiles.map((file) => (
                   <tr key={file._id} className="hover:bg-slate-50 transition">
                     <td className="px-6 py-4">
-                      <p className="font-bold text-[#0a2540]">{file.name}</p>
+                      <p className="font-bold text-[#0a2540]">{file.fullName}</p>
                       <p className="text-xs text-slate-400">{file.email}</p>
-                      <p className="text-xs text-slate-400">{file.mobile}</p>
+                      <p className="text-xs text-slate-400">{file.phone}</p>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${

@@ -73,53 +73,12 @@ export default function CreditFileDetails() {
     }
   };
 
-  const handleAutoAnalyze = () => {
-    // Attempt to parse income
-    let monthlyIncome = 0;
-    if (fileData?.eligibility?.income) {
-      const incomeStr = fileData.eligibility.income.toString().replace(/[^0-9]/g, '');
-      if (incomeStr) {
-        const incomeNum = parseInt(incomeStr, 10);
-        // assume if it's > 200,000 it's annual
-        monthlyIncome = incomeNum > 200000 ? Math.round(incomeNum / 12) : incomeNum;
-      }
-    }
-    if (!monthlyIncome) monthlyIncome = 50000; // default fallback
-
-    let cibil = parseInt(fileData?.cibilScore) || 700;
-    
-    // FOIR: Assume 40% baseline if we don't have exact EMI details
-    let foir = 40;
-
-    // ROI based on CIBIL
-    let roi = 14;
-    if (cibil >= 750) roi = 10.5;
-    else if (cibil >= 700) roi = 12.0;
-
-    // Tenure based on preferred or default 60
-    let tenure = parseInt(fileData?.preferredTenure) || 60;
-
-    // Eligible Amount: (Monthly income * (100 - foir)/100) * tenure
-    let eligible = Math.round((monthlyIncome * (100 - foir) / 100) * tenure);
-
-    setCreditDetails(prev => ({
-      ...prev,
-      verifiedCibil: cibil,
-      foir: foir,
-      proposedRoi: roi,
-      tenure: tenure,
-      eligibleAmount: eligible
-    }));
-    
-    setRemarks("Auto-analyzed based on reported CIBIL and income parameters.");
-  };
-
   const handleDecision = async (decision) => {
     if (!window.confirm(`Are you sure you want to ${decision} this file?`)) return;
     setSaving(true);
     try {
       const res = await api.put(`/credit/files/${id}/decision`, {
-        status: decision,
+        decision: decision,
         remarks: remarks
       });
       if (res.data.success) {
@@ -256,12 +215,6 @@ export default function CreditFileDetails() {
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-black text-[#0a2540]">Credit Analysis</h2>
-              <button 
-                onClick={handleAutoAnalyze} 
-                className="text-xs bg-[#0a2540] text-white px-3 py-1.5 rounded-lg font-bold hover:bg-[#1a3a5a] transition"
-              >
-                Auto Calculate
-              </button>
             </div>
             
             <div className="space-y-4">

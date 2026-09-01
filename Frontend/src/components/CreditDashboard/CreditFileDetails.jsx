@@ -108,7 +108,7 @@ export default function CreditFileDetails() {
         </button>
         <div>
           <h1 className="text-2xl font-black text-[#0a2540]">Review Loan Application</h1>
-          <p className="text-sm font-bold text-slate-500">Applicant: {fileData.name} | Status: <span className="text-[#d4af37]">{fileData.creditStatus}</span></p>
+          <p className="text-sm font-bold text-slate-500">Applicant: {fileData.fullName} | Status: <span className="text-[#d4af37]">{fileData.creditStatus}</span></p>
         </div>
       </div>
 
@@ -125,15 +125,15 @@ export default function CreditFileDetails() {
             <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
               <div>
                 <p className="text-slate-400 font-bold mb-1">Full Name</p>
-                <p className="font-semibold text-slate-700">{fileData.name}</p>
+                <p className="font-semibold text-slate-700">{fileData.fullName || "N/A"}</p>
               </div>
               <div>
                 <p className="text-slate-400 font-bold mb-1">Mobile</p>
-                <p className="font-semibold text-slate-700">{fileData.mobile}</p>
+                <p className="font-semibold text-slate-700">{fileData.phone || "N/A"}</p>
               </div>
               <div>
                 <p className="text-slate-400 font-bold mb-1">Email</p>
-                <p className="font-semibold text-slate-700">{fileData.email}</p>
+                <p className="font-semibold text-slate-700">{fileData.email || "N/A"}</p>
               </div>
               <div>
                 <p className="text-slate-400 font-bold mb-1">Cibil Score (Reported)</p>
@@ -145,7 +145,7 @@ export default function CreditFileDetails() {
               </div>
               <div>
                 <p className="text-slate-400 font-bold mb-1">Employment Type</p>
-                <p className="font-semibold text-slate-700">{fileData.employmentType || "N/A"}</p>
+                <p className="font-semibold text-slate-700">{fileData.eligibility?.employmentType || "N/A"}</p>
               </div>
               <div className="col-span-2">
                 <p className="text-slate-400 font-bold mb-1">Address</p>

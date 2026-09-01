@@ -5,10 +5,11 @@ const normalizeDepartment = (value) => {
   if (!raw) return "";
   const lower = raw.toLowerCase();
   if (lower.includes("kyc") || lower.includes("compliance")) return "Sales";
-  if (lower.includes("sales")) return "Sales";
-  if (lower.includes("telecalling") || lower.includes("lead generation")) return "Telecalling";
-  if (lower.includes("lead")) return "Leads";
   if (lower.includes("admin")) return "Admin";
+  if (lower.includes("sales")) return "Sales";
+  if (lower.includes("telecall") || lower.includes("tele caller") || lower.includes("lead generation")) return "Telecalling";
+  if (lower.includes("lead")) return "Leads";
+  if (lower.includes("credit") || lower.includes("underwriting")) return "Credit";
   return raw;
 };
 
@@ -17,9 +18,11 @@ const normalizeRole = (value) => {
   if (!raw) return "";
   const lower = raw.toLowerCase();
   if (lower === "superadmin" || lower === "administration (admin)" || lower === "admin") return "Admin";
+  if (lower === "management" || lower === "branch manager" || lower === "operations manager" || lower === "regional manager" || lower.includes("director") || lower.includes("ceo")) return "Manager";
   if (lower === "manager") return "Manager";
   if (lower === "team leader" || lower === "tl" || lower === "teamleader") return "Team Leader";
-  return raw;
+  if (lower === "employee" || lower === "front desk" || lower === "reception" || lower === "sales department" || lower === "sales" || lower.includes("hr") || lower.includes("support") || lower.includes("marketing") || lower.includes("operations") || lower.includes("legal") || lower.includes("finance") || lower.includes("insurance") || lower.includes("it department")) return "Employee";
+  return "Employee";
 };
 
 const authMiddleware = (req, res, next) => {

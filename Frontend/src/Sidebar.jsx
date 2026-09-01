@@ -27,6 +27,7 @@ export default function Sidebar({ isOpen, onClose }) {
   const isSales = department === "Sales";
   const isTelecalling = department === "Telecalling";
   const isLeads = department === "Leads";
+  const isCredit = department === "Credit";
   const isEmployee = !isAdmin && !isManager && !isTeamLeader;
   const isSalesEmployee = isSales && isEmployee;
   const rawDepartment = user?.department || user?.dept || user?.departmentName || "";
@@ -38,6 +39,7 @@ export default function Sidebar({ isOpen, onClose }) {
     if (isSales) return "SALES PORTAL";
     if (isTelecalling) return "TELECALLING PORTAL";
     if (isLeads) return "LEADS PORTAL";
+    if (isCredit) return "CREDIT PORTAL";
     if (isManager) return "MANAGER PORTAL";
     if (isTeamLeader) return "TEAM LEADER PORTAL";
     return "EMPLOYEE PORTAL";
@@ -54,7 +56,10 @@ export default function Sidebar({ isOpen, onClose }) {
     location.pathname === "/telecalling/employee" ||
     location.pathname === "/leads/manager" ||
     location.pathname === "/leads/team-leader" ||
-    location.pathname === "/leads/employee";
+    location.pathname === "/leads/employee" ||
+    location.pathname === "/credit/manager" ||
+    location.pathname === "/credit/team-leader" ||
+    location.pathname === "/credit/employee";
 
   return (
     <>
@@ -81,7 +86,7 @@ export default function Sidebar({ isOpen, onClose }) {
                 }`}
             >
               <LayoutDashboard size={18} />
-              {isSales ? "Sales Dashboard" : isTelecalling ? "Telecalling Dashboard" : isLeads ? "Leads Dashboard" : "Dashboard"}
+              {isSales ? "Sales Dashboard" : isTelecalling ? "Telecalling Dashboard" : isLeads ? "Leads Dashboard" : isCredit ? "Credit Dashboard" : "Dashboard"}
             </button>
 
             {isAdmin && (
@@ -125,7 +130,7 @@ export default function Sidebar({ isOpen, onClose }) {
               </>
             )}
 
-            {(((isManager || isTeamLeader) && !isSales) || (isEmployee && !isSalesEmployee)) && !isKyc && (
+            {(((isManager || isTeamLeader) && !isSales && !isCredit) || (isEmployee && !isSalesEmployee && !isCredit)) && !isKyc && (
               <>
                 <button
                   onClick={() => handleNavigation("/new-lead")}
@@ -199,9 +204,24 @@ export default function Sidebar({ isOpen, onClose }) {
               </>
             )}
 
+            {isCredit && (
+              <>
+                <button
+                  onClick={() => handleNavigation("/credit/files")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/credit/files"
+                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                    }`}
+                >
+                  <FolderHeart size={18} />
+                  Loan Files
+                </button>
+              </>
+            )}
+
             {(isManager || isTeamLeader || isEmployee || isTelecalling || isLeads) && (
               <>
-                {!isSalesEmployee && (
+                {!isSalesEmployee && !isCredit && (
                   <button
                     onClick={() => handleNavigation("/meetings")}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/meetings"
@@ -216,7 +236,7 @@ export default function Sidebar({ isOpen, onClose }) {
               </>
             )}
 
-            {(isManager || isTeamLeader || isEmployee || isSales || isTelecalling || isLeads) && (
+            {(isManager || isTeamLeader || isEmployee || isSales || isTelecalling || isLeads || isCredit) && (
               <button
                 onClick={() => handleNavigation("/attendance")}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/attendance"

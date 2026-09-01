@@ -22,6 +22,7 @@ import SalesDashboard from "../components/SalesDashboard/SalesDashboard";
 // import SalesManagerDashboard from "../components/SalesDashboard/SalesManagerDashboard";
 import { useAuth } from "../context/AuthContext";
 import { resolveDepartmentDashboard, getUserDepartment, getUserRole } from "../utils/hierarchy";
+import CreditDashboard from "./CreditDashboard/CreditDashboard";
 
 const panelHeader = (label, title) => (
   <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-8 border-l-[#0a2540] mb-6">
@@ -79,6 +80,10 @@ export const LeadsEmployeeDashboard = () => (
   </>
 );
 
+export const CreditManagerDashboardWrapper = () => <CreditDashboard />;
+export const CreditTeamLeaderDashboardWrapper = () => <CreditDashboard />;
+export const CreditEmployeeDashboardWrapper = () => <CreditDashboard />;
+
 const GenericDepartmentDashboard = ({ department, role }) => (
   <>
     {panelHeader(`${department} Panel`, `${department} ${role} Dashboard`)}
@@ -98,6 +103,9 @@ export default function DepartmentRoleDashboard() {
     case "leads-manager": return <LeadsManagerDashboard />;
     case "leads-team-leader": return <LeadsTeamLeaderDashboard />;
     case "leads-employee": return <LeadsEmployeeDashboard />;
+    case "credit-manager": return <CreditManagerDashboardWrapper />;
+    case "credit-team-leader": return <CreditTeamLeaderDashboardWrapper />;
+    case "credit-employee": return <CreditEmployeeDashboardWrapper />;
     case "department-role": return <GenericDepartmentDashboard department={user.department} role={user.role} />;
     default: return null;
   }

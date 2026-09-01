@@ -118,7 +118,55 @@ const customerSchema = new mongoose.Schema(
         size: Number,
         uploadedAt: { type: Date, default: Date.now }
       }
-    }]
+    }],
+
+    // ── Credit Department Details ────────────────────────────────────────────
+    creditStatus: {
+      type: String,
+      default: "Pending Credit Review" // Default state when Sales submits
+    },
+    creditAssignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee",
+      default: null
+    },
+    creditAssignedEmployeeId: {
+      type: String,
+      default: ""
+    },
+    creditAssignedEmployeeName: {
+      type: String,
+      default: ""
+    },
+    documentVerification: {
+      type: Map,
+      of: new mongoose.Schema({
+        status: { type: String, enum: ["Pending", "Verified", "Rejected"], default: "Pending" },
+        remark: { type: String, default: "" }
+      }, { _id: false }),
+      default: {}
+    },
+    creditDetails: {
+      monthlyIncome: { type: Number, default: 0 },
+      annualIncome: { type: Number, default: 0 },
+      existingEmi: { type: Number, default: 0 },
+      existingLoanAmount: { type: Number, default: 0 },
+      foir: { type: Number, default: 0 },
+      loanEligibilityAmount: { type: Number, default: 0 }
+    },
+    creditRemarks: {
+      type: String,
+      default: ""
+    },
+    creditReviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee",
+      default: null
+    },
+    creditReviewedAt: {
+      type: Date,
+      default: null
+    }
   },
   {
     timestamps: true

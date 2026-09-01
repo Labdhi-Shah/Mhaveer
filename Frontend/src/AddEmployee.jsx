@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import api from "./api";
 import { Loader2, CheckCircle, Copy, X } from "lucide-react";
 
-const DEPARTMENTS = ["Sales Department", "Telecalling", "Admin", "Account & Fianc", "Marketing", "Manegement", "Human Resorece(HR)", "Collection & Records", "KYC Compliation", "Operations Department", "Customer Support "];
+const DEPARTMENTS = ["Sales Department", "Telecalling", "Admin", "Account & Fianc", "Marketing", "Manegement", "Human Resorece(HR)", "Collection & Records", "KYC Compliation", "Operations Department", "Customer Support", "Credit"];
 const ROLES = ["Manager", "Team Leader", "Employee"];
 
 const ROLE_DATA = {

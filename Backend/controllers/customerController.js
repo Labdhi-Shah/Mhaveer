@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
 const Customer = require("../models/Customer");
+const { assignCreditFileToEmployee } = require("./creditController");
 
 // ── Multer Storage ────────────────────────────────────────────────────────────
 const storage = multer.diskStorage({
@@ -451,6 +452,9 @@ exports.submitMeetingForm = (req, res) => {
         await Meeting.findByIdAndUpdate(meetingId, { status: "Completed" }, { new: true });
         console.log(`[FillForm] Meeting ${meetingId} marked as Completed`);
       }
+
+      // Auto-assign to Credit Department
+      await assignCreditFileToEmployee(customer._id);
 
       res.status(201).json({
         success: true,

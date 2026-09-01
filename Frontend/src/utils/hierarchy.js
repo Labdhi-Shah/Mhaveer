@@ -14,6 +14,7 @@ export const normalizeDepartment = (value) => {
   if (lower.includes("sales")) return "Sales";
   if (lower.includes("telecall") || lower.includes("tele caller") || lower.includes("lead generation")) return "Telecalling";
   if (lower.includes("lead")) return "Leads";
+  if (lower.includes("credit") || lower.includes("underwriting")) return "Credit";
 
   return raw;
 };
@@ -39,6 +40,7 @@ export const getUserDepartment = (user) => {
   if (roleText.toLowerCase().includes("sales")) return "Sales";
   if (roleText.toLowerCase().includes("telecall") || roleText.toLowerCase().includes("tele caller") || roleText.toLowerCase().includes("lead generation")) return "Telecalling";
   if (roleText.toLowerCase().includes("lead")) return "Leads";
+  if (roleText.toLowerCase().includes("credit") || roleText.toLowerCase().includes("underwriting")) return "Credit";
   if (roleText.toLowerCase().includes("admin")) return "Admin";
   return "";
 };
@@ -71,6 +73,11 @@ export const getDepartmentRoute = (user) => {
     if (role === "Team Leader") return "/leads/team-leader";
     return "/leads/employee";
   }
+  if (department === "Credit") {
+    if (role === "Manager") return "/credit/manager";
+    if (role === "Team Leader") return "/credit/team-leader";
+    return "/credit/employee";
+  }
 
   if (role === "Manager") return "/telecalling/manager";
   if (role === "Team Leader") return "/telecalling/team-leader";
@@ -97,6 +104,12 @@ export const resolveDepartmentDashboard = (department, role) => {
     if (normalizedRole === "Manager") return "leads-manager";
     if (normalizedRole === "Team Leader") return "leads-team-leader";
     return "leads-employee";
+  }
+
+  if (normalizedDepartment === "Credit") {
+    if (normalizedRole === "Manager") return "credit-manager";
+    if (normalizedRole === "Team Leader") return "credit-team-leader";
+    return "credit-employee";
   }
 
   if (normalizedRole === "Manager") return "telecalling-manager";

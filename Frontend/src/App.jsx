@@ -11,6 +11,8 @@ import AttendanceView from "./components/AttendanceView";
 import ProfileView from "./components/ProfileView";
 import AdminDashboard from "./Page/AdminDashboard";
 import DepartmentRoleDashboard from "./components/DepartmentRoleDashboard";
+import CreditFilesList from "./components/CreditDashboard/CreditFilesList";
+import CreditFileDetails from "./components/CreditDashboard/CreditFileDetails";
 import { getDepartmentRoute, getUserDepartment, getUserRole } from "./utils/hierarchy";
 
 const ProtectedRoute = ({ children }) => {
@@ -209,6 +211,48 @@ export default function App() {
               element={
                 <DepartmentRoleProtectedRoute allowedDepartments={["Leads"]} allowedRoles={["Employee"]}>
                   <DepartmentRoleDashboard />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+
+            <Route
+              path="credit/manager"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Credit"]} allowedRoles={["Manager"]}>
+                  <DepartmentRoleDashboard />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+            <Route
+              path="credit/team-leader"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Credit"]} allowedRoles={["Team Leader"]}>
+                  <DepartmentRoleDashboard />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+            <Route
+              path="credit/employee"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Credit"]} allowedRoles={["Employee"]}>
+                  <DepartmentRoleDashboard />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+
+            <Route
+              path="credit/files"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Credit", "Admin"]}>
+                  <CreditFilesList />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+            <Route
+              path="credit/files/:id"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Credit", "Admin"]}>
+                  <CreditFileDetails />
                 </DepartmentRoleProtectedRoute>
               }
             />

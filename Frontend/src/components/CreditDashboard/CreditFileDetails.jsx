@@ -145,12 +145,14 @@ export default function CreditFileDetails() {
               </div>
               <div>
                 <p className="text-slate-400 font-bold mb-1">Employment Type</p>
-                <p className="font-semibold text-slate-700">{fileData.eligibility?.employmentType || "N/A"}</p>
+                <p className="font-semibold text-slate-700">
+                  {fileData.eligibility?.employmentType || "N/A"}
+                  {fileData.eligibility?.companyName && ` (${fileData.eligibility.companyName})`}
+                  {fileData.eligibility?.businessName && ` (${fileData.eligibility.businessName})`}
+                  {fileData.eligibility?.govDepartment && ` (${fileData.eligibility.govDepartment})`}
+                </p>
               </div>
-              <div className="col-span-2">
-                <p className="text-slate-400 font-bold mb-1">Address</p>
-                <p className="font-semibold text-slate-700">{fileData.residenceAddress || "N/A"}</p>
-              </div>
+
             </div>
           </div>
 

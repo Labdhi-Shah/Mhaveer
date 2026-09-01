@@ -417,12 +417,26 @@ exports.submitMeetingForm = (req, res) => {
         }
       });
 
+      let finalLoanAmount = 0;
+      if (meetingId) {
+        const Meeting = require("../models/Meeting");
+        const Lead = require("../models/Lead");
+        const meeting = await Meeting.findById(meetingId);
+        if (meeting && meeting.leadId) {
+          const lead = await Lead.findById(meeting.leadId);
+          if (lead) {
+            finalLoanAmount = lead.loanAmount || 0;
+          }
+        }
+      }
+
       // Create customer record
       const customer = new Customer({
         fullName: customerName,
         phone: customerPhone || "",
         email: "",
         loanType,
+        loanAmount: finalLoanAmount,
         propertyLoanType: propertyLoanType || "",
         cibilScore: cibilScore || "",
         meetingId: meetingId || null,

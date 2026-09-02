@@ -83,6 +83,11 @@ const customerSchema = new mongoose.Schema(
       type: String,
       default: "Pending Verification"
     },
+    
+    // ── OTP & Bank Access ────────────────────────────────────────────────────
+    bankOtp: { type: String, default: null },
+    bankOtpExpiry: { type: Date, default: null },
+    bankLinksUnlocked: { type: Boolean, default: false },
 
     // ── Documents ────────────────────────────────────────────────────────────
     documents: {
@@ -166,6 +171,28 @@ const customerSchema = new mongoose.Schema(
     creditReviewedAt: {
       type: Date,
       default: null
+    },
+    // ── Bank Application Details ─────────────────────────────────────────────
+    bankApplied: {
+      type: String,
+      default: ""
+    },
+    bankApplicationStatus: {
+      type: String,
+      enum: ["Pending", "Approved", "Rejected", ""],
+      default: ""
+    },
+    bankSanctionedAmount: {
+      type: Number,
+      default: 0
+    },
+    bankSanctionProof: {
+      filename: String,
+      originalName: String,
+      path: String,
+      mimeType: String,
+      size: Number,
+      uploadedAt: { type: Date, default: Date.now }
     }
   },
   {

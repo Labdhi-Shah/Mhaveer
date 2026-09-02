@@ -418,6 +418,7 @@ exports.submitMeetingForm = (req, res) => {
       });
 
       let finalLoanAmount = 0;
+      let finalCibilScore = cibilScore || "";
       if (meetingId) {
         const Meeting = require("../models/Meeting");
         const Lead = require("../models/Lead");
@@ -426,6 +427,9 @@ exports.submitMeetingForm = (req, res) => {
           const lead = await Lead.findById(meeting.leadId);
           if (lead) {
             finalLoanAmount = lead.loanAmount || 0;
+            if (lead.cibilScore && !finalCibilScore) {
+              finalCibilScore = lead.cibilScore;
+            }
           }
         }
       }
@@ -438,7 +442,7 @@ exports.submitMeetingForm = (req, res) => {
         loanType,
         loanAmount: finalLoanAmount,
         propertyLoanType: propertyLoanType || "",
-        cibilScore: cibilScore || "",
+        cibilScore: finalCibilScore,
         meetingId: meetingId || null,
         salesRepresentativeId: req.user.id,
         salesRepresentativeName: req.user.name || req.user.fullName || "Sales Officer",

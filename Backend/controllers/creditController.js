@@ -1,5 +1,40 @@
+const fs = require("fs");
+const path = require("path");
+const multer = require("multer");
 const Customer = require("../models/Customer");
 const Employee = require("../models/Employee");
+
+// ── Multer Storage ────────────────────────────────────────────────────────────
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, "../uploads");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+  const allowedExtensions = [".pdf", ".jpeg", ".jpg", ".png"];
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (allowedTypes.includes(file.mimetype) && allowedExtensions.includes(ext)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Invalid format. Only PDF, PNG, JPG, and JPEG are allowed."), false);
+  }
+};
+
+const uploadBankProof = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 }
+}).single("bankSanctionProof");
 
 // Helper: normalise department string
 const normalizeDept = (value) => {
@@ -254,8 +289,8 @@ exports.getDashboardStats = async (req, res) => {
     const pendingVer = await Customer.countDocuments({ $and: [query, { creditStatus: "Under Verification" }] });
     const docsPending = await Customer.countDocuments({ $and: [query, { creditStatus: "Documents Pending" }] });
     const completedRev = await Customer.countDocuments({ $and: [query, { creditStatus: "Credit Review Completed" }] });
-    const rejected = await Customer.countDocuments({ $and: [query, { creditStatus: "Rejected" }] });
-    const approved = await Customer.countDocuments({ $and: [query, { creditStatus: "Approved" }] });
+    const rejected = await Customer.countDocuments({ $and: [query, { creditStatus: { $in: ["Rejected", "Bank Rejected"] } }] });
+    const approved = await Customer.countDocuments({ $and: [query, { creditStatus: { $in: ["Approved", "Bank Approved"] } }] });
     const totalAssigned = await Customer.countDocuments(query);
 
     res.status(200).json({
@@ -272,6 +307,129 @@ exports.getDashboardStats = async (req, res) => {
     });
   } catch (error) {
     console.error("Dashboard Stats Error:", error);
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+  }
+};
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Submit Bank Application
+// ──────────────────────────────────────────────────────────────────────────────
+exports.submitBankApplication = async (req, res) => {
+  uploadBankProof(req, res, async (err) => {
+    if (err) {
+      console.error("Bank Proof Upload Error:", err);
+      return res.status(400).json({ success: false, message: err.message });
+    }
+
+    try {
+      const { bankApplied, bankApplicationStatus, bankSanctionedAmount } = req.body;
+      const file = await Customer.findById(req.params.id);
+      
+      if (!file) {
+        if (req.file) fs.unlinkSync(req.file.path);
+        return res.status(404).json({ success: false, message: "File not found" });
+      }
+
+      if (bankApplied) file.bankApplied = bankApplied;
+      if (bankApplicationStatus) {
+        file.bankApplicationStatus = bankApplicationStatus;
+        if (bankApplicationStatus === "Approved") {
+          file.creditStatus = "Bank Approved";
+        } else if (bankApplicationStatus === "Rejected") {
+          file.creditStatus = "Bank Rejected";
+        } else if (bankApplicationStatus === "Pending") {
+          file.creditStatus = "Bank Pending";
+        }
+      }
+      if (bankSanctionedAmount) file.bankSanctionedAmount = Number(bankSanctionedAmount);
+
+      if (req.file) {
+        file.bankSanctionProof = {
+          filename: req.file.filename,
+          originalName: req.file.originalname,
+          path: req.file.path,
+          mimeType: req.file.mimetype,
+          size: req.file.size
+        };
+      }
+
+      await file.save();
+      res.status(200).json({ success: true, data: file });
+    } catch (error) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      res.status(500).json({ success: false, message: "Server Error", error: error.message });
+    }
+  });
+};
+
+// ──────────────────────────────────────────────────────────────────────────────
+// OTP For Bank Links
+// ──────────────────────────────────────────────────────────────────────────────
+exports.sendBankOtp = async (req, res) => {
+  try {
+    const file = await Customer.findById(req.params.id);
+    if (!file) return res.status(404).json({ success: false, message: "File not found" });
+
+    // Generate 6 digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+    file.bankOtp = otp;
+    file.bankOtpExpiry = expiry;
+    await file.save();
+
+    console.log(`[OTP GENERATED] Send this to customer ${file.fullName} (${file.phone}): ${otp}`);
+
+    res.status(200).json({ 
+      success: true, 
+      message: "OTP sent successfully (check console/whatsapp)",
+      customerPhone: file.phone,
+      otp: otp
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+  }
+};
+
+exports.verifyBankOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
+    const file = await Customer.findById(req.params.id);
+    if (!file) return res.status(404).json({ success: false, message: "File not found" });
+
+    if (!file.bankOtp || file.bankOtp !== otp) {
+      return res.status(400).json({ success: false, message: "Invalid OTP" });
+    }
+
+    if (new Date() > file.bankOtpExpiry) {
+      return res.status(400).json({ success: false, message: "OTP Expired" });
+    }
+
+    // Success
+    file.bankLinksUnlocked = true;
+    file.bankOtp = null;
+    file.bankOtpExpiry = null;
+    await file.save();
+
+    res.status(200).json({ success: true, message: "OTP verified successfully, bank links unlocked." });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+  }
+};
+
+exports.unlockBanks = async (req, res) => {
+  try {
+    const file = await Customer.findById(req.params.id);
+    if (!file) return res.status(404).json({ success: false, message: "File not found" });
+
+    // Directly unlock banks without OTP
+    file.bankLinksUnlocked = true;
+    file.bankOtp = null;
+    file.bankOtpExpiry = null;
+    await file.save();
+
+    res.status(200).json({ success: true, message: "Bank links unlocked successfully." });
+  } catch (error) {
     res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };

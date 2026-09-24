@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from "./Page/Login";
+import ForgotPassword from "./Page/ForgotPassword";
 import { AuthProvider } from "./context/AuthContext";
 import DashboardLayout from "./components/DashboardLayout";
 import TeamPerformanceView from "./components/TeamPerformanceView";
@@ -98,6 +99,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           <Route
             path="/admin-dashboard"

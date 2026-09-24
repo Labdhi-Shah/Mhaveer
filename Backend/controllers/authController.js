@@ -79,8 +79,34 @@ exports.login = async (req, res) => {
 };
 
 exports.changePassword = async (req, res) => {
-  // For now, this is a stub so the frontend doesn't break
-  res.status(200).json({ success: true, message: "Password updated successfully!" });
+  const { employeeId, newPassword, confirmPassword } = req.body;
+
+  if (!employeeId || !newPassword || !confirmPassword) {
+    return res.status(400).json({ success: false, message: "Employee ID and both password fields are required" });
+  }
+
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({ success: false, message: "Passwords do not match" });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({ success: false, message: "Password must be at least 6 characters" });
+  }
+
+  try {
+    const employee = await Employee.findOne({ employeeId: employeeId.trim() });
+    if (!employee) {
+      return res.status(404).json({ success: false, message: "Employee ID not found" });
+    }
+
+    employee.password = await bcrypt.hash(newPassword, 10);
+    await employee.save();
+
+    return res.json({ success: true, message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Password reset error:", error);
+    return res.status(500).json({ success: false, message: "Server error while updating password" });
+  }
 };
 
 exports.logout = async (req, res) => {

@@ -80,9 +80,10 @@ exports.login = async (req, res) => {
 
 exports.changePassword = async (req, res) => {
   const { employeeId, newPassword, confirmPassword } = req.body;
+  const accountIdentifier = typeof employeeId === "string" ? employeeId.trim() : "";
 
-  if (!employeeId || !newPassword || !confirmPassword) {
-    return res.status(400).json({ success: false, message: "Employee ID and both password fields are required" });
+  if (!accountIdentifier || !newPassword || !confirmPassword) {
+    return res.status(400).json({ success: false, message: "Employee ID or official email and both password fields are required" });
   }
 
   if (newPassword !== confirmPassword) {
@@ -94,9 +95,14 @@ exports.changePassword = async (req, res) => {
   }
 
   try {
-    const employee = await Employee.findOne({ employeeId: employeeId.trim() });
+    const employee = await Employee.findOne({
+      $or: [
+        { employeeId: accountIdentifier.toUpperCase() },
+        { officialEmail: accountIdentifier.toLowerCase() },
+      ],
+    });
     if (!employee) {
-      return res.status(404).json({ success: false, message: "Employee ID not found" });
+      return res.status(404).json({ success: false, message: "Employee ID or official email is not found" });
     }
 
     employee.password = await bcrypt.hash(newPassword, 10);

@@ -10,7 +10,7 @@ import FollowUpView from "./components/FollowUpView";
 import MeetingsView from "./components/MeetingsView";
 import AttendanceView from "./components/AttendanceView";
 import ProfileView from "./components/ProfileView";
-import AdminDashboard from "./Page/AdminDashboard";
+import EmployeeManagementView from "./components/EmployeeManagementView";
 import DepartmentRoleDashboard from "./components/DepartmentRoleDashboard";
 import CreditFilesList from "./components/CreditDashboard/CreditFilesList";
 import CreditFileDetails from "./components/CreditDashboard/CreditFileDetails";
@@ -101,36 +101,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          <Route
-            path="/admin-dashboard"
-            element={
-              <ProtectedRoute>
-                <DepartmentRoleProtectedRoute allowedDepartments={["Admin"]} allowedRoles={["Admin"]}>
-                  <AdminDashboard />
-                </DepartmentRoleProtectedRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/employees"
-            element={
-              <ProtectedRoute>
-                <DepartmentRoleProtectedRoute allowedDepartments={["Admin"]} allowedRoles={["Admin"]}>
-                  <AdminDashboard />
-                </DepartmentRoleProtectedRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/add-employee"
-            element={
-              <ProtectedRoute>
-                <DepartmentRoleProtectedRoute allowedDepartments={["Admin"]} allowedRoles={["Admin"]}>
-                  <AdminDashboard />
-                </DepartmentRoleProtectedRoute>
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/admin-dashboard" element={<Navigate to="/dashboard" replace />} />
 
           <Route
             path="/"
@@ -170,7 +141,7 @@ export default function App() {
             <Route
               path="telecalling/manager"
               element={
-                <DepartmentRoleProtectedRoute allowedDepartments={["Telecalling"]} allowedRoles={["Manager"]}>
+                <DepartmentRoleProtectedRoute allowedDepartments={["Telecalling", "Admin"]} allowedRoles={["Manager", "Admin"]}>
                   <DepartmentRoleDashboard />
                 </DepartmentRoleProtectedRoute>
               }
@@ -278,6 +249,43 @@ export default function App() {
             <Route
               path="hr-dashboard"
               element={<Navigate to="/dashboard" replace />}
+            />
+
+            <Route
+              path="telecalling/employees"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Telecalling", "Admin"]}>
+                  <EmployeeManagementView activeTab="list" />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+            <Route
+              path="telecalling/add-employee"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Telecalling", "Admin"]}>
+                  <EmployeeManagementView activeTab="add" />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+            <Route
+              path="telecalling/employee-management"
+              element={<Navigate to="/telecalling/employees" replace />}
+            />
+            <Route
+              path="employees"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Telecalling", "Admin"]}>
+                  <EmployeeManagementView activeTab="list" />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+            <Route
+              path="add-employee"
+              element={
+                <DepartmentRoleProtectedRoute allowedDepartments={["Telecalling", "Admin"]}>
+                  <EmployeeManagementView activeTab="add" />
+                </DepartmentRoleProtectedRoute>
+              }
             />
 
             <Route

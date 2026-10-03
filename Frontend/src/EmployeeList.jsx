@@ -1,8 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "./api"; // જો તમારી api.js src/ માં હોય તો ./api રાખો
-import { Search, Edit, Trash2, Eye, Loader2, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Search, Edit, Trash2, Eye, Loader2, ChevronLeft, ChevronRight, X, UserPlus, CheckCircle } from "lucide-react";
+
+const DEPARTMENTS = ["Sales Department", "Telecalling", "Admin", "Account & Fianc", "Marketing", "Manegement", "Human Resorece(HR)", "Collection & Records", "KYC Compliation", "Operations Department", "Customer Support", "Credit"];
+const ROLES = ["Manager", "Team Leader", "Employee"];
 
 export default function EmployeeList() {
+  const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -11,10 +16,25 @@ export default function EmployeeList() {
 
   // Modal States
   const [viewEmp, setViewEmp] = useState(null); // View Modal State
-  const [editingEmp, setEditingEmp] = useState(null); // Edit Modal State
+
+
+
 
   const [managers, setManagers] = useState([]);
   const [teamLeaders, setTeamLeaders] = useState([]);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  // Clear messages after 3 seconds
+  useEffect(() => {
+    if (successMsg || errorMsg) {
+      const timer = setTimeout(() => {
+        setSuccessMsg("");
+        setErrorMsg("");
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMsg, errorMsg]);
 
   useEffect(() => {
     const fetchAllEmps = async () => {
@@ -31,19 +51,6 @@ export default function EmployeeList() {
     };
     fetchAllEmps();
   }, []);
-  const [editForm, setEditForm] = useState({
-    fullName: "",
-    personalEmail: "",
-    phone: "",
-    role: "",
-    department: "",
-    address: "",
-    dateOfBirth: "",
-    joiningDate: "",
-    status: "Active",
-    managerId: "",
-    teamLeaderId: ""
-  });
 
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
@@ -74,50 +81,65 @@ export default function EmployeeList() {
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to fetch employee details");
+      setErrorMsg(err.response?.data?.message || "Failed to fetch employee details");
     }
   };
 
-  const handleSaveEdit = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await api.put(`/employees/${editingEmp._id}`, editForm);
-      if (res.data.success) {
-        setEditingEmp(null);
-        fetchEmployees();
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update employee");
-    }
-  };
+
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this employee?")) {
       try {
         await api.delete(`/employees/${id}`);
+        setSuccessMsg("Employee deleted successfully");
         fetchEmployees();
       } catch (err) {
         console.error(err);
-        alert("Failed to delete employee");
+        setErrorMsg(err.response?.data?.message || "Failed to delete employee");
       }
     }
   };
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
+      {errorMsg && (
+        <div className="p-3 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-xs font-bold flex items-center justify-between">
+          <span>{errorMsg}</span>
+          <button onClick={() => setErrorMsg("")} className="cursor-pointer hover:text-rose-800"><X size={14} /></button>
+        </div>
+      )}
+      {successMsg && (
+        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-xs font-bold flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle size={16} />
+            <span>{successMsg}</span>
+          </div>
+          <button onClick={() => setSuccessMsg("")} className="cursor-pointer hover:text-emerald-900"><X size={14} /></button>
+        </div>
+      )}
+      
       {/* Search Header */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <h3 className="text-xl font-black text-[#0a2540]">All Employee Records</h3>
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3.5 top-3 text-slate-400" size={16} />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Search employee..."
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-[#0a2540] outline-none focus:border-[#d4af37]"
-          />
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-72">
+            <Search className="absolute left-3.5 top-3 text-slate-400" size={16} />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              placeholder="Search employee..."
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-[#0a2540] outline-none focus:border-[#d4af37]"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/telecalling/add-employee")}
+            className="flex items-center gap-1.5 bg-[#0a2540] hover:bg-[#12385c] text-[#d4af37] px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition shadow-sm shrink-0 cursor-pointer"
+          >
+            <UserPlus size={16} />
+            <span className="hidden sm:inline">Add Employee</span>
+          </button>
         </div>
       </div>
 
@@ -172,24 +194,9 @@ export default function EmployeeList() {
 
                       {/* EDIT ICON */}
                       <button
-                        onClick={() => {
-                          setEditingEmp(emp);
-                          setEditForm({
-                            fullName: emp.fullName || "",
-                            personalEmail: emp.personalEmail || "",
-                            phone: emp.phone || "",
-                            role: emp.role || "",
-                            department: emp.department || "",
-                            address: emp.address || "",
-                            dateOfBirth: emp.dateOfBirth ? new Date(emp.dateOfBirth).toISOString().split('T')[0] : "",
-                            joiningDate: emp.joiningDate ? new Date(emp.joiningDate).toISOString().split('T')[0] : "",
-                            status: emp.status || "Active",
-                            managerId: emp.managerId || "",
-                            teamLeaderId: emp.teamLeaderId || ""
-                          });
-                        }}
+                        onClick={() => navigate("/telecalling/add-employee", { state: { editEmpId: emp._id } })}
                         title="Edit Employee"
-                        className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition"
+                        className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition cursor-pointer"
                       >
                         <Edit size={14} />
                       </button>
@@ -252,8 +259,7 @@ export default function EmployeeList() {
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="font-bold text-slate-400">Generated Login Password</span>
-                {/* <span className="font-mono font-bold text-amber-600">{viewEmp.temporaryPassword || "••••••••"}</span> */}
-                <span className="font-mono font-bold text-amber-600">{viewEmp.passworsd}</span>
+                <span className="font-mono font-bold text-amber-600">{viewEmp.temporaryPassword || viewEmp.password || "••••••••"}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="font-bold text-slate-400">Phone</span>
@@ -292,162 +298,7 @@ export default function EmployeeList() {
         </div>
       )}
 
-      {/* 2. EDIT MODAL */}
-      {editingEmp && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative border-t-8 border-t-[#0a2540] max-h-[90vh] overflow-y-auto">
-            <button onClick={() => setEditingEmp(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-              <X size={20} />
-            </button>
-            <h3 className="text-lg font-black text-[#0a2540] mb-4">Edit Employee Record</h3>
-            <form onSubmit={handleSaveEdit} className="space-y-4 text-xs">
 
-              {/* Readonly Section */}
-              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
-                <div>
-                  <span className="block font-bold text-slate-400 mb-0.5">Employee ID</span>
-                  <span className="font-mono font-black text-slate-600">{editingEmp.employeeId}</span>
-                </div>
-                <div>
-                  <span className="block font-bold text-slate-400 mb-0.5">Official Login Email</span>
-                  <span className="font-semibold text-slate-600 break-all">{editingEmp.email}</span>
-                </div>
-                <div className="sm:col-span-2 border-t pt-2">
-                  <span className="block font-bold text-slate-400 mb-0.5">Generated Password (Read-Only)</span>
-                  <span className="font-mono font-bold text-amber-600">{editingEmp.temporaryPassword || "••••••••"}</span>
-                </div>
-              </div>
-
-              {/* Editable Fields */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-extrabold text-slate-700 uppercase mb-1">Full Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={editForm.fullName}
-                    onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-extrabold text-slate-700 uppercase mb-1">Personal Email *</label>
-                  <input
-                    type="email"
-                    required
-                    value={editForm.personalEmail}
-                    onChange={(e) => setEditForm({ ...editForm, personalEmail: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-extrabold text-slate-700 uppercase mb-1">Phone Number *</label>
-                  <input
-                    type="tel"
-                    required
-                    value={editForm.phone}
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-extrabold text-slate-700 uppercase mb-1">Role / Dept *</label>
-                  <input
-                    type="text"
-                    required
-                    value={editForm.role}
-                    onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-extrabold text-slate-700 uppercase mb-1">Specific Department</label>
-                  <input
-                    type="text"
-                    value={editForm.department || ""}
-                    onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-extrabold text-slate-700 uppercase mb-1">Date of Birth (DOB) *</label>
-                  <input
-                    type="date"
-                    required
-                    value={editForm.dateOfBirth}
-                    onChange={(e) => setEditForm({ ...editForm, dateOfBirth: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-extrabold text-slate-700 uppercase mb-1">Joining Date *</label>
-                  <input
-                    type="date"
-                    required
-                    value={editForm.joiningDate}
-                    onChange={(e) => setEditForm({ ...editForm, joiningDate: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block font-extrabold text-slate-700 uppercase mb-1">Status *</label>
-                  <select
-                    value={editForm.status}
-                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block font-extrabold text-slate-700 uppercase mb-1">Address</label>
-                  <textarea
-                    value={editForm.address}
-                    onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                    rows={2}
-                    className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37] resize-none"
-                  />
-                </div>
-
-                {editForm.role && !["Management", "Manager"].includes(editForm.role) && (
-                  <div>
-                    <label className="block font-extrabold text-slate-700 uppercase mb-1">Assign Manager</label>
-                    <select
-                      value={editForm.managerId || ""}
-                      onChange={(e) => setEditForm({ ...editForm, managerId: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
-                    >
-                      <option value="">-- No Manager --</option>
-                      {managers.map(m => (
-                        <option key={m._id} value={m._id}>{m.fullName} ({m.employeeId})</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {editForm.role && !["Management", "Manager", "Team Leader"].includes(editForm.role) && (
-                  <div>
-                    <label className="block font-extrabold text-slate-700 uppercase mb-1">Assign Team Leader</label>
-                    <select
-                      value={editForm.teamLeaderId || ""}
-                      onChange={(e) => setEditForm({ ...editForm, teamLeaderId: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-slate-50 border rounded-xl outline-none focus:border-[#d4af37]"
-                    >
-                      <option value="">-- No Team Leader --</option>
-                      {teamLeaders.map(tl => (
-                        <option key={tl._id} value={tl._id}>{tl.fullName} ({tl.employeeId})</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              <button type="submit" className="w-full py-3 bg-[#0a2540] text-[#d4af37] font-black rounded-xl text-xs uppercase shadow-md mt-4">Save Changes</button>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

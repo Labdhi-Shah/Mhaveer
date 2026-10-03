@@ -57,7 +57,7 @@ export const getDepartmentRoute = (user) => {
   const department = normalizeDepartment(getUserDepartment(user));
   const role = normalizeRole(getUserRole(user));
 
-  if (department === "Admin" || role === "Admin") return "/admin-dashboard";
+  if (department === "Admin" || role === "Admin") return "/telecalling/manager";
   if (department === "Sales") {
     if (role === "Manager") return "/sales/manager";
     if (role === "Team Leader") return "/sales/team-leader";
@@ -87,6 +87,10 @@ export const getDepartmentRoute = (user) => {
 export const resolveDepartmentDashboard = (department, role) => {
   const normalizedDepartment = normalizeDepartment(department);
   const normalizedRole = normalizeRole(role);
+
+  if (normalizedDepartment === "Admin" || normalizedRole === "Admin") {
+    return "telecalling-manager";
+  }
 
   if (normalizedDepartment === "Sales") {
     if (normalizedRole === "Manager") return "sales-manager";

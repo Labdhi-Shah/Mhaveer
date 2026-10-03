@@ -35,9 +35,8 @@ export default function Sidebar({ isOpen, onClose }) {
   const dashboardRoute = getDepartmentRoute(user);
 
   const getPortalLabel = () => {
-    if (isAdmin) return "NAVIGATION";
+    if (isTelecalling || isAdmin) return "TELECALLING PORTAL";
     if (isSales) return "SALES PORTAL";
-    if (isTelecalling) return "TELECALLING PORTAL";
     if (isLeads) return "LEADS PORTAL";
     if (isCredit) return "CREDIT PORTAL";
     if (isManager) return "MANAGER PORTAL";
@@ -47,7 +46,6 @@ export default function Sidebar({ isOpen, onClose }) {
 
   const isDashboardActive =
     location.pathname === "/dashboard" ||
-    location.pathname === "/admin-dashboard" ||
     location.pathname === "/sales/manager" ||
     location.pathname === "/sales/team-leader" ||
     location.pathname === "/sales/employee" ||
@@ -86,28 +84,30 @@ export default function Sidebar({ isOpen, onClose }) {
                 }`}
             >
               <LayoutDashboard size={18} />
-              {isSales ? "Sales Dashboard" : isTelecalling ? "Telecalling Dashboard" : isLeads ? "Leads Dashboard" : isCredit ? "Credit Dashboard" : "Dashboard"}
+              {isSales ? "Sales Dashboard" : (isTelecalling || isAdmin) ? "Telecalling Dashboard" : isLeads ? "Leads Dashboard" : isCredit ? "Credit Dashboard" : "Dashboard"}
             </button>
 
-            {isAdmin && (
+            {(isTelecalling || isAdmin) && (
               <>
                 <button
-                  onClick={() => handleNavigation("/employees")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/employees"
+                  onClick={() => handleNavigation("/telecalling/employees")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    location.pathname === "/telecalling/employees" || location.pathname === "/employees"
                       ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
                       : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                    }`}
+                  }`}
                 >
                   <Users size={18} />
                   Employee List
                 </button>
 
                 <button
-                  onClick={() => handleNavigation("/add-employee")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/add-employee"
+                  onClick={() => handleNavigation("/telecalling/add-employee")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    location.pathname === "/telecalling/add-employee" || location.pathname === "/add-employee"
                       ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
                       : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                    }`}
+                  }`}
                 >
                   <UserPlus size={18} />
                   Add Employee
@@ -115,7 +115,7 @@ export default function Sidebar({ isOpen, onClose }) {
               </>
             )}
 
-            {(isManager || isTeamLeader) && !isSales && (
+            {(isManager || isTeamLeader || isAdmin) && !isSales && (
               <>
                 <button
                   onClick={() => handleNavigation("/team-performance")}
@@ -130,7 +130,7 @@ export default function Sidebar({ isOpen, onClose }) {
               </>
             )}
 
-            {(((isManager || isTeamLeader) && !isSales && !isCredit) || (isEmployee && !isSalesEmployee && !isCredit)) && !isKyc && (
+            {(((isManager || isTeamLeader || isAdmin) && !isSales && !isCredit) || (isEmployee && !isSalesEmployee && !isCredit)) && !isKyc && (
               <>
                 <button
                   onClick={() => handleNavigation("/new-lead")}
@@ -219,7 +219,7 @@ export default function Sidebar({ isOpen, onClose }) {
               </>
             )}
 
-            {(isManager || isTeamLeader || isEmployee || isTelecalling || isLeads) && (
+            {(isManager || isTeamLeader || isEmployee || isAdmin || isTelecalling || isLeads) && (
               <>
                 {!isSalesEmployee && !isCredit && (
                   <button
@@ -236,7 +236,7 @@ export default function Sidebar({ isOpen, onClose }) {
               </>
             )}
 
-            {(isManager || isTeamLeader || isEmployee || isSales || isTelecalling || isLeads || isCredit) && (
+            {(isManager || isTeamLeader || isEmployee || isAdmin || isSales || isTelecalling || isLeads || isCredit) && (
               <button
                 onClick={() => handleNavigation("/attendance")}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/attendance"

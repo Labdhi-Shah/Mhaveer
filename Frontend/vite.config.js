@@ -105,6 +105,11 @@ const virtualHtmlPlugin = () => {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), virtualHtmlPlugin()],
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+    strictPort: true,
+  },
   build: {
     rollupOptions: {
       input: {

@@ -33,21 +33,21 @@ const panelHeader = (label, title) => (
 
 export const TelecallingManagerDashboard = () => (
   <>
-    {panelHeader("Telecalling Panel", "Telecalling Manager Dashboard")}
+    {panelHeader("Telecalling Portal", "Telecalling Manager Dashboard")}
     <EmployeeDashboard />
   </>
 );
 
 export const TelecallingTeamLeaderDashboard = () => (
   <>
-    {panelHeader("Telecalling Panel", "Telecalling Team Leader Dashboard")}
+    {panelHeader("Telecalling Portal", "Telecalling Team Leader Dashboard")}
     <EmployeeDashboard />
   </>
 );
 
 export const TelecallingEmployeeDashboard = () => (
   <>
-    {panelHeader("Telecalling Panel", "Telecalling Employee Dashboard")}
+    {panelHeader("Telecalling Portal", "Telecalling Employee Dashboard")}
     <EmployeeDashboard />
   </>
 );

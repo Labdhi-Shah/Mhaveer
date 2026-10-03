@@ -3,13 +3,13 @@ import { useNavigate, useLocation } from "react-router-dom";
 import api from "./api";
 import { Loader2, CheckCircle, Copy, X, Users, Building2, User, Phone, MapPin, Briefcase } from "lucide-react";
 
-const DEPARTMENTS = ["Sales Department", "Telecalling", "Admin", "Account & Fianc", "Marketing", "Manegement", "Human Resorece(HR)", "Collection & Records", "KYC Compliation", "Operations Department", "Customer Support", "Credit"];
-const ROLES = ["Manager", "Team Leader", "Employee"];
+const DEPARTMENTS = ["Telecalling"];
+const ROLES = ["Employee"];
 
-export default function AddEmployee() {
+export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const editEmpId = location.state?.editEmpId;
+  const editEmpId = modalEditEmpId || location.state?.editEmpId;
 
   const [form, setForm] = useState({
     fullName: "",
@@ -173,7 +173,11 @@ export default function AddEmployee() {
       if (editEmpId) {
         const response = await api.put(`/employees/${editEmpId}`, payload);
         if (response.data.success) {
-          navigate("/telecalling/employees", { state: { refresh: true } }); 
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            navigate("/telecalling/employees", { state: { refresh: true } }); 
+          }
         }
       } else {
         const response = await api.post("/employees", payload);
@@ -211,14 +215,25 @@ export default function AddEmployee() {
         <h3 className="text-xl font-black text-[#0a2540]">
           {editEmpId ? "Edit Employee Profile" : "Register New Employee"}
         </h3>
-        <button
-          type="button"
-          onClick={() => navigate("/telecalling/employees")}
-          className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-[#0a2540] px-4 py-2 rounded-xl font-bold text-xs transition cursor-pointer self-start sm:self-auto"
-        >
-          <Users size={16} />
-          <span>View Employee List</span>
-        </button>
+        {onCancel ? (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-[#0a2540] px-4 py-2 rounded-xl font-bold text-xs transition cursor-pointer self-start sm:self-auto"
+          >
+            <X size={16} />
+            <span>Cancel</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => navigate("/telecalling/employees")}
+            className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-[#0a2540] px-4 py-2 rounded-xl font-bold text-xs transition cursor-pointer self-start sm:self-auto"
+          >
+            <Users size={16} />
+            <span>View Employee List</span>
+          </button>
+        )}
       </div>
 
       {error && (

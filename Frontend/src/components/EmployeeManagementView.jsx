@@ -35,34 +35,7 @@ export default function EmployeeManagementView({ activeTab: propTab }) {
           </p>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 self-start md:self-auto w-full md:w-auto">
-          <button
-            type="button"
-            onClick={() => handleTabChange("list")}
-            className={`flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-              currentTab === "list"
-                ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                : "text-slate-600 hover:text-[#0a2540] hover:bg-white/60"
-            }`}
-          >
-            <Users size={16} />
-            <span>Employee List</span>
-          </button>
 
-          <button
-            type="button"
-            onClick={() => handleTabChange("add")}
-            className={`flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-              currentTab === "add"
-                ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                : "text-slate-600 hover:text-[#0a2540] hover:bg-white/60"
-            }`}
-          >
-            <UserPlus size={16} />
-            <span>Add Employee</span>
-          </button>
-        </div>
       </div>
 
       {/* Active View Component */}

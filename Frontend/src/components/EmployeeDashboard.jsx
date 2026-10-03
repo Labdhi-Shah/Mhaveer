@@ -183,67 +183,84 @@ export default function EmployeeDashboard() {
 
       {/* Main Layout for CRM Actions and Leads Table */}
       <div className="space-y-6">
-        {/* Recent CRM Actions Panel */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between h-fit w-full">
-          <div>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-              <h3 className="text-md font-black text-[#0a2540] flex items-center gap-2">
-                <CheckCircle size={18} className="text-emerald-500" />
-                Recent CRM Actions
-              </h3>
-            </div>
+        {/* Follow-Ups & Meetings Panel */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Upcoming Follow-Ups */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between h-fit w-full">
+            <div>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <h3 className="text-md font-black text-[#0a2540] flex items-center gap-2">
+                  <Clock size={18} className="text-amber-500" />
+                  Upcoming Follow-Ups
+                </h3>
+              </div>
 
-            {recentLoading ? (
-              <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <Loader2 className="animate-spin text-[#0a2540]" size={28} />
-                <p className="text-[10px] text-slate-400 font-bold uppercase">Retrieving Leads...</p>
-              </div>
-            ) : recentLeads.length === 0 ? (
-              <div className="text-center py-12 text-slate-400 text-xs">
-                No recent leads created. Use the form to save leads.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {recentLeads.map((lead) => (
-                  <div key={lead._id} className="p-3 bg-slate-50 hover:bg-slate-100/70 border border-slate-100 rounded-2xl flex flex-col justify-between gap-2 transition">
-                    <div>
+              {recentLoading ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <Loader2 className="animate-spin text-[#0a2540]" size={28} />
+                </div>
+              ) : recentLeads.filter(l => l.followUpDate).length === 0 ? (
+                <div className="text-center py-8 text-slate-400 text-xs">
+                  No upcoming follow-ups.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentLeads.filter(l => l.followUpDate).slice(0, 5).map((lead) => (
+                    <div key={lead._id} className="p-3 bg-amber-50/50 hover:bg-amber-50 border border-amber-100/50 rounded-2xl flex flex-col justify-between gap-2 transition cursor-pointer" onClick={() => setViewLead(lead)}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-mono text-[10px] font-black text-slate-400">{lead.leadId}</span>
-                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold ${lead.interested === "Yes" ? "bg-emerald-100 text-emerald-800" :
-                            lead.interested === "No" ? "bg-rose-100 text-rose-800" :
-                              "bg-amber-100 text-amber-800"
-                          }`}>
-                          {lead.interested}
+                        <span className="text-[10px] font-extrabold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
+                          {formatFriendlyDate(lead.followUpDate)} {lead.followUpTime ? `| ${formatFriendlyTime(lead.followUpTime)}` : ''}
                         </span>
                       </div>
                       <div>
                         <h4 className="text-xs font-black text-[#0a2540] truncate">{lead.companyName}</h4>
-                        <p className="text-[10px] text-slate-500 font-medium">Contact: {lead.contactPerson}</p>
+                        <p className="text-[10px] text-slate-500 font-medium">Contact: {lead.contactPerson} ({lead.phone})</p>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between border-t border-slate-100/70 pt-2 mt-1">
-                      <span className="text-[10px] font-extrabold text-[#d4af37]">{lead.loanType}</span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setViewLead(lead)}
-                          className="p-1 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg text-slate-500 hover:text-[#0a2540] transition"
-                          title="Quick View"
-                        >
-                          <Eye size={12} />
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirm(lead._id)}
-                          className="p-1 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg text-slate-400 hover:text-rose-600 transition"
-                          title="Delete Lead"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Upcoming Meetings */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between h-fit w-full">
+            <div>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <h3 className="text-md font-black text-[#0a2540] flex items-center gap-2">
+                  <Calendar size={18} className="text-[#0a2540]" />
+                  Upcoming Meetings
+                </h3>
               </div>
-            )}
+
+              {recentLoading ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <Loader2 className="animate-spin text-[#0a2540]" size={28} />
+                </div>
+              ) : recentLeads.filter(l => l.meetingDate).length === 0 ? (
+                <div className="text-center py-8 text-slate-400 text-xs">
+                  No upcoming meetings.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentLeads.filter(l => l.meetingDate).slice(0, 5).map((lead) => (
+                    <div key={lead._id} className="p-3 bg-blue-50/50 hover:bg-blue-50 border border-blue-100/50 rounded-2xl flex flex-col justify-between gap-2 transition cursor-pointer" onClick={() => setViewLead(lead)}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-mono text-[10px] font-black text-slate-400">{lead.leadId}</span>
+                        <span className="text-[10px] font-extrabold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                          {formatFriendlyDate(lead.meetingDate)} {lead.meetingTime ? `| ${formatFriendlyTime(lead.meetingTime)}` : ''}
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-[#0a2540] truncate">{lead.companyName}</h4>
+                        <p className="text-[10px] text-slate-500 font-medium">Contact: {lead.contactPerson} ({lead.phone})</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

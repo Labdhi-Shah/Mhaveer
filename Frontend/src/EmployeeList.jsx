@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "./api"; // જો તમારી api.js src/ માં હોય તો ./api રાખો
-import { Search, Edit, Trash2, Eye, Loader2, ChevronLeft, ChevronRight, X, UserPlus, CheckCircle } from "lucide-react";
+import { Search, Edit, Trash2, Eye, Loader2, ChevronLeft, ChevronRight, X, UserPlus, CheckCircle, Building2 } from "lucide-react";
+import AddEmployee from "./AddEmployee";
 
 const DEPARTMENTS = ["Sales Department", "Telecalling", "Admin", "Account & Fianc", "Marketing", "Manegement", "Human Resorece(HR)", "Collection & Records", "KYC Compliation", "Operations Department", "Customer Support", "Credit"];
 const ROLES = ["Manager", "Team Leader", "Employee"];
@@ -14,10 +15,8 @@ export default function EmployeeList() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Modal States
   const [viewEmp, setViewEmp] = useState(null); // View Modal State
-
-
+  const [editEmpModalId, setEditEmpModalId] = useState(null); // Edit Modal State
 
 
   const [managers, setManagers] = useState([]);
@@ -132,14 +131,6 @@ export default function EmployeeList() {
               className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-[#0a2540] outline-none focus:border-[#d4af37]"
             />
           </div>
-          <button
-            type="button"
-            onClick={() => navigate("/telecalling/add-employee")}
-            className="flex items-center gap-1.5 bg-[#0a2540] hover:bg-[#12385c] text-[#d4af37] px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition shadow-sm shrink-0 cursor-pointer"
-          >
-            <UserPlus size={16} />
-            <span className="hidden sm:inline">Add Employee</span>
-          </button>
         </div>
       </div>
 
@@ -194,7 +185,7 @@ export default function EmployeeList() {
 
                       {/* EDIT ICON */}
                       <button
-                        onClick={() => navigate("/telecalling/add-employee", { state: { editEmpId: emp._id } })}
+                        onClick={() => setEditEmpModalId(emp._id)}
                         title="Edit Employee"
                         className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition cursor-pointer"
                       >
@@ -284,11 +275,37 @@ export default function EmployeeList() {
                 </span>
               </div>
               {viewEmp.address && (
-                <div className="flex flex-col gap-1 pt-1">
+                <div className="flex flex-col gap-1 pt-1 border-b pb-2">
                   <span className="font-bold text-slate-400">Address</span>
                   <span className="text-slate-800 break-words">{viewEmp.address}</span>
                 </div>
               )}
+
+              {/* Bank Details Section */}
+              <div className="pt-2">
+                <div className="flex items-center gap-1.5 mb-3 text-[#0a2540]">
+                  <Building2 size={16} />
+                  <h4 className="font-black text-sm uppercase tracking-wider">Bank Details</h4>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between border-b pb-1.5">
+                    <span className="font-bold text-slate-400 text-[11px]">Bank Name</span>
+                    <span className="font-semibold text-slate-800">{viewEmp.bankName || "-"}</span>
+                  </div>
+                  <div className="flex justify-between border-b pb-1.5">
+                    <span className="font-bold text-slate-400 text-[11px]">Account Holder</span>
+                    <span className="font-semibold text-slate-800">{viewEmp.accountHolderName || "-"}</span>
+                  </div>
+                  <div className="flex justify-between border-b pb-1.5">
+                    <span className="font-bold text-slate-400 text-[11px]">Account Number</span>
+                    <span className="font-mono font-bold text-[#0a2540]">{viewEmp.accountNumber || "-"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-bold text-slate-400 text-[11px]">IFSC Code</span>
+                    <span className="font-mono font-bold text-[#0a2540]">{viewEmp.ifscCode || "-"}</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <button onClick={() => setViewEmp(null)} className="w-full mt-5 py-2.5 bg-[#0a2540] text-white font-bold rounded-xl text-xs uppercase">
@@ -298,6 +315,23 @@ export default function EmployeeList() {
         </div>
       )}
 
+
+      {/* 2. EDIT DETAILS MODAL */}
+      {editEmpModalId && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl relative">
+            <AddEmployee 
+              modalEditEmpId={editEmpModalId} 
+              onSuccess={() => {
+                setEditEmpModalId(null);
+                setSuccessMsg("Employee updated successfully.");
+                fetchEmployees();
+              }}
+              onCancel={() => setEditEmpModalId(null)}
+            />
+          </div>
+        </div>
+      )}
 
     </div>
   );

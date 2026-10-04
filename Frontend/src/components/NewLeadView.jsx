@@ -25,6 +25,18 @@ export default function NewLeadView() {
       loanAmount: "",
       loanType: "",
       propertyLoanCategory: "",
+      homeLoanType: "",
+      propertyLocation: "",
+      durationOfRentProperty: "",
+      lapPropertyType: "",
+      lapPropertyLocation: "",
+      lapPropertyMarketValue: "",
+      businessLoanType: "",
+      btBankName: "",
+      btRateOfInterest: "",
+      btPropertyType: "",
+      btMarketValue: "",
+      btLocation: "",
       cibilScore: "",
       interested: "",
       callStatus: "",
@@ -38,6 +50,7 @@ export default function NewLeadView() {
 
   const interestedValue = watch("interested");
   const loanTypeValue = watch("loanType");
+  const lapPropertyTypeValue = watch("lapPropertyType");
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -66,8 +79,28 @@ export default function NewLeadView() {
         cibilScore: data.cibilScore ? parseInt(data.cibilScore) : undefined
       };
 
+      if (payload.loanType !== "Home Loan") {
+        delete payload.homeLoanType;
+      }
       if (payload.loanType !== "Property Loan") {
         delete payload.propertyLoanCategory;
+        delete payload.propertyLocation;
+        delete payload.durationOfRentProperty;
+      }
+      if (payload.loanType !== "LAP") {
+        delete payload.lapPropertyType;
+        delete payload.lapPropertyLocation;
+        delete payload.lapPropertyMarketValue;
+      }
+      if (payload.loanType !== "Business Loan") {
+        delete payload.businessLoanType;
+      }
+      if (payload.loanType !== "Balance Transfer") {
+        delete payload.btBankName;
+        delete payload.btRateOfInterest;
+        delete payload.btPropertyType;
+        delete payload.btMarketValue;
+        delete payload.btLocation;
       }
 
       if (!payload.meetingDate) delete payload.meetingDate;
@@ -168,22 +201,122 @@ export default function NewLeadView() {
                 <option value="Home Loan">Home Loan</option>
                 <option value="Business Loan">Business Loan</option>
                 <option value="Property Loan">Property Loan</option>
+                <option value="LAP">LAP (Loan Against Property)</option>
+                <option value="Balance Transfer">Balance Transfer</option>
               </select>
               {errors.loanType && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.loanType.message}</p>}
             </div>
 
-            {loanTypeValue === "Property Loan" && (
+            {loanTypeValue === "Home Loan" && (
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1.5">Property Loan Category *</label>
-                <select {...register("propertyLoanCategory", { required: "Property Loan Category is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none bg-white transition ${errors.propertyLoanCategory ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`}>
+                <label className="block text-xs font-bold text-slate-600 mb-1.5">Home Loan Type *</label>
+                <select {...register("homeLoanType", { required: "Home Loan Type is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none bg-white transition ${errors.homeLoanType ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`}>
                   <option value="">Select Category</option>
-                  <option value="Commercial Loan">Commercial Loan</option>
-                  <option value="Industrial Loan">Industrial Loan</option>
-                  <option value="Residential Loan">Residential Loan</option>
-                  <option value="Plot Loan">Plot Loan</option>
+                  <option value="Home Purchase">Home Purchase</option>
+                  <option value="Existing Home">Existing Home</option>
                 </select>
-                {errors.propertyLoanCategory && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.propertyLoanCategory.message}</p>}
+                {errors.homeLoanType && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.homeLoanType.message}</p>}
               </div>
+            )}
+
+            {loanTypeValue === "Property Loan" && (
+              <>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1.5">Property Loan Category *</label>
+                  <select {...register("propertyLoanCategory", { required: "Property Loan Category is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none bg-white transition ${errors.propertyLoanCategory ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`}>
+                    <option value="">Select Category</option>
+                    <option value="Commercial Loan">Commercial Loan</option>
+                    <option value="Industrial Loan">Industrial Loan</option>
+                    <option value="Residential Loan">Residential Loan</option>
+                    <option value="Plot Loan">Plot Loan</option>
+                    <option value="Working Capital">Working Capital</option>
+                    <option value="Lease Rental Discounting">Lease Rental Discounting</option>
+                  </select>
+                  {errors.propertyLoanCategory && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.propertyLoanCategory.message}</p>}
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1.5">Property Location *</label>
+                  <input type="text" placeholder="Enter location" {...register("propertyLocation", { required: "Property Location is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.propertyLocation ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+                  {errors.propertyLocation && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.propertyLocation.message}</p>}
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1.5">Duration of Rent Property *</label>
+                  <input type="text" placeholder="e.g. 5 Years" {...register("durationOfRentProperty", { required: "Duration is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.durationOfRentProperty ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+                  {errors.durationOfRentProperty && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.durationOfRentProperty.message}</p>}
+                </div>
+              </>
+            )}
+
+            {loanTypeValue === "LAP" && (
+              <>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1.5">Property Type *</label>
+                  <select {...register("lapPropertyType", { required: "Property Type is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none bg-white transition ${errors.lapPropertyType ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`}>
+                    <option value="">Select Property Type</option>
+                    <option value="Residential">Residential</option>
+                    <option value="Commercial">Commercial</option>
+                    <option value="Industrial">Industrial</option>
+                  </select>
+                  {errors.lapPropertyType && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.lapPropertyType.message}</p>}
+                </div>
+                {lapPropertyTypeValue && ["Residential", "Commercial", "Industrial"].includes(lapPropertyTypeValue) && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1.5">Property Location *</label>
+                      <input type="text" placeholder="Enter location" {...register("lapPropertyLocation", { required: "Location is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.lapPropertyLocation ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+                      {errors.lapPropertyLocation && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.lapPropertyLocation.message}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1.5">Property Market Value *</label>
+                      <input type="number" placeholder="Enter market value" {...register("lapPropertyMarketValue", { required: "Market value is required", min: { value: 1, message: "Value must be positive" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.lapPropertyMarketValue ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+                      {errors.lapPropertyMarketValue && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.lapPropertyMarketValue.message}</p>}
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+
+            {loanTypeValue === "Business Loan" && (
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1.5">Business Loan Type *</label>
+                <select {...register("businessLoanType", { required: "Business Loan Type is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none bg-white transition ${errors.businessLoanType ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`}>
+                  <option value="">Select Category</option>
+                  <option value="CGTMS">CGTMS</option>
+                  <option value="MSME">MSME</option>
+                  <option value="Unsecured">Unsecured</option>
+                </select>
+                {errors.businessLoanType && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.businessLoanType.message}</p>}
+              </div>
+            )}
+
+            {loanTypeValue === "Balance Transfer" && (
+              <>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1.5">Bank Name *</label>
+                  <input type="text" placeholder="Enter bank name" {...register("btBankName", { required: "Bank Name is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.btBankName ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+                  {errors.btBankName && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.btBankName.message}</p>}
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1.5">Rate of Interest (%) *</label>
+                  <input type="number" step="0.01" placeholder="e.g. 8.5" {...register("btRateOfInterest", { required: "Rate of Interest is required", min: { value: 0, message: "Value must be positive" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.btRateOfInterest ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+                  {errors.btRateOfInterest && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.btRateOfInterest.message}</p>}
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1.5">Property Type *</label>
+                  <input type="text" placeholder="Enter property type" {...register("btPropertyType", { required: "Property Type is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.btPropertyType ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+                  {errors.btPropertyType && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.btPropertyType.message}</p>}
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1.5">Market Value *</label>
+                  <input type="number" placeholder="Enter market value" {...register("btMarketValue", { required: "Market value is required", min: { value: 1, message: "Value must be positive" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.btMarketValue ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+                  {errors.btMarketValue && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.btMarketValue.message}</p>}
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1.5">Location *</label>
+                  <input type="text" placeholder="Enter location" {...register("btLocation", { required: "Location is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.btLocation ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+                  {errors.btLocation && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.btLocation.message}</p>}
+                </div>
+              </>
             )}
 
             <div>

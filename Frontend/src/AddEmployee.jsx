@@ -244,62 +244,6 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
         
-        {/* --- PROFESSIONAL DETAILS --- */}
-        <SectionHeader title="Professional Details" icon={Briefcase} />
-        
-        <div>
-          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Department *</label>
-          <select name="department" value={form.department} onChange={handleChange} required className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer">
-            <option value="" disabled>-- Select Department --</option>
-            {DEPARTMENTS.map((dept, idx) => (<option key={idx} value={dept}>{dept}</option>))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Role *</label>
-          <select name="role" value={form.role} onChange={handleChange} required className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer">
-            <option value="" disabled>-- Select Role --</option>
-            {ROLES.map((r, idx) => (<option key={idx} value={r}>{r}</option>))}
-          </select>
-        </div>
-
-        {form.role && form.role !== "Manager" && (
-          <div>
-            <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Assign Manager</label>
-            <select name="managerId" value={form.managerId} onChange={handleChange} className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer">
-              <option value="">-- No Manager --</option>
-              {managers.filter(m => !form.department || m.department === form.department).map(m => (
-                <option key={m._id} value={m._id}>{m.fullName} ({m.employeeId})</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {form.role && form.role === "Employee" && (
-          <div>
-            <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Assign Team Leader</label>
-            <select name="teamLeaderId" value={form.teamLeaderId} onChange={handleChange} className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer">
-              <option value="">-- No Team Leader --</option>
-              {teamLeaders.filter(tl => !form.department || tl.department === form.department).map(tl => (
-                <option key={tl._id} value={tl._id}>{tl.fullName} ({tl.employeeId})</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        <div>
-          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Status *</label>
-          <select name="status" value={form.status} onChange={handleChange} className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] cursor-pointer">
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
-        </div>
-        
-        <div>
-          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Joining Date *</label>
-          <input type="date" name="joiningDate" required value={form.joiningDate} onChange={handleChange} onClick={handleDateClick} className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] cursor-pointer" />
-        </div>
-
         {/* --- PERSONAL & IDENTIFICATION DETAILS --- */}
         <SectionHeader title="Personal & ID Details" icon={User} />
         
@@ -336,39 +280,6 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
           {errors.panNumber && <p className="text-rose-500 text-[10px] mt-1">{errors.panNumber}</p>}
         </div>
 
-        {/* --- BANK DETAILS --- */}
-        <SectionHeader title="Bank Details" icon={Building2} />
-
-        <div>
-          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Bank Name</label>
-          <select name="bankName" value={form.bankName} onChange={handleChange} className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer">
-            <option value="">-- Select Bank --</option>
-            {banks.map((b, idx) => {
-              const bankVal = typeof b === 'string' ? b : (b.name || b.bankName || JSON.stringify(b));
-              return <option key={idx} value={bankVal}>{bankVal}</option>;
-            })}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Account Holder Name</label>
-          <input type="text" name="accountHolderName" value={form.accountHolderName} onChange={handleChange} placeholder="Name as per bank" className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]" />
-        </div>
-
-        <div>
-          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Account Number</label>
-          <input type="text" name="accountNumber" value={form.accountNumber} onChange={handleChange} placeholder="Bank Account Number" className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]" />
-        </div>
-
-        <div>
-          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">IFSC Code</label>
-          <input type="text" name="ifscCode" maxLength={11} value={form.ifscCode} onChange={handleChange} placeholder="11 char IFSC" className={`w-full px-4 py-2.5 bg-slate-100/70 border rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] ${errors.ifscCode ? 'border-rose-500' : 'border-slate-300'}`} />
-          {errors.ifscCode && <p className="text-rose-500 text-[10px] mt-1">{errors.ifscCode}</p>}
-        </div>
-
-        {/* --- FAMILY / EMERGENCY CONTACT --- */}
-        <SectionHeader title="Family / Emergency Contacts" icon={Phone} />
-
         <div>
           <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Father's Phone</label>
           <input type="tel" name="fatherPhone" maxLength={10} value={form.fatherPhone} onChange={handleChange} placeholder="10 digit number" className={`w-full px-4 py-2.5 bg-slate-100/70 border rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] ${errors.fatherPhone ? 'border-rose-500' : 'border-slate-300'}`} />
@@ -387,12 +298,71 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
           {errors.guardianPhone && <p className="text-rose-500 text-[10px] mt-1">{errors.guardianPhone}</p>}
         </div>
 
-        {/* --- ADDRESS DETAILS --- */}
-        <SectionHeader title="Address Details" icon={MapPin} />
-
         <div className="md:col-span-2">
           <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Full Address</label>
           <textarea name="address" value={form.address} onChange={handleChange} placeholder="House No, Street, Area, City, State, PIN" rows={2} className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] resize-none" />
+        </div>
+
+        {/* --- PROFESSIONAL DETAILS --- */}
+        <SectionHeader title="Professional Details" icon={Briefcase} />
+        
+        <div>
+          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Department *</label>
+          <select name="department" value={form.department} onChange={handleChange} required className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer">
+            <option value="" disabled>-- Select Department --</option>
+            {DEPARTMENTS.map((dept, idx) => (<option key={idx} value={dept}>{dept}</option>))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Role *</label>
+          <select name="role" value={form.role} onChange={handleChange} required className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer">
+            <option value="" disabled>-- Select Role --</option>
+            {ROLES.map((r, idx) => (<option key={idx} value={r}>{r}</option>))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Status *</label>
+          <select name="status" value={form.status} onChange={handleChange} className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] cursor-pointer">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+        
+        <div>
+          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Joining Date *</label>
+          <input type="date" name="joiningDate" required value={form.joiningDate} onChange={handleChange} onClick={handleDateClick} className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] cursor-pointer" />
+        </div>
+
+        {/* --- BANK DETAILS --- */}
+        <SectionHeader title="Bank Details" icon={Building2} />
+
+        <div>
+          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Bank Name</label>
+          <select name="bankName" value={form.bankName} onChange={handleChange} className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer">
+            <option value="">-- Select Bank --</option>
+            {banks.map((b, idx) => {
+              const bankVal = typeof b === 'string' ? b : (b.name || b.bankName || JSON.stringify(b));
+              return <option key={idx} value={bankVal}>{bankVal}</option>;
+            })}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">IFSC Code</label>
+          <input type="text" name="ifscCode" maxLength={11} value={form.ifscCode} onChange={handleChange} placeholder="11 char IFSC" className={`w-full px-4 py-2.5 bg-slate-100/70 border rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] ${errors.ifscCode ? 'border-rose-500' : 'border-slate-300'}`} />
+          {errors.ifscCode && <p className="text-rose-500 text-[10px] mt-1">{errors.ifscCode}</p>}
+        </div>
+
+        <div>
+          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Account Number</label>
+          <input type="text" name="accountNumber" value={form.accountNumber} onChange={handleChange} placeholder="Bank Account Number" className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]" />
+        </div>
+
+        <div>
+          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Account Holder Name</label>
+          <input type="text" name="accountHolderName" value={form.accountHolderName} onChange={handleChange} placeholder="Name as per bank" className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37]" />
         </div>
 
         {/* Submit Button */}

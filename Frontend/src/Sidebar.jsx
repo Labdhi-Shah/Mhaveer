@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
-import { getDepartmentRoute, getUserDepartment, getUserRole } from "./utils/hierarchy";
+import { getUserRole } from "./utils/hierarchy";
 
 export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
@@ -19,45 +19,15 @@ export default function Sidebar({ isOpen, onClose }) {
     }
   };
 
-  const department = getUserDepartment(user);
   const role = getUserRole(user);
-  const isAdmin = department === "Admin" || role === "Admin";
   const isManager = role === "Manager";
-  const isTeamLeader = role === "Team Leader";
-  const isSales = department === "Sales";
-  const isTelecalling = department === "Telecalling";
-  const isLeads = department === "Leads";
-  const isCredit = department === "Credit";
-  const isEmployee = !isAdmin && !isManager && !isTeamLeader;
-  const isSalesEmployee = isSales && isEmployee;
-  const rawDepartment = user?.department || user?.dept || user?.departmentName || "";
-  const isKyc = rawDepartment.toLowerCase().includes("kyc") || rawDepartment.toLowerCase().includes("compliance");
-  const dashboardRoute = getDepartmentRoute(user);
-
-  const getPortalLabel = () => {
-    if (isTelecalling || isAdmin) return "TELECALLING PORTAL";
-    if (isSales) return "SALES PORTAL";
-    if (isLeads) return "LEADS PORTAL";
-    if (isCredit) return "CREDIT PORTAL";
-    if (isManager) return "MANAGER PORTAL";
-    if (isTeamLeader) return "TEAM LEADER PORTAL";
-    return "EMPLOYEE PORTAL";
-  };
+  const dashboardRoute = isManager ? "/telecalling/manager" : "/telecalling/employee";
+  const getPortalLabel = () => isManager ? "MANAGER PORTAL" : "EMPLOYEE PORTAL";
 
   const isDashboardActive =
     location.pathname === "/dashboard" ||
-    location.pathname === "/sales/manager" ||
-    location.pathname === "/sales/team-leader" ||
-    location.pathname === "/sales/employee" ||
     location.pathname === "/telecalling/manager" ||
-    location.pathname === "/telecalling/team-leader" ||
-    location.pathname === "/telecalling/employee" ||
-    location.pathname === "/leads/manager" ||
-    location.pathname === "/leads/team-leader" ||
-    location.pathname === "/leads/employee" ||
-    location.pathname === "/credit/manager" ||
-    location.pathname === "/credit/team-leader" ||
-    location.pathname === "/credit/employee";
+    location.pathname === "/telecalling/employee";
 
   return (
     <>
@@ -84,10 +54,10 @@ export default function Sidebar({ isOpen, onClose }) {
                 }`}
             >
               <LayoutDashboard size={18} />
-              {isSales ? "Sales Dashboard" : (isTelecalling || isAdmin) ? "Telecalling Dashboard" : isLeads ? "Leads Dashboard" : isCredit ? "Credit Dashboard" : "Dashboard"}
+              Telecalling Dashboard
             </button>
 
-            {(isTelecalling || isAdmin) && (
+            {isManager && (
               <>
                 <button
                   onClick={() => handleNavigation("/telecalling/employees")}
@@ -112,11 +82,7 @@ export default function Sidebar({ isOpen, onClose }) {
                   <UserPlus size={18} />
                   Add Employee
                 </button>
-              </>
-            )}
 
-            {(isManager || isTeamLeader || isAdmin) && !isSales && (
-              <>
                 <button
                   onClick={() => handleNavigation("/team-performance")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/team-performance"
@@ -130,124 +96,60 @@ export default function Sidebar({ isOpen, onClose }) {
               </>
             )}
 
-            {(((isManager || isTeamLeader || isAdmin) && !isSales && !isCredit) || (isEmployee && !isSalesEmployee && !isCredit)) && !isKyc && (
-              <>
-                <button
-                  onClick={() => handleNavigation("/new-lead")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/new-lead"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                    }`}
-                >
-                  <PlusCircle size={18} />
-                  New Lead
-                </button>
+            <button
+              onClick={() => handleNavigation("/new-lead")}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/new-lead"
+                  ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                }`}
+            >
+              <PlusCircle size={18} />
+              New Lead
+            </button>
 
-                <button
-                  onClick={() => handleNavigation("/my-leads")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/my-leads"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                    }`}
-                >
-                  <FolderHeart size={18} />
-                  My Leads
-                </button>
+            <button
+              onClick={() => handleNavigation("/my-leads")}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/my-leads"
+                  ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                }`}
+            >
+              <FolderHeart size={18} />
+              My Leads
+            </button>
 
-                <button
-                  onClick={() => handleNavigation("/follow-up")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/follow-up"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                    }`}
-                >
-                  <Clock size={18} />
-                  Follow-up
-                </button>
-              </>
-            )}
+            <button
+              onClick={() => handleNavigation("/follow-up")}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/follow-up"
+                  ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                }`}
+            >
+              <Clock size={18} />
+              Follow-up
+            </button>
 
-            {isSalesEmployee && !isKyc && (
-              <>
-                <button
-                  onClick={() => handleNavigation("/meetings?type=new")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/meetings" && location.search.includes("type=new")
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                    }`}
-                >
-                  <Calendar size={18} />
-                  New Meetings
-                </button>
+            <button
+              onClick={() => handleNavigation("/meetings")}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/meetings"
+                  ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                }`}
+            >
+              <Calendar size={18} />
+              Meetings
+            </button>
 
-                <button
-                  onClick={() => handleNavigation("/meetings?type=total")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/meetings" && location.search.includes("type=total")
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                    }`}
-                >
-                  <Calendar size={18} />
-                  Total Meetings
-                </button>
-
-                <button
-                  onClick={() => handleNavigation("/my-leads")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/my-leads"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                    }`}
-                >
-                  <FolderHeart size={18} />
-                  Leads
-                </button>
-              </>
-            )}
-
-            {isCredit && (
-              <>
-                <button
-                  onClick={() => handleNavigation("/credit/files")}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/credit/files"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                    }`}
-                >
-                  <FolderHeart size={18} />
-                  Loan Files
-                </button>
-              </>
-            )}
-
-            {(isManager || isTeamLeader || isEmployee || isAdmin || isTelecalling || isLeads) && (
-              <>
-                {!isSalesEmployee && !isCredit && (
-                  <button
-                    onClick={() => handleNavigation("/meetings")}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/meetings"
-                        ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                      }`}
-                  >
-                    <Calendar size={18} />
-                    Meetings
-                  </button>
-                )}
-              </>
-            )}
-
-            {(isManager || isTeamLeader || isEmployee || isAdmin || isSales || isTelecalling || isLeads || isCredit) && (
-              <button
-                onClick={() => handleNavigation("/attendance")}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/attendance"
-                    ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
-                  }`}
-              >
-                <ClipboardList size={18} />
-                Attendance
-              </button>
-            )}
+            <button
+              onClick={() => handleNavigation("/attendance")}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/attendance"
+                  ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                }`}
+            >
+              <ClipboardList size={18} />
+              Attendance
+            </button>
           </div>
         </div>
       </aside>

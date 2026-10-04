@@ -1,19 +1,15 @@
 import { useState, useEffect } from "react";
-import { Search, ArrowUpDown, ChevronDown, ChevronUp, Download, UserPlus, Users, Loader2 } from "lucide-react";
-import api from "../api";
+import { Search, ArrowUpDown, ChevronDown, ChevronUp, Download, Users, Loader2 } from "lucide-react";
+import api from "./../api";
 import { useAuth } from "../context/AuthContext";
-import { getUserRoleCategory } from "../utils/hierarchy";
+import { getUserRole } from "../utils/hierarchy";
 
 export default function TeamPerformanceView() {
   const { user } = useAuth();
   const [data, setData] = useState([]);
-  const [type, setType] = useState("Employee"); // "Employee" or "Team Leader"
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: "name", direction: "asc" });
-
-  // For Manager drill-down
-  const [selectedTeamLeader, setSelectedTeamLeader] = useState(null);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,19 +17,15 @@ export default function TeamPerformanceView() {
 
   useEffect(() => {
     fetchPerformanceData();
-  }, [selectedTeamLeader]);
+  }, []);
 
   const fetchPerformanceData = async () => {
     setLoading(true);
     try {
-      let url = "/team-performance";
-      if (selectedTeamLeader) {
-        url += `?teamLeaderId=${selectedTeamLeader.id}`;
-      }
+      const url = "/team-performance";
       const res = await api.get(url);
       if (res.data.success) {
         setData(res.data.data);
-        setType(res.data.type);
       }
     } catch (error) {
       console.error("Failed to fetch team performance", error);
@@ -68,14 +60,10 @@ export default function TeamPerformanceView() {
 
   const exportToCSV = () => {
     if (!filteredData.length) return;
-    const headers = type === "Team Leader"
-      ? ["Name", "Employees", "Total Calls", "Today's Calls", "Interested Leads", "Pending Follow-ups", "Today's Meetings", "Last Activity"]
-      : ["Name", "Total Calls", "Today's Calls", "Interested Leads", "Pending Follow-ups", "Today's Meetings", "Last Activity"];
+    const headers = ["Name", "Total Calls", "Today's Calls", "Interested Leads", "Pending Follow-ups", "Today's Meetings", "Last Activity"];
     
     const rows = filteredData.map(item => {
-      const row = [item.name];
-      if (type === "Team Leader") row.push(item.employeeCount);
-      row.push(item.totalCalls, item.todaysCalls, item.interestedLeads, item.pendingFollowUps, item.todaysMeetings, item.lastActivity ? new Date(item.lastActivity).toLocaleDateString() : "N/A");
+      const row = [item.name, item.totalCalls, item.todaysCalls, item.interestedLeads, item.pendingFollowUps, item.todaysMeetings, item.lastActivity ? new Date(item.lastActivity).toLocaleDateString() : "N/A"];
       return row.join(",");
     });
     
@@ -87,8 +75,8 @@ export default function TeamPerformanceView() {
     link.click();
   };
 
-  const roleCategory = getUserRoleCategory(user);
-  if (roleCategory === "Employee") {
+  const role = getUserRole(user);
+  if (role !== "Manager") {
     return <div className="p-8 text-center font-bold text-red-500">Access Denied</div>;
   }
 
@@ -106,23 +94,13 @@ export default function TeamPerformanceView() {
           <div>
             <h1 className="text-2xl font-black text-[#0a2540] flex items-center gap-3">
               <Users className="text-[#d4af37]" size={28} />
-              {selectedTeamLeader ? `Team: ${selectedTeamLeader.name}` : "Team Performance"}
+              Team Performance
             </h1>
             <p className="text-sm font-medium text-slate-500 mt-1">
-              {selectedTeamLeader 
-                ? "Viewing employee performance under this team leader."
-                : "Monitor leads and follow-ups across your team."}
+              Monitor leads and follow-ups across your team.
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {selectedTeamLeader && (
-              <button
-                onClick={() => setSelectedTeamLeader(null)}
-                className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-50 transition shadow-sm"
-              >
-                Back to Team Leaders
-              </button>
-            )}
             <button
               onClick={exportToCSV}
               className="flex items-center gap-2 px-4 py-2 bg-[#0a2540] text-white font-bold rounded-xl text-sm hover:bg-[#0a2540]/90 transition shadow-sm"
@@ -139,7 +117,7 @@ export default function TeamPerformanceView() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
               type="text"
-              placeholder={`Search ${type === "Team Leader" ? "Team Leaders" : "Employees"}...`}
+              placeholder="Search Employees..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#d4af37]/30 transition"
@@ -159,14 +137,6 @@ export default function TeamPerformanceView() {
                   >
                     <div className="flex items-center gap-2">Name {renderSortIcon("name")}</div>
                   </th>
-                  {type === "Team Leader" && (
-                    <th 
-                      className="py-4 px-6 text-xs font-black text-[#0a2540] uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition"
-                      onClick={() => handleSort("employeeCount")}
-                    >
-                      <div className="flex items-center gap-2">Employees {renderSortIcon("employeeCount")}</div>
-                    </th>
-                  )}
                   <th 
                     className="py-4 px-6 text-xs font-black text-[#0a2540] uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition"
                     onClick={() => handleSort("totalCalls")}
@@ -208,14 +178,14 @@ export default function TeamPerformanceView() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={type === "Team Leader" ? 9 : 8} className="py-12 text-center">
+                    <td colSpan={8} className="py-12 text-center">
                       <Loader2 className="w-8 h-8 text-[#d4af37] animate-spin mx-auto mb-3" />
                       <p className="text-sm font-bold text-slate-400">Loading performance data...</p>
                     </td>
                   </tr>
                 ) : paginatedData.length === 0 ? (
                   <tr>
-                    <td colSpan={type === "Team Leader" ? 9 : 8} className="py-12 text-center">
+                    <td colSpan={8} className="py-12 text-center">
                       <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <Users className="text-slate-300" size={32} />
                       </div>
@@ -227,8 +197,7 @@ export default function TeamPerformanceView() {
                   paginatedData.map((item) => (
                     <tr 
                       key={item.id} 
-                      className={`border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition ${type === "Team Leader" ? "cursor-pointer" : ""}`}
-                      onClick={() => type === "Team Leader" && setSelectedTeamLeader(item)}
+                      className={`border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition`}
                     >
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
@@ -241,13 +210,6 @@ export default function TeamPerformanceView() {
                           </div>
                         </div>
                       </td>
-                      {type === "Team Leader" && (
-                        <td className="py-4 px-6">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-blue-50 text-blue-600">
-                            <UserPlus size={12} /> {item.employeeCount}
-                          </span>
-                        </td>
-                      )}
                       <td className="py-4 px-6 text-sm font-black text-slate-600">{item.totalCalls}</td>
                       <td className="py-4 px-6 text-sm font-black text-slate-600">{item.todaysCalls}</td>
                       <td className="py-4 px-6">

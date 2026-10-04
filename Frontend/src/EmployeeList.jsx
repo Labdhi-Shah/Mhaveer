@@ -5,7 +5,7 @@ import { Search, Edit, Trash2, Eye, Loader2, ChevronLeft, ChevronRight, X, UserP
 import AddEmployee from "./AddEmployee";
 
 const DEPARTMENTS = ["Sales Department", "Telecalling", "Admin", "Account & Fianc", "Marketing", "Manegement", "Human Resorece(HR)", "Collection & Records", "KYC Compliation", "Operations Department", "Customer Support", "Credit"];
-const ROLES = ["Manager", "Team Leader", "Employee"];
+const ROLES = ["Manager", "Employee"];
 
 export default function EmployeeList() {
   const navigate = useNavigate();
@@ -19,8 +19,6 @@ export default function EmployeeList() {
   const [editEmpModalId, setEditEmpModalId] = useState(null); // Edit Modal State
 
 
-  const [managers, setManagers] = useState([]);
-  const [teamLeaders, setTeamLeaders] = useState([]);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -38,12 +36,7 @@ export default function EmployeeList() {
   useEffect(() => {
     const fetchAllEmps = async () => {
       try {
-        const res = await api.get("/employees?limit=1000");
-        if (res.data.success) {
-          const allEmps = res.data.data;
-          setManagers(allEmps.filter(e => e.role === "Manager" || e.role === "Management"));
-          setTeamLeaders(allEmps.filter(e => e.role === "Team Leader"));
-        }
+        await api.get("/employees?limit=1000");
       } catch (err) {
         console.error(err);
       }

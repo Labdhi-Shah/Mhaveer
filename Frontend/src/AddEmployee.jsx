@@ -21,8 +21,6 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
     department: "",
     address: "",
     status: "Active",
-    managerId: "",
-    teamLeaderId: "",
     aadhaarNumber: "",
     panNumber: "",
     fatherPhone: "",
@@ -34,8 +32,6 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
     accountHolderName: "",
   });
 
-  const [managers, setManagers] = useState([]);
-  const [teamLeaders, setTeamLeaders] = useState([]);
   const [banks, setBanks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -44,18 +40,7 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const empRes = await api.get("/employees?limit=1000");
-        if (empRes.data?.success) {
-          const allEmps = empRes.data.data;
-          setManagers(allEmps.filter(e => e.role === "Manager" || e.role === "Management"));
-          setTeamLeaders(allEmps.filter(e => e.role === "Team Leader"));
-        }
-      } catch (err) {
-        console.error("Failed to fetch employees", err);
-      }
-      
+    const fetchBanks = async () => {
       try {
         const bankRes = await api.get("/banks");
         if (bankRes.data) {
@@ -77,7 +62,7 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
         ]);
       }
     };
-    fetchInitialData();
+    fetchBanks();
   }, []);
 
   useEffect(() => {
@@ -97,8 +82,6 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
               department: data.department || "",
               address: data.address || "",
               status: data.status || "Active",
-              managerId: data.managerId || "",
-              teamLeaderId: data.teamLeaderId || "",
               aadhaarNumber: data.aadhaarNumber || "",
               panNumber: data.panNumber || "",
               fatherPhone: data.fatherPhone || "",
@@ -402,7 +385,7 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
               </div>
 
               <div className="flex gap-2 mt-4">
-                <button type="button" onClick={() => { setCreatedData(null); setForm({ fullName: "", personalEmail: "", phone: "", dob: "", joiningDate: "", role: "", department: "", address: "", status: "Active", managerId: "", teamLeaderId: "", aadhaarNumber: "", panNumber: "", fatherPhone: "", motherPhone: "", guardianPhone: "", bankName: "", ifscCode: "", accountNumber: "", accountHolderName: ""}); }} className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs uppercase cursor-pointer transition">
+                <button type="button" onClick={() => { setCreatedData(null); setForm({ fullName: "", personalEmail: "", phone: "", dob: "", joiningDate: "", role: "", department: "", address: "", status: "Active", aadhaarNumber: "", panNumber: "", fatherPhone: "", motherPhone: "", guardianPhone: "", bankName: "", ifscCode: "", accountNumber: "", accountHolderName: ""}); }} className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs uppercase cursor-pointer transition">
                   Add Another
                 </button>
                 <button type="button" onClick={() => { setCreatedData(null); navigate("/telecalling/employees"); }} className="flex-1 py-2.5 bg-[#0a2540] hover:bg-[#12385c] text-[#d4af37] font-bold rounded-xl text-xs uppercase cursor-pointer transition">

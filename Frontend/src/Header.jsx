@@ -30,12 +30,10 @@ export default function Header({ onToggleSidebar }) {
     if (path.includes("follow-up")) return "Call Back Follow-ups";
     if (path.includes("meetings")) return "Scheduled Meetings";
     if (path.includes("profile")) return "Employee Profile";
-    if (path.includes("sales-dashboard")) return "Sales Department Dashboard";
-
     if (path.includes("employees")) return "Employee Directory";
     if (path.includes("add-employee")) return "Register Employee";
     if (path.includes("attendance")) return "Attendance Logs";
-    return "CRM Portal";
+    return "Telecalling Portal";
   };
 
   const fetchAttendanceStatus = async () => {
@@ -52,18 +50,6 @@ export default function Header({ onToggleSidebar }) {
   useEffect(() => {
     if (user && !isSuperAdmin) {
       fetchAttendanceStatus();
-    }
-    
-    // Add meeting notification logic for Sales
-    if (user && roleCategory === "Sales") {
-      api.get("/meetings")
-        .then(res => {
-          if (res.data.success) {
-            const newMeetings = res.data.data.filter(m => m.status === "Scheduled");
-            setMeetingCount(newMeetings.length);
-          }
-        })
-        .catch(err => console.error("Failed to fetch meeting count", err));
     }
   }, [user, isSuperAdmin, roleCategory]);
 
@@ -283,13 +269,7 @@ export default function Header({ onToggleSidebar }) {
         )}
         <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#d4af37] rounded-lg transition relative hidden sm:block" title="Notifications">
           <Bell size={18} />
-          {roleCategory === "Sales" && meetingCount > 0 ? (
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-bounce">
-              {meetingCount}
-            </span>
-          ) : (
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#d4af37] rounded-full" />
-          )}
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#d4af37] rounded-full" />
         </button>
 
         <div className="h-6 w-px bg-slate-700" />

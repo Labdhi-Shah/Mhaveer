@@ -215,7 +215,7 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
         <h3 className="text-xl font-black text-[#0a2540]">
           {editEmpId ? "Edit Employee Profile" : "Register New Employee"}
         </h3>
-        {onCancel ? (
+        {onCancel && (
           <button
             type="button"
             onClick={onCancel}
@@ -223,15 +223,6 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
           >
             <X size={16} />
             <span>Cancel</span>
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => navigate("/telecalling/employees")}
-            className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-[#0a2540] px-4 py-2 rounded-xl font-bold text-xs transition cursor-pointer self-start sm:self-auto"
-          >
-            <Users size={16} />
-            <span>View Employee List</span>
           </button>
         )}
       </div>

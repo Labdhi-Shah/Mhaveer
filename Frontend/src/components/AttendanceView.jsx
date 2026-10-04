@@ -271,78 +271,7 @@ export default function AttendanceView() {
           </p>
         </div>
 
-        {/* Action Panel for Check In / Out */}
-        <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
-          <div className="flex flex-col">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Today's Status</span>
-            <span className={`text-sm font-black ${
-              !todayRecord ? "text-slate-500" :
-              todayRecord.status === "Working" ? "text-emerald-600" :
-              todayRecord.status === "Completed" ? "text-slate-600" :
-              todayRecord.status === "On Break" ? "text-amber-500" : "text-[#0a2540]"
-            }`}>
-              {todayRecord ? todayRecord.status : "Not Started"}
-            </span>
-            {todayRecord && todayRecord.startTime && (
-              <span className="text-[10px] font-bold text-slate-500 mt-0.5">
-                In: {formatTime(todayRecord.startTime)}
-              </span>
-            )}
-          </div>
-          
-          <div className="h-10 w-px bg-slate-200 mx-2"></div>
-          
-          <div className="flex gap-2">
-            {(!todayRecord || todayRecord.status === "Not Started") && (
-              <button
-                onClick={() => handleAttendanceAction('start')}
-                disabled={actionLoading}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-sm disabled:opacity-50"
-              >
-                {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <Clock size={16} />}
-                Check In
-              </button>
-            )}
 
-            {todayRecord && todayRecord.status === "Working" && (
-              <>
-                <button
-                  onClick={() => handleAttendanceAction('pause')}
-                  disabled={actionLoading}
-                  className="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-sm disabled:opacity-50"
-                >
-                  {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <Clock size={16} />}
-                  Break
-                </button>
-                <button
-                  onClick={() => handleAttendanceAction('stop')}
-                  disabled={actionLoading}
-                  className="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-sm disabled:opacity-50"
-                >
-                  {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <X size={16} />}
-                  Check Out
-                </button>
-              </>
-            )}
-
-            {todayRecord && todayRecord.status === "On Break" && (
-              <button
-                onClick={() => handleAttendanceAction('resume')}
-                disabled={actionLoading}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-sm disabled:opacity-50"
-              >
-                {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <Clock size={16} />}
-                Resume Work
-              </button>
-            )}
-            
-            {todayRecord && todayRecord.status === "Completed" && (
-              <div className="bg-slate-100 text-slate-500 px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-2">
-                <CheckCircle size={16} /> Session Completed
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* SUMMARY CARDS */}

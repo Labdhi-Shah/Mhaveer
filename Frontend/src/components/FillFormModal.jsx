@@ -145,8 +145,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
 
   // Step 3 Validation
   const isStep3Valid = () => {
-    const activeDocs = getActiveDocuments();
-    return activeDocs.every(doc => !!uploadedFiles[doc.id] && !uploadProgress[doc.id]);
+    return true; // Document collection section removed
   };
 
   // Array Helpers
@@ -512,7 +511,6 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                     <p className="flex justify-between"><span className="text-slate-400">Loan Type:</span> <strong className="text-[#0a2540]">{loanType}</strong></p>
                     <p className="flex justify-between"><span className="text-slate-400">Age / CIBIL:</span> <strong className="text-[#0a2540]">{eligibility.age} yrs / {cibilScore}</strong></p>
                     <p className="flex justify-between"><span className="text-slate-400">Employment:</span> <strong className="text-[#0a2540]">{eligibility.employmentType}</strong></p>
-                    <p className="flex justify-between"><span className="text-slate-400">Docs Uploaded:</span> <strong className="text-[#0a2540]">{Object.keys(uploadedFiles).length} files</strong></p>
                   </div>
                 </div>
 
@@ -993,150 +991,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                   </AnimatePresence>
                 </div>
               </motion.div>
-            ) : (
-              /* Step 3: Document Collection */
-              <motion.div
-                key="step3"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
-              >
-                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-8 border-l-[#0a2540]">
-                  <h2 className="text-base sm:text-lg font-black text-[#0a2540] flex items-center gap-2">
-                    <span className="bg-[#0a2540]/5 text-[#0a2540] w-6 h-6 rounded-md flex items-center justify-center text-xs">3</span>
-                    Document Collection
-                  </h2>
-                  <p className="text-xs text-slate-500 font-medium mt-1">
-                    Upload clear, scanned PDF or image copies of the required verification credentials. Max size is 10 MB per file.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {getActiveDocuments().map((doc) => {
-                    const fileInfo = uploadedFiles[doc.id];
-                    const progress = uploadProgress[doc.id];
-                    const error = uploadErrors[doc.id];
-
-                    return (
-                      <div
-                        key={doc.id}
-                        className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"
-                      >
-                        <div>
-                          <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
-                            <span className="text-xs font-black text-[#0a2540]">
-                              {doc.title} {doc.required && <span className="text-rose-500">*</span>}
-                            </span>
-                            {fileInfo ? (
-                              <span className="text-[10px] bg-emerald-50 text-emerald-700 font-black px-2 py-0.5 rounded-full flex items-center gap-1 uppercase tracking-wider border border-emerald-200">
-                                <CheckCircle size={10} /> Verified
-                              </span>
-                            ) : (
-                              <span className="text-[10px] bg-slate-50 text-slate-400 font-black px-2 py-0.5 rounded-full uppercase tracking-wider border border-slate-200">
-                                Pending
-                              </span>
-                            )}
-                          </div>
-
-                          <p className="text-[11px] text-slate-400 mb-3 font-medium">{doc.desc}</p>
-                        </div>
-
-                        {/* File Upload Content State */}
-                        <div className="mt-2">
-                          {progress !== undefined ? (
-                            /* Simulated Progress State */
-                            <div className="space-y-2 py-4">
-                              <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
-                                <span className="flex items-center gap-1.5">
-                                  <Loader2 size={12} className="animate-spin text-[#0a2540]" />
-                                  Uploading file...
-                                </span>
-                                <span>{progress}%</span>
-                              </div>
-                              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                                <div
-                                  className="bg-[#0a2540] h-full transition-all duration-300"
-                                  style={{ width: `${progress}%` }}
-                                />
-                              </div>
-                            </div>
-                          ) : fileInfo ? (
-                            /* Uploaded Complete State */
-                            <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center gap-3">
-                              {/* Preview Thumbnail or PDF Icon */}
-                              {fileInfo.previewUrl ? (
-                                <img
-                                  src={fileInfo.previewUrl}
-                                  alt="Preview"
-                                  className="w-12 h-12 object-cover rounded-lg border border-slate-300 shadow-xs bg-white shrink-0"
-                                />
-                              ) : (
-                                <div className="w-12 h-12 bg-rose-50 text-rose-500 border border-rose-200 rounded-lg flex items-center justify-center shrink-0">
-                                  <FileText size={24} />
-                                </div>
-                              )}
-
-                              {/* File Meta info */}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-black text-[#0a2540] truncate">
-                                  {fileInfo.name}
-                                </p>
-                                <p className="text-[10px] text-slate-400 font-bold mt-0.5">
-                                  {fileInfo.size}
-                                </p>
-                              </div>
-
-                              {/* Action buttons for loaded file */}
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => triggerUpload(doc.id)}
-                                  className="p-1.5 text-slate-400 hover:text-[#0a2540] hover:bg-slate-100 rounded-lg transition"
-                                  title="Replace File"
-                                >
-                                  <RefreshCw size={14} />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => removeFile(doc.id)}
-                                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                                  title="Delete File"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            /* Trigger Upload Dropzone UI */
-                            <div>
-                              <button
-                                type="button"
-                                onClick={() => triggerUpload(doc.id)}
-                                className="w-full py-4 border-2 border-dashed border-slate-200 hover:border-[#0a2540]/30 bg-slate-50 hover:bg-slate-100/50 rounded-xl flex flex-col items-center justify-center gap-1.5 transition text-center"
-                              >
-                                <Upload className="text-slate-400" size={16} />
-                                <span className="text-xs font-bold text-slate-600">
-                                  Upload Document
-                                </span>
-                              </button>
-                            </div>
-                          )}
-
-                          {/* Error Validation UI */}
-                          {error && (
-                            <div className="mt-2 text-[10px] text-rose-500 font-bold flex items-start gap-1 bg-rose-50 p-2 rounded-lg border border-rose-100">
-                              <AlertCircle size={12} className="shrink-0 mt-0.5" />
-                              <span>{error}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
+            ) : null}
           </AnimatePresence>
         </div>
 
@@ -1157,7 +1012,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
             )}
 
             {/* Next / Submit Button */}
-            {currentStep < 3 ? (
+            {currentStep < 2 ? (
               <button
                 type="button"
                 disabled={currentStep === 1 ? !isStep1Valid() : !isStep2Valid()}
@@ -1176,7 +1031,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                 <button
                   type="button"
                   onClick={handleFormSubmit}
-                  disabled={!isStep3Valid() || isSubmitting}
+                  disabled={!isStep2Valid() || isSubmitting}
                   className="bg-[#0a2540] hover:bg-[#0a2540]/90 text-[#d4af37] px-6 py-2.5 rounded-xl font-black text-sm flex items-center gap-2 transition shadow-sm disabled:opacity-50"
                 >
                   {isSubmitting ? (

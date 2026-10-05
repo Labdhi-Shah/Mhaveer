@@ -330,7 +330,7 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
           <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Bank Name</label>
           <div 
             onClick={() => setIsBankDropdownOpen(!isBankDropdownOpen)}
-            className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] font-bold cursor-pointer flex justify-between items-center outline-none focus:border-[#d4af37]"
+            className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-[#0a2540] font-bold cursor-pointer flex justify-between items-center outline-none focus:border-[#d4af37]"
           >
             <span className={form.bankName ? "text-[#0a2540]" : "text-slate-400"}>
               {form.bankName || "-- Select Bank --"}

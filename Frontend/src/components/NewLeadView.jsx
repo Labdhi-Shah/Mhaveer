@@ -16,9 +16,16 @@ export default function NewLeadView() {
     formState: { errors } 
   } = useForm({
     defaultValues: {
-      companyName: "",
-      contactPerson: "",
-      phone: "",
+      companyName1: "",
+      companyName2: "",
+      contactPerson1: "",
+      contactPerson2: "",
+      contactPerson3: "",
+      contactPerson4: "",
+      phone1: "",
+      phone2: "",
+      phone3: "",
+      phone4: "",
       city: "",
 
       state: "",
@@ -74,14 +81,30 @@ export default function NewLeadView() {
         }
       }
 
+      const companyNames = [data.companyName1, data.companyName2].filter(Boolean).join(" | ");
+      const contactPersons = [data.contactPerson1, data.contactPerson2, data.contactPerson3, data.contactPerson4].filter(Boolean).join(" | ");
+      const phones = [data.phone1, data.phone2, data.phone3, data.phone4].filter(Boolean).join(", ");
+      
       const payload = {
         ...data,
-        phoneNumber: data.phone,
+        companyName: companyNames,
+        contactPerson: contactPersons,
+        phoneNumber: phones,
         companyTurnover: data.companyTurnover ? parseFloat(data.companyTurnover) : undefined,
         loanAmount: data.loanAmount ? parseFloat(data.loanAmount) : undefined,
         cibilScore: data.cibilScore ? parseInt(data.cibilScore) : undefined
       };
       
+      delete payload.companyName1;
+      delete payload.companyName2;
+      delete payload.contactPerson1;
+      delete payload.contactPerson2;
+      delete payload.contactPerson3;
+      delete payload.contactPerson4;
+      delete payload.phone1;
+      delete payload.phone2;
+      delete payload.phone3;
+      delete payload.phone4;
       delete payload.phone;
 
       if (payload.loanType !== "Home Loan") {
@@ -168,21 +191,59 @@ export default function NewLeadView() {
         <form onSubmit={handleSubmit(onSubmitLead)} className="space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5">Company Name *</label>
-              <input type="text" placeholder="Enter company name" {...register("companyName", { required: "Company Name is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.companyName ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
-              {errors.companyName && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.companyName.message}</p>}
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Company Name 1 *</label>
+              <input type="text" placeholder="Enter primary company name" {...register("companyName1", { required: "Company Name is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.companyName1 ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+              {errors.companyName1 && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.companyName1.message}</p>}
+            </div>
+            
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Company Name 2 <span className="font-normal text-slate-400">(Optional)</span></label>
+              <input type="text" placeholder="Enter secondary company name" {...register("companyName2")} className="w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition border-slate-200 focus:border-[#0a2540]" />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5">Contact Person Name *</label>
-              <input type="text" placeholder="Enter full name" {...register("contactPerson", { required: "Contact Person Name is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.contactPerson ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
-              {errors.contactPerson && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.contactPerson.message}</p>}
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Contact Person 1 *</label>
+              <input type="text" placeholder="Enter primary contact name" {...register("contactPerson1", { required: "Contact Person Name is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.contactPerson1 ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+              {errors.contactPerson1 && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.contactPerson1.message}</p>}
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5">Phone Number *</label>
-              <input type="tel" placeholder="10-digit mobile number" {...register("phone", { required: "Phone is required", pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only (10 digits starting with 6-9)" }})} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.phone ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
-              {errors.phone && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.phone.message}</p>}
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Contact Person 2 <span className="font-normal text-slate-400">(Optional)</span></label>
+              <input type="text" placeholder="Enter additional contact" {...register("contactPerson2")} className="w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition border-slate-200 focus:border-[#0a2540]" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Contact Person 3 <span className="font-normal text-slate-400">(Optional)</span></label>
+              <input type="text" placeholder="Enter additional contact" {...register("contactPerson3")} className="w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition border-slate-200 focus:border-[#0a2540]" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Contact Person 4 <span className="font-normal text-slate-400">(Optional)</span></label>
+              <input type="text" placeholder="Enter additional contact" {...register("contactPerson4")} className="w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition border-slate-200 focus:border-[#0a2540]" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Phone Number 1 *</label>
+              <input type="tel" placeholder="10-digit primary mobile" {...register("phone1", { required: "Phone is required", pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.phone1 ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+              {errors.phone1 && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.phone1.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Phone Number 2 <span className="font-normal text-slate-400">(Optional)</span></label>
+              <input type="tel" placeholder="10-digit additional mobile" {...register("phone2", { pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.phone2 ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+              {errors.phone2 && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.phone2.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Phone Number 3 <span className="font-normal text-slate-400">(Optional)</span></label>
+              <input type="tel" placeholder="10-digit additional mobile" {...register("phone3", { pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.phone3 ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+              {errors.phone3 && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.phone3.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Phone Number 4 <span className="font-normal text-slate-400">(Optional)</span></label>
+              <input type="tel" placeholder="10-digit additional mobile" {...register("phone4", { pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.phone4 ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+              {errors.phone4 && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.phone4.message}</p>}
             </div>
 
             <div>

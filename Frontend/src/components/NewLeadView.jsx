@@ -7,9 +7,6 @@ import api from "../api";
 export default function NewLeadView() {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
-  const [activeCompanyIndex, setActiveCompanyIndex] = useState(0);
-  const [activeContactIndex, setActiveContactIndex] = useState(0);
-  const [activePhoneIndex, setActivePhoneIndex] = useState(0);
 
   const { 
     register, 
@@ -152,9 +149,6 @@ export default function NewLeadView() {
       if (res.data.success) {
         showToast("Lead saved successfully!", "success");
         reset();
-        setActiveCompanyIndex(0);
-        setActiveContactIndex(0);
-        setActivePhoneIndex(0);
       }
     } catch (error) {
       console.error("Error saving lead:", error);
@@ -197,64 +191,59 @@ export default function NewLeadView() {
         <form onSubmit={handleSubmit(onSubmitLead)} className="space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-slate-600">Company Name *</label>
-                <select
-                  value={activeCompanyIndex}
-                  onChange={(e) => setActiveCompanyIndex(Number(e.target.value))}
-                  className="text-[10px] bg-slate-100 border border-slate-200 text-slate-600 rounded-md px-1 py-0.5 outline-none focus:border-[#0a2540]"
-                >
-                  <option value={0}>Company Name 1</option>
-                  <option value={1}>Company Name 2</option>
-                </select>
-              </div>
-              <input type="text" placeholder="Enter company name 1" {...register("companyName1", { required: activeCompanyIndex === 0 ? "Company Name is required" : false })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.companyName1 ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"} ${activeCompanyIndex !== 0 ? 'hidden' : ''}`} />
-              <input type="text" placeholder="Enter company name 2" {...register("companyName2")} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition border-slate-200 focus:border-[#0a2540] ${activeCompanyIndex !== 1 ? 'hidden' : ''}`} />
-              {errors.companyName1 && activeCompanyIndex === 0 && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.companyName1.message}</p>}
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Company Name 1 *</label>
+              <input type="text" placeholder="Enter primary company name" {...register("companyName1", { required: "Company Name is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.companyName1 ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+              {errors.companyName1 && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.companyName1.message}</p>}
+            </div>
+            
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Company Name 2 <span className="font-normal text-slate-400">(Optional)</span></label>
+              <input type="text" placeholder="Enter secondary company name" {...register("companyName2")} className="w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition border-slate-200 focus:border-[#0a2540]" />
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-slate-600">Contact Person Name *</label>
-                <select
-                  value={activeContactIndex}
-                  onChange={(e) => setActiveContactIndex(Number(e.target.value))}
-                  className="text-[10px] bg-slate-100 border border-slate-200 text-slate-600 rounded-md px-1 py-0.5 outline-none focus:border-[#0a2540]"
-                >
-                  <option value={0}>Contact Person 1</option>
-                  <option value={1}>Contact Person 2</option>
-                  <option value={2}>Contact Person 3</option>
-                  <option value={3}>Contact Person 4</option>
-                </select>
-              </div>
-              {[1, 2, 3, 4].map((num, i) => (
-                <div key={`contact-${num}`} className={activeContactIndex !== i ? 'hidden' : ''}>
-                  <input type="text" placeholder={`Enter full name ${num}`} {...register(`contactPerson${num}`, i === 0 ? { required: "Contact Person Name is required" } : {})} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors[`contactPerson${num}`] ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
-                  {errors[`contactPerson${num}`] && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors[`contactPerson${num}`].message}</p>}
-                </div>
-              ))}
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Contact Person 1 *</label>
+              <input type="text" placeholder="Enter primary contact name" {...register("contactPerson1", { required: "Contact Person Name is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.contactPerson1 ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+              {errors.contactPerson1 && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.contactPerson1.message}</p>}
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-slate-600">Phone Number *</label>
-                <select
-                  value={activePhoneIndex}
-                  onChange={(e) => setActivePhoneIndex(Number(e.target.value))}
-                  className="text-[10px] bg-slate-100 border border-slate-200 text-slate-600 rounded-md px-1 py-0.5 outline-none focus:border-[#0a2540]"
-                >
-                  <option value={0}>Phone Number 1</option>
-                  <option value={1}>Phone Number 2</option>
-                  <option value={2}>Phone Number 3</option>
-                  <option value={3}>Phone Number 4</option>
-                </select>
-              </div>
-              {[1, 2, 3, 4].map((num, i) => (
-                <div key={`phone-${num}`} className={activePhoneIndex !== i ? 'hidden' : ''}>
-                  <input type="tel" placeholder={`10-digit mobile number ${num}`} {...register(`phone${num}`, i === 0 ? { required: "Phone is required", pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only (10 digits starting with 6-9)" } } : { pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only (10 digits starting with 6-9)" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors[`phone${num}`] ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
-                  {errors[`phone${num}`] && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors[`phone${num}`].message}</p>}
-                </div>
-              ))}
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Contact Person 2 <span className="font-normal text-slate-400">(Optional)</span></label>
+              <input type="text" placeholder="Enter additional contact" {...register("contactPerson2")} className="w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition border-slate-200 focus:border-[#0a2540]" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Contact Person 3 <span className="font-normal text-slate-400">(Optional)</span></label>
+              <input type="text" placeholder="Enter additional contact" {...register("contactPerson3")} className="w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition border-slate-200 focus:border-[#0a2540]" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Contact Person 4 <span className="font-normal text-slate-400">(Optional)</span></label>
+              <input type="text" placeholder="Enter additional contact" {...register("contactPerson4")} className="w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition border-slate-200 focus:border-[#0a2540]" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Phone Number 1 *</label>
+              <input type="tel" placeholder="10-digit primary mobile" {...register("phone1", { required: "Phone is required", pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.phone1 ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+              {errors.phone1 && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.phone1.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Phone Number 2 <span className="font-normal text-slate-400">(Optional)</span></label>
+              <input type="tel" placeholder="10-digit additional mobile" {...register("phone2", { pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.phone2 ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+              {errors.phone2 && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.phone2.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Phone Number 3 <span className="font-normal text-slate-400">(Optional)</span></label>
+              <input type="tel" placeholder="10-digit additional mobile" {...register("phone3", { pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.phone3 ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+              {errors.phone3 && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.phone3.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">Phone Number 4 <span className="font-normal text-slate-400">(Optional)</span></label>
+              <input type="tel" placeholder="10-digit additional mobile" {...register("phone4", { pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.phone4 ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+              {errors.phone4 && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.phone4.message}</p>}
             </div>
 
             <div>

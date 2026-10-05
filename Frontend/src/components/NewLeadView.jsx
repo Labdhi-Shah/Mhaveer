@@ -7,6 +7,9 @@ import api from "../api";
 export default function NewLeadView() {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [activeCompanyIndex, setActiveCompanyIndex] = useState(0);
+  const [activeContactIndex, setActiveContactIndex] = useState(0);
+  const [activePhoneIndex, setActivePhoneIndex] = useState(0);
 
   const { 
     register, 
@@ -16,9 +19,16 @@ export default function NewLeadView() {
     formState: { errors } 
   } = useForm({
     defaultValues: {
-      companyName: "",
-      contactPerson: "",
-      phone: "",
+      companyName0: "",
+      companyName1: "",
+      contactPerson0: "",
+      contactPerson1: "",
+      contactPerson2: "",
+      contactPerson3: "",
+      phone0: "",
+      phone1: "",
+      phone2: "",
+      phone3: "",
       city: "",
 
       state: "",
@@ -74,15 +84,30 @@ export default function NewLeadView() {
         }
       }
 
+      const companyNames = [data.companyName0, data.companyName1].filter(Boolean).map(s => s.trim()).filter(Boolean).join(", ");
+      const contactPersons = [data.contactPerson0, data.contactPerson1, data.contactPerson2, data.contactPerson3].filter(Boolean).map(s => s.trim()).filter(Boolean).join(", ");
+      const phoneNumbers = [data.phone0, data.phone1, data.phone2, data.phone3].filter(Boolean).map(s => s.trim()).filter(Boolean).join(", ");
+
       const payload = {
         ...data,
-        phoneNumber: data.phone,
+        companyName: companyNames,
+        contactPerson: contactPersons,
+        phoneNumber: phoneNumbers,
         companyTurnover: data.companyTurnover ? parseFloat(data.companyTurnover) : undefined,
         loanAmount: data.loanAmount ? parseFloat(data.loanAmount) : undefined,
         cibilScore: data.cibilScore ? parseInt(data.cibilScore) : undefined
       };
       
-      delete payload.phone;
+      delete payload.companyName0;
+      delete payload.companyName1;
+      delete payload.contactPerson0;
+      delete payload.contactPerson1;
+      delete payload.contactPerson2;
+      delete payload.contactPerson3;
+      delete payload.phone0;
+      delete payload.phone1;
+      delete payload.phone2;
+      delete payload.phone3;
 
       if (payload.loanType !== "Home Loan") {
         delete payload.homeLoanType;
@@ -126,6 +151,9 @@ export default function NewLeadView() {
       if (res.data.success) {
         showToast("Lead saved successfully!", "success");
         reset();
+        setActiveCompanyIndex(0);
+        setActiveContactIndex(0);
+        setActivePhoneIndex(0);
       }
     } catch (error) {
       console.error("Error saving lead:", error);
@@ -169,20 +197,104 @@ export default function NewLeadView() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-600 mb-1.5">Company Name *</label>
-              <input type="text" placeholder="Enter company name" {...register("companyName", { required: "Company Name is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.companyName ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
-              {errors.companyName && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.companyName.message}</p>}
+              <div className="flex flex-wrap gap-2 mb-2">
+                {[0, 1].map((idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveCompanyIndex(idx)}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors border ${
+                      activeCompanyIndex === idx 
+                        ? "bg-[#0a2540] text-white border-[#0a2540]" 
+                        : errors[`companyName${idx}`]
+                          ? "bg-rose-50 text-rose-600 border-rose-300"
+                          : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
+                    }`}
+                  >
+                    Company {idx + 1}
+                  </button>
+                ))}
+              </div>
+              {[0, 1].map((idx) => (
+                <div key={idx} className={activeCompanyIndex === idx ? "block" : "hidden"}>
+                  <input 
+                    type="text" 
+                    placeholder="Enter company name" 
+                    {...register(`companyName${idx}`, { required: idx === 0 ? "Primary Company Name is required" : false })} 
+                    className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors[`companyName${idx}`] ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} 
+                  />
+                  {errors[`companyName${idx}`] && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors[`companyName${idx}`].message}</p>}
+                </div>
+              ))}
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-600 mb-1.5">Contact Person Name *</label>
-              <input type="text" placeholder="Enter full name" {...register("contactPerson", { required: "Contact Person Name is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.contactPerson ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
-              {errors.contactPerson && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.contactPerson.message}</p>}
+              <div className="flex flex-wrap gap-2 mb-2">
+                {[0, 1, 2, 3].map((idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveContactIndex(idx)}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors border ${
+                      activeContactIndex === idx 
+                        ? "bg-[#0a2540] text-white border-[#0a2540]" 
+                        : errors[`contactPerson${idx}`]
+                          ? "bg-rose-50 text-rose-600 border-rose-300"
+                          : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
+                    }`}
+                  >
+                    Person {idx + 1}
+                  </button>
+                ))}
+              </div>
+              {[0, 1, 2, 3].map((idx) => (
+                <div key={idx} className={activeContactIndex === idx ? "block" : "hidden"}>
+                  <input 
+                    type="text" 
+                    placeholder="Enter full name" 
+                    {...register(`contactPerson${idx}`, { required: idx === 0 ? "Primary Contact Person is required" : false })} 
+                    className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors[`contactPerson${idx}`] ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} 
+                  />
+                  {errors[`contactPerson${idx}`] && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors[`contactPerson${idx}`].message}</p>}
+                </div>
+              ))}
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-600 mb-1.5">Phone Number *</label>
-              <input type="tel" placeholder="10-digit mobile number" {...register("phone", { required: "Phone is required", pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only (10 digits starting with 6-9)" }})} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.phone ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
-              {errors.phone && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.phone.message}</p>}
+              <div className="flex flex-wrap gap-2 mb-2">
+                {[0, 1, 2, 3].map((idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActivePhoneIndex(idx)}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors border ${
+                      activePhoneIndex === idx 
+                        ? "bg-[#0a2540] text-white border-[#0a2540]" 
+                        : errors[`phone${idx}`]
+                          ? "bg-rose-50 text-rose-600 border-rose-300"
+                          : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
+                    }`}
+                  >
+                    Phone {idx + 1}
+                  </button>
+                ))}
+              </div>
+              {[0, 1, 2, 3].map((idx) => (
+                <div key={idx} className={activePhoneIndex === idx ? "block" : "hidden"}>
+                  <input 
+                    type="tel" 
+                    placeholder="10-digit mobile number" 
+                    {...register(`phone${idx}`, { 
+                      required: idx === 0 ? "Primary Phone is required" : false, 
+                      pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only (10 digits starting with 6-9)" }
+                    })} 
+                    className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors[`phone${idx}`] ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} 
+                  />
+                  {errors[`phone${idx}`] && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors[`phone${idx}`].message}</p>}
+                </div>
+              ))}
             </div>
 
             <div>

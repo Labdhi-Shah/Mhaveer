@@ -54,48 +54,29 @@ export default function Header({ onToggleSidebar }) {
   }, [user, isSuperAdmin, roleCategory]);
 
   useEffect(() => {
-    if (!attendance || attendance.status === "Not Started") {
+    if (!attendance || !attendance.attendanceStarted || !attendance.loginTime) {
       setElapsed("00:00:00");
       return;
     }
 
-    if (attendance.status === "Completed") {
-      if (attendance.totalWorkingHours) {
-        setElapsed(`${attendance.totalWorkingHours}:00`);
-      } else {
-        setElapsed("00:00:00");
-      }
+    if (attendance.logoutTime) {
+      const start = new Date(attendance.loginTime);
+      const end = new Date(attendance.logoutTime);
+      const diffSecs = Math.max(0, Math.floor((end - start) / 1000));
+      const hours = Math.floor(diffSecs / 3600);
+      const minutes = Math.floor((diffSecs % 3600) / 60);
+      const pad = (n) => String(n).padStart(2, "0");
+      setElapsed(`${pad(hours)}:${pad(minutes)}`);
       return;
     }
 
     const updateTimer = () => {
-      if (!attendance.startTime) return;
-      const start = new Date(attendance.startTime);
-      let currentEnd = new Date();
-
-      if (attendance.status === "On Break" && attendance.breaks && attendance.breaks.length > 0) {
-        currentEnd = new Date(attendance.breaks[attendance.breaks.length - 1].startTime);
-      }
-
-      let elapsedMs = currentEnd - start;
-
-      let breaksMs = 0;
-      if (attendance.breaks) {
-        attendance.breaks.forEach(b => {
-          if (b.endTime) {
-            breaksMs += (new Date(b.endTime) - new Date(b.startTime));
-          }
-        });
-      }
-
-      elapsedMs -= breaksMs;
-      if (elapsedMs < 0) elapsedMs = 0;
-
-      const diffSecs = Math.floor(elapsedMs / 1000);
+      const start = new Date(attendance.loginTime);
+      const now = new Date();
+      const diffSecs = Math.max(0, Math.floor((now - start) / 1000));
       const hours = Math.floor(diffSecs / 3600);
       const minutes = Math.floor((diffSecs % 3600) / 60);
       const seconds = diffSecs % 60;
-
       const pad = (n) => String(n).padStart(2, "0");
       setElapsed(`${pad(hours)}:${pad(minutes)}:${pad(seconds)}`);
     };
@@ -105,27 +86,7 @@ export default function Header({ onToggleSidebar }) {
     return () => clearInterval(interval);
   }, [attendance]);
 
-  const handleAttendanceClick = async () => {
-    if (loading) return;
-    setLoading(true);
-    try {
-      if (!attendance || attendance.status === "Not Started" || attendance.status === null) {
-        const res = await api.post("/attendance/start");
-        if (res.data.success) setAttendance(res.data.data);
-      } else if (attendance.status === "Working") {
-        const res = await api.post("/attendance/pause");
-        if (res.data.success) setAttendance(res.data.data);
-      } else if (attendance.status === "On Break") {
-        const res = await api.post("/attendance/resume");
-        if (res.data.success) setAttendance(res.data.data);
-      }
-      // If completed, do nothing
-    } catch (err) {
-      console.error("Attendance action failed", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // handleAttendanceClick and timer logic removed as attendance is now fully automated on login/logout.
 
   // Click outside dropdown handler
   useEffect(() => {
@@ -165,49 +126,27 @@ export default function Header({ onToggleSidebar }) {
     .toUpperCase();
 
   const getTimerWidgetProps = () => {
-    if (!attendance || attendance.status === "Not Started" || attendance.status === null) {
+    if (!attendance || !attendance.attendanceStarted || !attendance.loginTime) {
+      return null;
+    } else if (!attendance.logoutTime) {
       return {
-        label: "Start Work",
-        mobileLabel: "Start",
-        icon: <Clock size={16} />,
-        color: "text-slate-300",
-        bg: "bg-slate-800/60 hover:bg-slate-700/80",
-        border: "border-transparent",
-        showPulse: false
-      };
-    } else if (attendance.status === "Working") {
-      return {
-        label: elapsed,
+        label: `Working (${elapsed})`,
         mobileLabel: elapsed,
-        icon: <PauseCircle size={16} />,
+        icon: <Clock size={16} />,
         color: "text-emerald-400",
-        bg: "bg-emerald-400/10 hover:bg-emerald-400/20",
-        border: "border-emerald-400/50",
+        bg: "bg-emerald-400/10 border-emerald-400/50",
         showPulse: true
       };
-    } else if (attendance.status === "On Break") {
-      return {
-        label: `Lunch / Break (${elapsed})`,
-        mobileLabel: `Break (${elapsed})`,
-        icon: <PlayCircle size={16} />,
-        color: "text-amber-400",
-        bg: "bg-amber-400/10 hover:bg-amber-400/20",
-        border: "border-amber-400/50",
-        showPulse: false
-      };
-    } else if (attendance.status === "Completed") {
+    } else {
       return {
         label: `Completed (${elapsed})`,
         mobileLabel: `Done (${elapsed})`,
         icon: <CheckCircle size={16} />,
         color: "text-slate-400",
-        bg: "bg-slate-800/40",
-        border: "border-slate-700",
-        showPulse: false,
-        disabled: true
+        bg: "bg-slate-800/40 border-slate-700",
+        showPulse: false
       };
     }
-    return {};
   };
 
   const widgetProps = getTimerWidgetProps();
@@ -248,23 +187,16 @@ export default function Header({ onToggleSidebar }) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4">
-        {user && !isSuperAdmin && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleAttendanceClick}
-              disabled={widgetProps.disabled || loading}
-              className={`flex items-center gap-2 border px-3 py-1.5 rounded-xl transition shadow-md font-bold text-xs cursor-pointer ${widgetProps.color} ${widgetProps.bg} ${widgetProps.border} ${widgetProps.disabled || loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-              title={attendance?.status === "Working" ? "Click to Pause (Lunch/Break)" : (attendance?.status === "On Break" ? "Click to Resume Work" : "Start Working")}
-            >
-              <div className={widgetProps.showPulse ? "animate-pulse" : ""}>
-                {widgetProps.icon}
-              </div>
-              <span className="font-mono tracking-widest hidden sm:inline">{widgetProps.label}</span>
-              <span className="font-mono tracking-widest inline sm:hidden">{widgetProps.mobileLabel || widgetProps.label}</span>
-              {widgetProps.showPulse && (
-                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
-              )}
-            </button>
+        {widgetProps && (
+          <div className={`flex items-center gap-2 border px-3 py-1.5 rounded-xl shadow-md font-bold text-xs ${widgetProps.color} ${widgetProps.bg}`}>
+            <div className={widgetProps.showPulse ? "animate-pulse" : ""}>
+              {widgetProps.icon}
+            </div>
+            <span className="font-mono tracking-widest hidden sm:inline">{widgetProps.label}</span>
+            <span className="font-mono tracking-widest inline sm:hidden">{widgetProps.mobileLabel || widgetProps.label}</span>
+            {widgetProps.showPulse && (
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
+            )}
           </div>
         )}
         <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#d4af37] rounded-lg transition relative hidden sm:block" title="Notifications">

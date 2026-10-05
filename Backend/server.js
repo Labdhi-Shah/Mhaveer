@@ -49,8 +49,11 @@ app.use("/api/meetings", meetingRoutes);
 app.use("/api/credit", creditRoutes);
 const adminRoutes = require("./routes/adminRoutes");
 const bankRoutes = require("./routes/bankRoutes");
+const leaveRoutes = require("./routes/leaveRoutes");
+
 app.use("/api/admin", adminRoutes);
 app.use("/api/banks", bankRoutes);
+app.use("/api/leaves", leaveRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
@@ -62,6 +65,10 @@ const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
+// Initialize WebSocket logic for managing data streams
+const { initWebSocket } = require("./services/websocket");
+initWebSocket(server);
 
 // Handle unhandled promise rejections gracefully
 process.on("unhandledRejection", (err) => {

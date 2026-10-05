@@ -56,16 +56,12 @@ function Login() {
           }
           
           setMessage("✅ Login Successful");
-          setTimeout(() => {
-            window.location.href = "/dashboard";
-          }, 1000);
+          navigate("/dashboard");
         } else {
           // Super Admin Login
           localStorage.setItem("user", JSON.stringify({ email, name: "Super Admin", role: "SuperAdmin" }));
           setMessage("✅ Login Successful");
-          setTimeout(() => {
-            window.location.href = "/dashboard";
-          }, 1000);
+          navigate("/dashboard");
         }
       } else {
         setMessage(data.message || "Invalid Email or Password");

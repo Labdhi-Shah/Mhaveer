@@ -22,36 +22,12 @@ const attendanceSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-    startTime: {
+    loginTime: {
       type: Date,
     },
-    endTime: {
+    logoutTime: {
       type: Date,
       default: null,
-    },
-    breaks: [
-      {
-        startTime: { type: Date },
-        endTime: { type: Date }
-      }
-    ],
-    totalBreakMinutes: {
-      type: Number,
-      default: 0,
-    },
-    totalWorkingMinutes: {
-      type: Number,
-      default: 0,
-    },
-    totalWorkingHours: {
-      type: String,
-      default: "00:00",
-    },
-    status: {
-      type: String,
-      enum: ["Not Started", "Working", "On Break", "Completed"],
-      required: true,
-      default: "Working"
     },
     managerId: {
       type: String,

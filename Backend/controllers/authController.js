@@ -58,6 +58,26 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
+    // Auto-create or update attendance on login
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    let attendance = await Attendance.findOne({ employeeId: employee._id, date: { $gte: startOfDay } });
+    if (!attendance) {
+      attendance = new Attendance({
+        employeeId: employee._id,
+        employeeName: employee.name,
+        officialEmail: employee.officialEmail,
+        role: employee.role,
+        managerId: employee.managerId || "",
+        managerName: employee.managerName || "",
+        teamLeaderId: employee.teamLeaderId || "",
+        teamLeaderName: employee.teamLeaderName || "",
+        date: new Date(),
+        loginTime: new Date()
+      });
+      await attendance.save();
+    }
+
     return res.json({
       success: true,
       token,
@@ -116,56 +136,26 @@ exports.changePassword = async (req, res) => {
 };
 
 exports.logout = async (req, res) => {
-  const { attendanceId } = req.body;
-  if (!attendanceId) {
-    return res.status(400).json({ success: false, message: "Attendance ID required" });
+  const { employeeId } = req.body;
+  if (!employeeId) {
+    return res.status(400).json({ success: false, message: "Employee ID required for logout" });
   }
 
   try {
-    const attendance = await Attendance.findById(attendanceId);
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const attendance = await Attendance.findOne({ 
+      employeeId, 
+      date: { $gte: startOfDay } 
+    });
+
     if (!attendance) {
-      return res.status(404).json({ success: false, message: "Attendance record not found" });
+      return res.status(404).json({ success: false, message: "Attendance record not found for today" });
     }
 
-    if (attendance.status !== "Completed") {
-      // If currently on break, cap the break
-      if (attendance.status === "On Break" && attendance.breaks.length > 0) {
-        const lastBreak = attendance.breaks[attendance.breaks.length - 1];
-        if (!lastBreak.endTime) {
-          lastBreak.endTime = new Date();
-        }
-      }
-
-      attendance.endTime = new Date();
-      attendance.status = "Completed";
-
-      // Calculate total break minutes
-      let totalBreakMs = 0;
-      attendance.breaks.forEach((b) => {
-        if (b.startTime && b.endTime) {
-          totalBreakMs += (b.endTime - b.startTime);
-        }
-      });
-      const totalBreakMins = Math.floor(totalBreakMs / 60000);
-      attendance.totalBreakMinutes = totalBreakMins;
-
-      // Calculate working hours
-      let diffMs = 0;
-      if (attendance.startTime) {
-        diffMs = attendance.endTime - attendance.startTime;
-      }
-      const totalWorkMins = Math.floor(diffMs / 60000) - totalBreakMins;
-
-      const finalWorkMins = totalWorkMins > 0 ? totalWorkMins : 0;
-      const hours = Math.floor(finalWorkMins / 60);
-      const minutes = finalWorkMins % 60;
-
-      const pad = (n) => String(n).padStart(2, "0");
-
-      attendance.totalWorkingMinutes = finalWorkMins;
-      attendance.totalWorkingHours = `${pad(hours)}:${pad(minutes)}`;
-      await attendance.save();
-    }
+    attendance.logoutTime = new Date();
+    await attendance.save();
 
     return res.json({ success: true, message: "Logout tracked successfully" });
   } catch (error) {

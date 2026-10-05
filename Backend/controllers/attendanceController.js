@@ -217,7 +217,6 @@ exports.getTodayAttendance = async (req, res) => {
         message: "No attendance started for today.",
         data: {
           attendanceStarted: false,
-          status: "Not Started"
         }
       });
     }
@@ -227,11 +226,8 @@ exports.getTodayAttendance = async (req, res) => {
       message: "Today's attendance fetched.",
       data: {
         attendanceStarted: true,
-        status: record.status,
-        startTime: record.startTime,
-        endTime: record.endTime,
-        totalWorkingHours: record.totalWorkingHours,
-        breaks: record.breaks
+        loginTime: record.loginTime,
+        logoutTime: record.logoutTime,
       }
     });
   } catch (error) {

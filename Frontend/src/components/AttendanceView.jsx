@@ -9,6 +9,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import { getUserRoleCategory, filterAttendanceRecords } from "../utils/hierarchy";
+import LeaveManagement from "./LeaveManagement";
 
 export default function AttendanceView() {
   const { user } = useAuth();
@@ -17,6 +18,7 @@ export default function AttendanceView() {
   const [todayRecord, setTodayRecord] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [mainTab, setMainTab] = useState("logs"); // "logs" or "leave"
   const [stats, setStats] = useState({
     today: "00:00",
     thisWeek: "00:00",
@@ -35,6 +37,20 @@ export default function AttendanceView() {
 
   const [selectedRecord, setSelectedRecord] = useState(null);
 
+  const processRecord = (r) => {
+    const login = r.loginTime ? new Date(r.loginTime) : null;
+    const logout = r.logoutTime ? new Date(r.logoutTime) : (login ? new Date() : null);
+    const totalWorkingMinutes = login && logout ? Math.max(0, Math.floor((logout - login) / 60000)) : 0;
+    const hours = Math.floor(totalWorkingMinutes / 60);
+    const mins = totalWorkingMinutes % 60;
+    return {
+      ...r,
+      totalWorkingMinutes,
+      totalWorkingHours: `${String(hours).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m`,
+      status: r.logoutTime ? "Completed" : "Working"
+    };
+  };
+
   const fetchAttendance = async () => {
     setLoading(true);
     try {
@@ -52,14 +68,15 @@ export default function AttendanceView() {
 
         const res = await api.get(endpoint, { params });
         if (res.data.success) {
-          setRecords(res.data.data.records);
+          const processed = res.data.data.records.map(processRecord);
+          setRecords(processed);
           setTotalPages(res.data.data.pages || 1);
-          calculateStats(res.data.data.records);
+          calculateStats(processed);
         }
       } else {
         const res = await api.get("/attendance/admin?limit=1000");
         if (res.data.success) {
-          const allRecords = res.data.data.records;
+          const allRecords = res.data.data.records.map(processRecord);
           
           let filtered = await filterAttendanceRecords(user, allRecords);
 
@@ -264,17 +281,31 @@ export default function AttendanceView() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <div>
           <h1 className="text-2xl font-black text-[#0a2540] flex items-center gap-2">
-            <ClipboardList className="text-[#d4af37]" /> Attendance logs
+            <ClipboardList className="text-[#d4af37]" /> Attendance & Leave
           </h1>
           <p className="text-sm font-semibold text-slate-500 mt-1">
-            Track and monitor employee work sessions and hours.
+            Track work sessions or manage leave applications.
           </p>
         </div>
-
-
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setMainTab("logs")} 
+            className={`px-4 py-2 font-bold rounded-xl text-sm transition ${mainTab === 'logs' ? 'bg-[#0a2540] text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+          >
+            Attendance Logs
+          </button>
+          <button 
+            onClick={() => setMainTab("leave")} 
+            className={`px-4 py-2 font-bold rounded-xl text-sm transition ${mainTab === 'leave' ? 'bg-[#0a2540] text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+          >
+            Leave Management
+          </button>
+        </div>
       </div>
 
-      {/* SUMMARY CARDS */}
+      {mainTab === "logs" ? (
+        <>
+          {/* SUMMARY CARDS */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {[
           { label: "Today", value: stats.today, icon: <Clock size={16} /> },
@@ -398,8 +429,6 @@ export default function AttendanceView() {
                   <th className="py-4 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Employee</th>
                 )}
                 <th className="py-4 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Start Time</th>
-                <th className="py-4 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Lunch Start</th>
-                <th className="py-4 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Lunch End</th>
                 <th className="py-4 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">End Time</th>
                 <th className="py-4 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Working</th>
                 <th className="py-4 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</th>
@@ -408,11 +437,11 @@ export default function AttendanceView() {
             <tbody className="divide-y divide-slate-50">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-sm font-bold text-slate-400">Loading records...</td>
+                  <td colSpan={6} className="py-12 text-center text-sm font-bold text-slate-400">Loading records...</td>
                 </tr>
               ) : records.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-sm font-bold text-slate-400">
+                  <td colSpan={6} className="py-12 text-center text-sm font-bold text-slate-400">
                     <div className="flex flex-col items-center gap-2">
                       <AlertCircle size={24} className="text-slate-300" />
                       No attendance records found for this period.
@@ -421,19 +450,14 @@ export default function AttendanceView() {
                 </tr>
               ) : (
                 records.map((r, i) => {
-                  const lunchStart = r.breaks && r.breaks.length > 0 ? r.breaks[0].startTime : null;
-                  const lunchEnd = r.breaks && r.breaks.length > 0 ? r.breaks[0].endTime : null;
-
                   return (
-                    <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
+                    <tr key={i} className="hover:bg-slate-50/50 transition-colors group cursor-pointer" onClick={() => setSelectedRecord(r)}>
                       <td className="py-4 px-6 text-sm font-bold text-[#0a2540]">{formatDate(r.date)}</td>
                       {user?.role === "SuperAdmin" && (
                         <td className="py-4 px-6 text-sm font-semibold text-slate-600">{r.employeeName}</td>
                       )}
-                      <td className="py-4 px-6 text-sm font-semibold text-emerald-600">{formatTime(r.startTime)}</td>
-                      <td className="py-4 px-6 text-sm font-semibold text-amber-500">{formatTime(lunchStart)}</td>
-                      <td className="py-4 px-6 text-sm font-semibold text-amber-600">{formatTime(lunchEnd)}</td>
-                      <td className="py-4 px-6 text-sm font-semibold text-rose-500">{formatTime(r.endTime)}</td>
+                      <td className="py-4 px-6 text-sm font-semibold text-emerald-600">{formatTime(r.loginTime)}</td>
+                      <td className="py-4 px-6 text-sm font-semibold text-rose-500">{formatTime(r.logoutTime)}</td>
                       <td className="py-4 px-6 text-sm font-black text-[#0a2540]">{r.totalWorkingHours}</td>
                       <td className="py-4 px-6">{getStatusBadge(r.status)}</td>
                     </tr>
@@ -504,26 +528,12 @@ export default function AttendanceView() {
 
                 <div className="flex justify-between items-center pb-4 border-b border-slate-100">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Start Time</span>
-                  <span className="text-sm font-bold text-emerald-600">{formatTime(selectedRecord.startTime)}</span>
+                  <span className="text-sm font-bold text-emerald-600">{formatTime(selectedRecord.loginTime)}</span>
                 </div>
 
                 <div className="flex justify-between items-center pb-4 border-b border-slate-100">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">End Time</span>
-                  <span className="text-sm font-bold text-rose-500">{formatTime(selectedRecord.endTime)}</span>
-                </div>
-
-                {selectedRecord.breaks && selectedRecord.breaks.map((b, idx) => (
-                  <div key={idx} className="bg-amber-50 rounded-xl p-3 flex justify-between items-center">
-                    <span className="text-xs font-bold text-amber-700/70 uppercase tracking-widest">Lunch/Break {idx + 1}</span>
-                    <span className="text-xs font-bold text-amber-700">
-                      {formatTime(b.startTime)} - {formatTime(b.endTime)}
-                    </span>
-                  </div>
-                ))}
-
-                <div className="flex justify-between items-center pb-4 border-b border-slate-100 pt-2">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Break</span>
-                  <span className="text-sm font-bold text-amber-600">{selectedRecord.totalBreakMinutes} Mins</span>
+                  <span className="text-sm font-bold text-rose-500">{formatTime(selectedRecord.logoutTime)}</span>
                 </div>
 
                 <div className="flex justify-between items-center pt-2">
@@ -539,6 +549,10 @@ export default function AttendanceView() {
           </>
         )}
       </AnimatePresence>
+        </>
+      ) : (
+        <LeaveManagement />
+      )}
     </div>
   );
 }

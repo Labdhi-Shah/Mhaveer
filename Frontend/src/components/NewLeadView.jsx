@@ -7,6 +7,9 @@ import api from "../api";
 export default function NewLeadView() {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [activeCompanyIndex, setActiveCompanyIndex] = useState(0);
+  const [activeContactIndex, setActiveContactIndex] = useState(0);
+  const [activePhoneIndex, setActivePhoneIndex] = useState(0);
 
   const { 
     register, 
@@ -16,10 +19,18 @@ export default function NewLeadView() {
     formState: { errors } 
   } = useForm({
     defaultValues: {
-      companyName: "",
-      contactPerson: "",
-      phone: "",
+      companyName1: "",
+      companyName2: "",
+      contactPerson1: "",
+      contactPerson2: "",
+      contactPerson3: "",
+      contactPerson4: "",
+      phone1: "",
+      phone2: "",
+      phone3: "",
+      phone4: "",
       city: "",
+
       state: "",
       companyTurnover: "",
       loanAmount: "",
@@ -73,14 +84,30 @@ export default function NewLeadView() {
         }
       }
 
+      const companyNames = [data.companyName1, data.companyName2].filter(Boolean).join(" | ");
+      const contactPersons = [data.contactPerson1, data.contactPerson2, data.contactPerson3, data.contactPerson4].filter(Boolean).join(" | ");
+      const phones = [data.phone1, data.phone2, data.phone3, data.phone4].filter(Boolean).join(", ");
+      
       const payload = {
         ...data,
-        phoneNumber: data.phone,
+        companyName: companyNames,
+        contactPerson: contactPersons,
+        phoneNumber: phones,
         companyTurnover: data.companyTurnover ? parseFloat(data.companyTurnover) : undefined,
         loanAmount: data.loanAmount ? parseFloat(data.loanAmount) : undefined,
         cibilScore: data.cibilScore ? parseInt(data.cibilScore) : undefined
       };
       
+      delete payload.companyName1;
+      delete payload.companyName2;
+      delete payload.contactPerson1;
+      delete payload.contactPerson2;
+      delete payload.contactPerson3;
+      delete payload.contactPerson4;
+      delete payload.phone1;
+      delete payload.phone2;
+      delete payload.phone3;
+      delete payload.phone4;
       delete payload.phone;
 
       if (payload.loanType !== "Home Loan") {
@@ -125,6 +152,9 @@ export default function NewLeadView() {
       if (res.data.success) {
         showToast("Lead saved successfully!", "success");
         reset();
+        setActiveCompanyIndex(0);
+        setActiveContactIndex(0);
+        setActivePhoneIndex(0);
       }
     } catch (error) {
       console.error("Error saving lead:", error);
@@ -167,21 +197,64 @@ export default function NewLeadView() {
         <form onSubmit={handleSubmit(onSubmitLead)} className="space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5">Company Name *</label>
-              <input type="text" placeholder="Enter company name" {...register("companyName", { required: "Company Name is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.companyName ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
-              {errors.companyName && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.companyName.message}</p>}
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-600">Company Name *</label>
+                <select
+                  value={activeCompanyIndex}
+                  onChange={(e) => setActiveCompanyIndex(Number(e.target.value))}
+                  className="text-[10px] bg-slate-100 border border-slate-200 text-slate-600 rounded-md px-1 py-0.5 outline-none focus:border-[#0a2540]"
+                >
+                  <option value={0}>Company Name 1</option>
+                  <option value={1}>Company Name 2</option>
+                </select>
+              </div>
+              <input type="text" placeholder="Enter company name 1" {...register("companyName1", { required: activeCompanyIndex === 0 ? "Company Name is required" : false })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.companyName1 ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"} ${activeCompanyIndex !== 0 ? 'hidden' : ''}`} />
+              <input type="text" placeholder="Enter company name 2" {...register("companyName2")} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition border-slate-200 focus:border-[#0a2540] ${activeCompanyIndex !== 1 ? 'hidden' : ''}`} />
+              {errors.companyName1 && activeCompanyIndex === 0 && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.companyName1.message}</p>}
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5">Contact Person Name *</label>
-              <input type="text" placeholder="Enter full name" {...register("contactPerson", { required: "Contact Person Name is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.contactPerson ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
-              {errors.contactPerson && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.contactPerson.message}</p>}
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-600">Contact Person Name *</label>
+                <select
+                  value={activeContactIndex}
+                  onChange={(e) => setActiveContactIndex(Number(e.target.value))}
+                  className="text-[10px] bg-slate-100 border border-slate-200 text-slate-600 rounded-md px-1 py-0.5 outline-none focus:border-[#0a2540]"
+                >
+                  <option value={0}>Contact Person 1</option>
+                  <option value={1}>Contact Person 2</option>
+                  <option value={2}>Contact Person 3</option>
+                  <option value={3}>Contact Person 4</option>
+                </select>
+              </div>
+              {[1, 2, 3, 4].map((num, i) => (
+                <div key={`contact-${num}`} className={activeContactIndex !== i ? 'hidden' : ''}>
+                  <input type="text" placeholder={`Enter full name ${num}`} {...register(`contactPerson${num}`, i === 0 ? { required: "Contact Person Name is required" } : {})} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors[`contactPerson${num}`] ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+                  {errors[`contactPerson${num}`] && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors[`contactPerson${num}`].message}</p>}
+                </div>
+              ))}
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5">Phone Number *</label>
-              <input type="tel" placeholder="10-digit mobile number" {...register("phone", { required: "Phone is required", pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only (10 digits starting with 6-9)" }})} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.phone ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
-              {errors.phone && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.phone.message}</p>}
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-600">Phone Number *</label>
+                <select
+                  value={activePhoneIndex}
+                  onChange={(e) => setActivePhoneIndex(Number(e.target.value))}
+                  className="text-[10px] bg-slate-100 border border-slate-200 text-slate-600 rounded-md px-1 py-0.5 outline-none focus:border-[#0a2540]"
+                >
+                  <option value={0}>Phone Number 1</option>
+                  <option value={1}>Phone Number 2</option>
+                  <option value={2}>Phone Number 3</option>
+                  <option value={3}>Phone Number 4</option>
+                </select>
+              </div>
+              {[1, 2, 3, 4].map((num, i) => (
+                <div key={`phone-${num}`} className={activePhoneIndex !== i ? 'hidden' : ''}>
+                  <input type="tel" placeholder={`10-digit mobile number ${num}`} {...register(`phone${num}`, i === 0 ? { required: "Phone is required", pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only (10 digits starting with 6-9)" } } : { pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only (10 digits starting with 6-9)" } })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors[`phone${num}`] ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+                  {errors[`phone${num}`] && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors[`phone${num}`].message}</p>}
+                </div>
+              ))}
             </div>
 
             <div>

@@ -314,13 +314,20 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
 
         <div>
           <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Bank Name</label>
-          <select name="bankName" value={form.bankName} onChange={handleChange} className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer">
-            <option value="">-- Select Bank --</option>
+          <input 
+            list="bank-options"
+            name="bankName"
+            value={form.bankName}
+            onChange={handleChange}
+            placeholder="-- Type or Select Bank --"
+            className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#0a2540] outline-none focus:border-[#d4af37] font-bold cursor-pointer"
+          />
+          <datalist id="bank-options">
             {banks.map((b, idx) => {
               const bankVal = typeof b === 'string' ? b : (b.name || b.bankName || JSON.stringify(b));
-              return <option key={idx} value={bankVal}>{bankVal}</option>;
+              return <option key={idx} value={bankVal} />;
             })}
-          </select>
+          </datalist>
         </div>
 
         <div>

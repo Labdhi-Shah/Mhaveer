@@ -26,18 +26,10 @@ exports.getDashboardStats = async (req, res) => {
       // Filter by role hierarchy
       let filter = {};
       if (req.user.role === "Manager") {
-        const teamLeaders = await Employee.find({ managerId: req.user.id, role: "Team Leader" }).select('_id');
-        const tlIds = teamLeaders.map(tl => tl._id.toString());
-        filter = { 
-          $or: [
-            { employeeId: req.user.id }, 
-            { managerId: req.user.id },
-            { teamLeaderId: { $in: tlIds } }
-          ] 
-        };
-      } else if (req.user.role === "Team Leader") {
-        filter = { $or: [{ employeeId: req.user.id }, { teamLeaderId: req.user.id }] };
+        // Manager sees ALL telecalling data (no employee ownership filter)
+        filter = {};
       } else {
+        // Employee sees only their OWN telecalling data
         filter = { employeeId: req.user.id };
       }
 

@@ -51,12 +51,7 @@ exports.getManagerLeaves = async (req, res) => {
       return res.status(403).json({ success: false, message: "Unauthorized access" });
     }
 
-    let query = {};
-    if (req.user.role === "Manager") {
-      query.managerId = req.user.id;
-    }
-
-    const leaves = await Leave.find(query).sort({ createdAt: -1 });
+    const leaves = await Leave.find({}).sort({ createdAt: -1 });
 
     return res.status(200).json({ success: true, data: leaves });
   } catch (error) {
@@ -80,9 +75,7 @@ exports.updateLeaveStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: "Leave request not found" });
     }
 
-    if (req.user.role === "Manager" && leave.managerId !== req.user.id) {
-      return res.status(403).json({ success: false, message: "Unauthorized to update this leave" });
-    } else if (req.user.role !== "Admin" && req.user.role !== "SuperAdmin" && req.user.role !== "Manager") {
+    if (req.user.role !== "Admin" && req.user.role !== "SuperAdmin" && req.user.role !== "Manager") {
       return res.status(403).json({ success: false, message: "Unauthorized access" });
     }
 

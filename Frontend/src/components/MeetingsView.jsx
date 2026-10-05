@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Phone, Loader2, AlertCircle, CheckCircle, MapPin, Plus, X, Filter, ClipboardList, Pencil } from "lucide-react";
+import { Calendar, Phone, Loader2, AlertCircle, CheckCircle, MapPin, Plus, X, Filter, ClipboardList, Pencil, Trash2 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import api from "../api";
 import FillFormModal from "./FillFormModal";
@@ -23,13 +23,27 @@ export default function MeetingsView() {
   // Selected Meeting state for Fill Form
   const [selectedMeeting, setSelectedMeeting] = useState(null);
 
-  const handleFillFormForCard = (meeting) => {
+  const handleFillFormForCard = async (meeting) => {
     if (meeting.status !== "Scheduled" && meeting.status !== "Rescheduled") {
       showToast("Please select a scheduled or rescheduled meeting to fill the form.", "error");
       return;
     }
-    setSelectedMeeting(meeting);
-    setIsFormOpen(true);
+    setActionLoading(true);
+    try {
+      const res = await api.get(`/meetings/${meeting._id}`);
+      const m = res.data?.data || res.data;
+      setSelectedMeeting(m);
+      setIsFormOpen(true);
+    } catch (err) {
+      console.error(err);
+      if (err.response?.status === 403) {
+        showToast("You do not have permission to view this meeting.", "error");
+      } else {
+        showToast("Failed to fetch meeting details.", "error");
+      }
+    } finally {
+      setActionLoading(false);
+    }
   };
   const [formData, setFormData] = useState({
     title: "",
@@ -84,20 +98,35 @@ export default function MeetingsView() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const openModal = (meeting = null) => {
+  const openModal = async (meeting = null) => {
     if (meeting) {
-      setEditingMeeting(meeting);
-      setFormData({
-        title: meeting.title,
-        customerName: meeting.customerName,
-        customerPhone: meeting.customerPhone || "",
-        date: meeting.date ? meeting.date.split("T")[0] : "",
-        time: meeting.time,
-        location: meeting.location || "",
-        type: meeting.type || "Consultation",
-        status: meeting.status || "Scheduled",
-        notes: meeting.notes || ""
-      });
+      setActionLoading(true);
+      try {
+        const res = await api.get(`/meetings/${meeting._id}`);
+        const m = res.data?.data || res.data;
+        setEditingMeeting(m);
+        setFormData({
+          title: m.title || "",
+          customerName: m.customerName || "",
+          customerPhone: m.customerPhone || "",
+          date: m.date ? m.date.split("T")[0] : "",
+          time: m.time || "",
+          location: m.location || "",
+          type: m.type || "Consultation",
+          status: m.status || "Scheduled",
+          notes: m.notes || ""
+        });
+        setIsModalOpen(true);
+      } catch (err) {
+        console.error(err);
+        if (err.response?.status === 403) {
+          showToast("You do not have permission to view this meeting.", "error");
+        } else {
+          showToast("Failed to fetch meeting details.", "error");
+        }
+      } finally {
+        setActionLoading(false);
+      }
     } else {
       setEditingMeeting(null);
       setFormData({
@@ -111,24 +140,38 @@ export default function MeetingsView() {
         status: "Scheduled",
         notes: ""
       });
+      setIsModalOpen(true);
     }
-    setIsModalOpen(true);
   };
 
-  const handleReschedule = (meeting) => {
-    setEditingMeeting(meeting);
-    setFormData({
-      title: meeting.title || "",
-      customerName: meeting.customerName || "",
-      customerPhone: meeting.customerPhone || "",
-      date: meeting.date ? new Date(meeting.date).toISOString().split("T")[0] : "",
-      time: meeting.time || "",
-      location: meeting.location || "",
-      type: meeting.type || "Consultation",
-      status: "Rescheduled",
-      notes: meeting.notes || ""
-    });
-    setIsModalOpen(true);
+  const handleReschedule = async (meeting) => {
+    setActionLoading(true);
+    try {
+      const res = await api.get(`/meetings/${meeting._id}`);
+      const m = res.data?.data || res.data;
+      setEditingMeeting(m);
+      setFormData({
+        title: m.title || "",
+        customerName: m.customerName || "",
+        customerPhone: m.customerPhone || "",
+        date: m.date ? m.date.split("T")[0] : "",
+        time: m.time || "",
+        location: m.location || "",
+        type: m.type || "Consultation",
+        status: "Rescheduled",
+        notes: m.notes || ""
+      });
+      setIsModalOpen(true);
+    } catch (err) {
+      console.error(err);
+      if (err.response?.status === 403) {
+        showToast("You do not have permission to view this meeting.", "error");
+      } else {
+        showToast("Failed to fetch meeting details.", "error");
+      }
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const closeModal = () => {
@@ -141,13 +184,32 @@ export default function MeetingsView() {
     setActionLoading(true);
     try {
       if (editingMeeting) {
-        const res = await api.put(`/meetings/${editingMeeting._id}`, formData);
-        if (res.data.success) {
+        const updatedFields = {};
+        Object.keys(formData).forEach(key => {
+          let formVal = formData[key];
+          let originalVal = editingMeeting[key];
+          if (key === 'date' && originalVal) {
+            originalVal = originalVal.split('T')[0];
+          }
+          if ((formVal || "") !== (originalVal || "")) {
+            updatedFields[key] = formVal;
+          }
+        });
+        
+        if (Object.keys(updatedFields).length === 0) {
+          showToast("No changes detected.");
+          setActionLoading(false);
+          closeModal();
+          return;
+        }
+
+        const res = await api.put(`/meetings/${editingMeeting._id}`, updatedFields);
+        if (res.data?.success !== false) {
           showToast("Meeting updated successfully!");
         }
       } else {
         const res = await api.post("/meetings", formData);
-        if (res.data.success) {
+        if (res.data?.success !== false) {
           showToast("Meeting created successfully!");
         }
       }
@@ -161,6 +223,22 @@ export default function MeetingsView() {
     }
   };
 
+  const deleteMeeting = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this meeting?")) return;
+    setActionLoading(true);
+    try {
+      const res = await api.delete(`/meetings/${id}`);
+      if (res.data?.success !== false) {
+        showToast("Meeting deleted successfully!");
+        fetchMeetings();
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.message || "Failed to delete meeting.", "error");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const updateStatus = async (id, status) => {
     setActionLoading(true);
@@ -246,7 +324,12 @@ export default function MeetingsView() {
             Manage your schedule, consultations, and face-to-face loan reviews.
           </p>
         </div>
-
+        <button
+          onClick={() => openModal()}
+          className="bg-[#0a2540] hover:bg-[#0a2540]/90 text-[#d4af37] px-5 py-3 rounded-xl text-sm font-black transition shadow-md flex items-center gap-2"
+        >
+          <Plus size={18} /> Schedule Meeting
+        </button>
       </div>
 
       {/* Filters */}
@@ -409,9 +492,16 @@ export default function MeetingsView() {
                              </button>
                            </>
                         )}
+                        <button
+                          disabled={actionLoading}
+                          onClick={() => deleteMeeting(meeting._id)}
+                          className="p-1.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition disabled:opacity-50"
+                          title="Delete Meeting"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
-                     {/* Edit and Delete action buttons removed */}
                   </div>
                 </div>
               ))}

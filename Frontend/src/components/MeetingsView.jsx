@@ -98,49 +98,33 @@ export default function MeetingsView() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const openModal = async (meeting = null) => {
-    if (meeting) {
-      setActionLoading(true);
-      try {
-        const res = await api.get(`/meetings/${meeting._id}`);
-        const m = res.data?.data || res.data;
-        setEditingMeeting(m);
-        setFormData({
-          title: m.title || "",
-          customerName: m.customerName || "",
-          customerPhone: m.customerPhone || "",
-          date: m.date ? m.date.split("T")[0] : "",
-          time: m.time || "",
-          location: m.location || "",
-          type: m.type || "Consultation",
-          status: m.status || "Scheduled",
-          notes: m.notes || ""
-        });
-        setIsModalOpen(true);
-      } catch (err) {
-        console.error(err);
-        if (err.response?.status === 403) {
-          showToast("You do not have permission to view this meeting.", "error");
-        } else {
-          showToast("Failed to fetch meeting details.", "error");
-        }
-      } finally {
-        setActionLoading(false);
-      }
-    } else {
-      setEditingMeeting(null);
+  const openModal = async (meeting) => {
+    setActionLoading(true);
+    try {
+      const res = await api.get(`/meetings/${meeting._id}`);
+      const m = res.data?.data || res.data;
+      setEditingMeeting(m);
       setFormData({
-        title: "",
-        customerName: "",
-        customerPhone: "",
-        date: "",
-        time: "",
-        location: "",
-        type: "Consultation",
-        status: "Scheduled",
-        notes: ""
+        title: m.title || "",
+        customerName: m.customerName || "",
+        customerPhone: m.customerPhone || "",
+        date: m.date ? m.date.split("T")[0] : "",
+        time: m.time || "",
+        location: m.location || "",
+        type: m.type || "Consultation",
+        status: m.status || "Scheduled",
+        notes: m.notes || ""
       });
       setIsModalOpen(true);
+    } catch (err) {
+      console.error(err);
+      if (err.response?.status === 403) {
+        showToast("You do not have permission to view this meeting.", "error");
+      } else {
+        showToast("Failed to fetch meeting details.", "error");
+      }
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -206,11 +190,6 @@ export default function MeetingsView() {
         const res = await api.put(`/meetings/${editingMeeting._id}`, updatedFields);
         if (res.data?.success !== false) {
           showToast("Meeting updated successfully!");
-        }
-      } else {
-        const res = await api.post("/meetings", formData);
-        if (res.data?.success !== false) {
-          showToast("Meeting created successfully!");
         }
       }
       closeModal();
@@ -324,12 +303,6 @@ export default function MeetingsView() {
             Manage your schedule, consultations, and face-to-face loan reviews.
           </p>
         </div>
-        <button
-          onClick={() => openModal()}
-          className="bg-[#0a2540] hover:bg-[#0a2540]/90 text-[#d4af37] px-5 py-3 rounded-xl text-sm font-black transition shadow-md flex items-center gap-2"
-        >
-          <Plus size={18} /> Schedule Meeting
-        </button>
       </div>
 
       {/* Filters */}
@@ -525,7 +498,7 @@ export default function MeetingsView() {
             >
               <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
                 <h3 className="font-black text-[#0a2540] text-lg">
-                  {editingMeeting ? "Edit Meeting" : "Schedule Meeting"}
+                  Edit Meeting
                 </h3>
                 <button onClick={closeModal} className="text-slate-400 hover:text-rose-500 transition">
                   <X size={20} />
@@ -667,7 +640,7 @@ export default function MeetingsView() {
                   className="px-6 py-2.5 rounded-xl font-bold text-[#d4af37] bg-[#0a2540] hover:bg-[#0a2540]/90 transition text-sm flex items-center gap-2 disabled:opacity-50"
                 >
                   {actionLoading ? <Loader2 size={16} className="animate-spin" /> : null}
-                  {editingMeeting ? "Update Meeting" : "Save Meeting"}
+                  Update Meeting
                 </button>
               </div>
             </motion.div>

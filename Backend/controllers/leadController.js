@@ -109,7 +109,7 @@ exports.getLeads = async (req, res) => {
     if (req.query.interested) query.interested = req.query.interested;
     
     // If not super admin, restrict according to role hierarchy
-    if (req.user.role !== "SuperAdmin" && req.user.role !== "Admin") {
+    if (req.user.role !== "SuperAdmin" && req.user.role !== "Admin" && req.user.role !== "Administration (Admin)" && req.user.role !== "Manager") {
       let hierarchyFilter = {};
       if (req.user.role === "Manager") {
         const teamLeaders = await Employee.find({ managerId: req.user.id, role: "Team Leader" }).select('_id');
@@ -172,7 +172,7 @@ exports.getLeadById = async (req, res) => {
     }
 
     let isAuthorized = false;
-    if (req.user.role === "SuperAdmin" || req.user.role === "Admin") isAuthorized = true;
+    if (req.user.role === "SuperAdmin" || req.user.role === "Admin" || req.user.role === "Manager" || req.user.role === "Administration (Admin)") isAuthorized = true;
     else if (lead.employeeId === req.user.id) isAuthorized = true;
     else if (req.user.role === "Manager") {
       if (lead.managerId === req.user.id) isAuthorized = true;
@@ -208,7 +208,7 @@ exports.updateLead = async (req, res) => {
     }
 
     let isAuthorized = false;
-    if (req.user.role === "SuperAdmin" || req.user.role === "Admin") isAuthorized = true;
+    if (req.user.role === "SuperAdmin" || req.user.role === "Admin" || req.user.role === "Manager" || req.user.role === "Administration (Admin)") isAuthorized = true;
     else if (lead.employeeId === req.user.id) isAuthorized = true;
     else if (req.user.role === "Manager") {
       if (lead.managerId === req.user.id) isAuthorized = true;
@@ -289,7 +289,7 @@ exports.deleteLead = async (req, res) => {
     }
 
     let isAuthorized = false;
-    if (req.user.role === "SuperAdmin" || req.user.role === "Admin") isAuthorized = true;
+    if (req.user.role === "SuperAdmin" || req.user.role === "Admin" || req.user.role === "Manager" || req.user.role === "Administration (Admin)") isAuthorized = true;
     else if (lead.employeeId === req.user.id) isAuthorized = true;
     else if (req.user.role === "Manager") {
       if (lead.managerId === req.user.id) isAuthorized = true;

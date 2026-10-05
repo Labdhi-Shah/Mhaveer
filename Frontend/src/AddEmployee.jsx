@@ -39,7 +39,7 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
   const [copied, setCopied] = useState(false);
   const [errors, setErrors] = useState({});
 
-  const [bankSearchTerm, setBankSearchTerm] = useState("");
+
   const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
   const bankDropdownRef = useRef(null);
 
@@ -328,46 +328,41 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
 
         <div ref={bankDropdownRef} className="relative">
           <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Bank Name</label>
-          <div 
-            onClick={() => setIsBankDropdownOpen(!isBankDropdownOpen)}
-            className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-[#0a2540] font-bold cursor-pointer flex justify-between items-center outline-none focus:border-[#d4af37]"
-          >
-            <span className={form.bankName ? "text-[#0a2540]" : "text-slate-400"}>
-              {form.bankName || "-- Select Bank --"}
-            </span>
-            <span className="text-slate-400 text-[10px]">▼</span>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="-- Select or Search Bank --"
+              value={form.bankName}
+              onChange={(e) => {
+                setForm({ ...form, bankName: e.target.value });
+                setIsBankDropdownOpen(true);
+              }}
+              onFocus={() => setIsBankDropdownOpen(true)}
+              className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-[#0a2540] font-bold outline-none focus:border-[#d4af37]"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none">▼</span>
           </div>
           
           {isBankDropdownOpen && (
             <div className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden flex flex-col max-h-60">
-              <div className="p-2 border-b border-slate-100 bg-slate-50">
-                <input
-                  type="text"
-                  placeholder="Search bank..."
-                  value={bankSearchTerm}
-                  onChange={(e) => setBankSearchTerm(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-[#0a2540] placeholder-slate-400 outline-none focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37]/20"
-                  autoFocus
-                />
-              </div>
               <div className="overflow-y-auto flex-1 custom-scrollbar">
                 {banks
                   .map(b => typeof b === 'string' ? b : (b.name || b.bankName || JSON.stringify(b)))
-                  .filter(bankVal => bankVal.toLowerCase().includes(bankSearchTerm.toLowerCase()))
+                  .filter(bankVal => bankVal.toLowerCase().includes((form.bankName || "").toLowerCase()))
                   .map((bankVal, idx) => (
                     <div 
                       key={idx} 
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => {
                         setForm({ ...form, bankName: bankVal });
                         setIsBankDropdownOpen(false);
-                        setBankSearchTerm("");
                       }}
                       className="px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100 hover:text-[#0a2540] cursor-pointer transition border-b border-slate-50 last:border-b-0 font-medium"
                     >
                       {bankVal}
                     </div>
                   ))}
-                {banks.filter(b => (typeof b === 'string' ? b : (b.name || b.bankName || JSON.stringify(b))).toLowerCase().includes(bankSearchTerm.toLowerCase())).length === 0 && (
+                {banks.filter(b => (typeof b === 'string' ? b : (b.name || b.bankName || JSON.stringify(b))).toLowerCase().includes((form.bankName || "").toLowerCase())).length === 0 && (
                   <div className="px-4 py-3 text-sm text-slate-400 text-center font-medium">No banks found</div>
                 )}
               </div>

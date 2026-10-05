@@ -42,7 +42,7 @@ exports.getMeetings = async (req, res) => {
 
     let query = {};
 
-    if (userRole === "Admin") {
+    if (userRole === "Admin" || userRole === "Administration (Admin)" || userRole === "Manager" || userRole === "SuperAdmin") {
       // Admin sees everything
       query = {};
     } else if (userDept === "Sales") {
@@ -88,7 +88,7 @@ exports.getSingleMeeting = async (req, res) => {
     const userDept = normalizeDept(req.user.department || "");
 
     // Access check
-    const isAdmin = userRole === "Admin";
+    const isAdmin = userRole === "Admin" || userRole === "Administration (Admin)" || userRole === "Manager" || userRole === "SuperAdmin";
     const isSalesManager = userDept === "Sales" && userRole === "Manager";
     const isSalesEmployee =
       userDept === "Sales" &&
@@ -119,7 +119,7 @@ exports.updateMeeting = async (req, res) => {
     const userRole = normalizeRole(req.user.role || "");
     const userDept = normalizeDept(req.user.department || "");
 
-    const isAdmin = userRole === "Admin";
+    const isAdmin = userRole === "Admin" || userRole === "Administration (Admin)" || userRole === "Manager" || userRole === "SuperAdmin";
     const isSalesManager = userDept === "Sales" && userRole === "Manager";
     const isSalesAssignee =
       userDept === "Sales" &&
@@ -156,7 +156,7 @@ exports.deleteMeeting = async (req, res) => {
     }
 
     const userRole = normalizeRole(req.user.role || "");
-    const isAdmin = userRole === "Admin";
+    const isAdmin = userRole === "Admin" || userRole === "Administration (Admin)" || userRole === "Manager" || userRole === "SuperAdmin";
     const isCreator = meeting.employeeId?.toString() === req.user.id;
 
     if (!isAdmin && !isCreator) {

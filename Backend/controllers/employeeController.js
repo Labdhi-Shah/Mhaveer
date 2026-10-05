@@ -127,19 +127,9 @@ exports.getEmployees = async (req, res) => {
       ];
     }
 
-    if (req.user && req.user.role !== "SuperAdmin" && req.user.role !== "Admin") {
+    if (req.user && req.user.role !== "SuperAdmin" && req.user.role !== "Admin" && req.user.role !== "Administration (Admin)" && req.user.role !== "Manager") {
       let hierarchyFilter = {};
-      if (req.user.role === "Manager") {
-        const teamLeaders = await Employee.find({ managerId: req.user.id, role: "Team Leader" }).select('_id');
-        const tlIds = teamLeaders.map(tl => tl._id.toString());
-        hierarchyFilter = {
-          $or: [
-            { _id: req.user.id },
-            { managerId: req.user.id },
-            { teamLeaderId: { $in: tlIds } }
-          ]
-        };
-      } else if (req.user.role === "Team Leader") {
+      if (req.user.role === "Team Leader") {
         hierarchyFilter = {
           $or: [
             { _id: req.user.id },

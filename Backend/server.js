@@ -27,6 +27,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
     "http://localhost:5173",
     "http://localhost:5174",
     "http://192.168.29.244:5173",
+    "http://192.168.1.21:5173", // Temporary addition for local network testing
     "https://mhaveer.vercel.app"
   ];
 

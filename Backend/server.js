@@ -47,7 +47,9 @@ app.use("/api/customers", customerRoutes);
 app.use("/api/meetings", meetingRoutes);
 app.use("/api/credit", creditRoutes);
 const adminRoutes = require("./routes/adminRoutes");
+const bankRoutes = require("./routes/bankRoutes");
 app.use("/api/admin", adminRoutes);
+app.use("/api/banks", bankRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

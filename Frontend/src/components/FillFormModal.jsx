@@ -846,7 +846,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                     {/* CIBIL Score */}
                     <div>
                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
-                        CIBIL Score *
+                        CIBIL Score
                       </label>
                       <input
                         type="number"

@@ -51,6 +51,7 @@ export default function NewLeadView() {
   const interestedValue = watch("interested");
   const loanTypeValue = watch("loanType");
   const lapPropertyTypeValue = watch("lapPropertyType");
+  const propertyLoanCategoryValue = watch("propertyLoanCategory");
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -86,8 +87,11 @@ export default function NewLeadView() {
         delete payload.propertyLoanCategory;
         delete payload.propertyLocation;
         delete payload.durationOfRentProperty;
+      } else if (payload.propertyLoanCategory === "LAP") {
+        delete payload.propertyLocation;
+        delete payload.durationOfRentProperty;
       }
-      if (payload.loanType !== "LAP") {
+      if (payload.propertyLoanCategory !== "LAP") {
         delete payload.lapPropertyType;
         delete payload.lapPropertyLocation;
         delete payload.lapPropertyMarketValue;
@@ -201,7 +205,6 @@ export default function NewLeadView() {
                 <option value="Home Loan">Home Loan</option>
                 <option value="Business Loan">Business Loan</option>
                 <option value="Property Loan">Property Loan</option>
-                <option value="LAP">LAP (Loan Against Property)</option>
                 <option value="Balance Transfer">Balance Transfer</option>
               </select>
               {errors.loanType && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.loanType.message}</p>}
@@ -228,23 +231,28 @@ export default function NewLeadView() {
                     <option value="Working Capital">Working Capital</option>
                     <option value="Plot Loan">Plot Loan</option>
                     <option value="Lease Rental Discounting">Lease Rental Discounting</option>
+                    <option value="LAP">LAP</option>
                   </select>
                   {errors.propertyLoanCategory && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.propertyLoanCategory.message}</p>}
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1.5">Property Location *</label>
-                  <input type="text" placeholder="Enter location" {...register("propertyLocation", { required: "Property Location is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.propertyLocation ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
-                  {errors.propertyLocation && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.propertyLocation.message}</p>}
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1.5">Duration of Rent Property *</label>
-                  <input type="text" placeholder="e.g. 5 Years" {...register("durationOfRentProperty", { required: "Duration is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.durationOfRentProperty ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
-                  {errors.durationOfRentProperty && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.durationOfRentProperty.message}</p>}
-                </div>
+                {propertyLoanCategoryValue !== "LAP" && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1.5">Property Location *</label>
+                      <input type="text" placeholder="Enter location" {...register("propertyLocation", { required: "Property Location is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.propertyLocation ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+                      {errors.propertyLocation && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.propertyLocation.message}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1.5">Duration of Rent Property *</label>
+                      <input type="text" placeholder="e.g. 5 Years" {...register("durationOfRentProperty", { required: "Duration is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none transition ${errors.durationOfRentProperty ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`} />
+                      {errors.durationOfRentProperty && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.durationOfRentProperty.message}</p>}
+                    </div>
+                  </>
+                )}
               </>
             )}
 
-            {loanTypeValue === "LAP" && (
+            {loanTypeValue === "Property Loan" && propertyLoanCategoryValue === "LAP" && (
               <>
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1.5">Property Type *</label>

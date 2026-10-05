@@ -225,11 +225,8 @@ export default function NewLeadView() {
                   <label className="block text-xs font-bold text-slate-600 mb-1.5">Property Loan Category *</label>
                   <select {...register("propertyLoanCategory", { required: "Property Loan Category is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none bg-white transition ${errors.propertyLoanCategory ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`}>
                     <option value="">Select Category</option>
-                    <option value="Commercial Loan">Commercial Loan</option>
-                    <option value="Industrial Loan">Industrial Loan</option>
-                    <option value="Residential Loan">Residential Loan</option>
-                    <option value="Plot Loan">Plot Loan</option>
                     <option value="Working Capital">Working Capital</option>
+                    <option value="Plot Loan">Plot Loan</option>
                     <option value="Lease Rental Discounting">Lease Rental Discounting</option>
                   </select>
                   {errors.propertyLoanCategory && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.propertyLoanCategory.message}</p>}
@@ -253,8 +250,8 @@ export default function NewLeadView() {
                   <label className="block text-xs font-bold text-slate-600 mb-1.5">Property Type *</label>
                   <select {...register("lapPropertyType", { required: "Property Type is required" })} className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none bg-white transition ${errors.lapPropertyType ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-[#0a2540]"}`}>
                     <option value="">Select Property Type</option>
-                    <option value="Residential">Residential</option>
                     <option value="Commercial">Commercial</option>
+                    <option value="Residential">Residential</option>
                     <option value="Industrial">Industrial</option>
                   </select>
                   {errors.lapPropertyType && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.lapPropertyType.message}</p>}

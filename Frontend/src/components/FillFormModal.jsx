@@ -435,26 +435,12 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                 <div className={`flex items-center gap-2.5 ${currentStep >= 2 ? "text-[#0a2540]" : "text-slate-400"}`}>
                   <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${currentStep === 2
                     ? "bg-[#0a2540] text-[#d4af37] ring-4 ring-[#0a2540]/10"
-                    : currentStep > 2
-                      ? "bg-emerald-500 text-white"
-                      : "bg-slate-100 text-slate-400 border border-slate-200"
+                    : "bg-slate-100 text-slate-400 border border-slate-200"
                     }`}>
-                    {currentStep > 2 ? "✓" : "02"}
+                    02
                   </span>
                   <span className={`text-xs uppercase tracking-wider font-extrabold ${currentStep === 2 ? "text-[#0a2540]" : "text-slate-500"}`}>
                     Eligibility Check
-                  </span>
-                </div>
-                <div className="flex-1 max-w-[60px] h-[2px] bg-slate-200 mx-2" />
-                <div className={`flex items-center gap-2.5 ${currentStep >= 3 ? "text-[#0a2540]" : "text-slate-400"}`}>
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${currentStep === 3
-                    ? "bg-[#0a2540] text-[#d4af37] ring-4 ring-[#0a2540]/10"
-                    : "bg-slate-100 text-slate-400 border border-slate-200"
-                    }`}>
-                    03
-                  </span>
-                  <span className={`text-xs uppercase tracking-wider font-extrabold ${currentStep === 3 ? "text-[#0a2540]" : "text-slate-500"}`}>
-                    Document Collection
                   </span>
                 </div>
               </div>
@@ -462,20 +448,18 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
               {/* Mobile Stepper Indicator */}
               <div className="md:hidden flex items-center justify-between">
                 <span className="text-xs font-black text-[#0a2540] uppercase tracking-wider">
-                  Step {currentStep} of 3: {
-                    currentStep === 1 ? "Loan Requirement" :
-                      currentStep === 2 ? "Eligibility Check" :
-                        "Document Collection"
+                  Step {currentStep} of 2: {
+                    currentStep === 1 ? "Loan Requirement" : "Eligibility Check"
                   }
                 </span>
                 <span className="text-xs font-black text-[#0a2540] bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-                  {Math.round((currentStep / 3) * 100)}%
+                  {Math.round((currentStep / 2) * 100)}%
                 </span>
               </div>
               <div className="md:hidden mt-3 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                 <div
                   className="bg-[#0a2540] h-full transition-all duration-300"
-                  style={{ width: `${(currentStep / 3) * 100}%` }}
+                  style={{ width: `${(currentStep / 2) * 100}%` }}
                 />
               </div>
             </div>

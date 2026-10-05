@@ -51,7 +51,12 @@ exports.getManagerLeaves = async (req, res) => {
       return res.status(403).json({ success: false, message: "Unauthorized access" });
     }
 
-    const leaves = await Leave.find({}).sort({ createdAt: -1 });
+    let query = {};
+    if (req.user.role === "Manager") {
+      query.managerId = req.user.id;
+    }
+
+    const leaves = await Leave.find(query).sort({ createdAt: -1 });
 
     return res.status(200).json({ success: true, data: leaves });
   } catch (error) {

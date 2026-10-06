@@ -202,21 +202,21 @@ export default function NewLeadView() {
         </h3>
 
         <form onSubmit={handleSubmit(onSubmitLead)} className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8 bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
             <div>
               <label className={labelClass}>Company Name *</label>
-              <div className="bg-slate-100/80 p-1.5 rounded-[14px] flex gap-1.5 mb-3 shadow-inner">
+              <div className="flex flex-wrap gap-2 mb-3">
                 {[0, 1].map((idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => setActiveCompanyIndex(idx)}
-                    className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all duration-200 ${
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border ${
                       activeCompanyIndex === idx 
-                        ? "bg-white text-[#0a2540] shadow-sm ring-1 ring-slate-200/50" 
+                        ? "bg-[#0a2540] text-white border-[#0a2540] shadow-md" 
                         : errors[`companyName${idx}`]
-                          ? "bg-rose-50 text-rose-600 ring-1 ring-rose-200"
-                          : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                          ? "bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
                     }`}
                   >
                     Company {idx + 1}
@@ -238,18 +238,18 @@ export default function NewLeadView() {
 
             <div>
               <label className={labelClass}>Contact Person Name *</label>
-              <div className="bg-slate-100/80 p-1.5 rounded-[14px] flex gap-1.5 mb-3 shadow-inner">
+              <div className="flex flex-wrap gap-2 mb-3">
                 {[0, 1, 2, 3].map((idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => setActiveContactIndex(idx)}
-                    className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all duration-200 ${
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border ${
                       activeContactIndex === idx 
-                        ? "bg-white text-[#0a2540] shadow-sm ring-1 ring-slate-200/50" 
+                        ? "bg-[#0a2540] text-white border-[#0a2540] shadow-md" 
                         : errors[`contactPerson${idx}`]
-                          ? "bg-rose-50 text-rose-600 ring-1 ring-rose-200"
-                          : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                          ? "bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
                     }`}
                   >
                     Person {idx + 1}
@@ -271,18 +271,18 @@ export default function NewLeadView() {
 
             <div>
               <label className={labelClass}>Phone Number *</label>
-              <div className="bg-slate-100/80 p-1.5 rounded-[14px] flex gap-1.5 mb-3 shadow-inner">
+              <div className="flex flex-wrap gap-2 mb-3">
                 {[0, 1, 2, 3].map((idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => setActivePhoneIndex(idx)}
-                    className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all duration-200 ${
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border ${
                       activePhoneIndex === idx 
-                        ? "bg-white text-[#0a2540] shadow-sm ring-1 ring-slate-200/50" 
+                        ? "bg-[#0a2540] text-white border-[#0a2540] shadow-md" 
                         : errors[`phone${idx}`]
-                          ? "bg-rose-50 text-rose-600 ring-1 ring-rose-200"
-                          : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                          ? "bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
                     }`}
                   >
                     Phone {idx + 1}

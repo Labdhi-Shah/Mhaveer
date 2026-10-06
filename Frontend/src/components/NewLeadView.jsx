@@ -305,9 +305,11 @@ export default function NewLeadView() {
               ))}
             </div>
 
-            <div>
+            <div className="flex flex-col h-full">
               <label className={labelClass}>City</label>
-              <input type="text" placeholder="Enter city" {...register("city")} className={getInputClass(false)} />
+              <div className="mt-auto">
+                <input type="text" placeholder="Enter city" {...register("city")} className={getInputClass(false)} />
+              </div>
             </div>
 
             <div>

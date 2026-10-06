@@ -17,7 +17,7 @@ const normalizeRole = (value) => {
   const raw = typeof value === "string" ? value.trim() : "";
   if (!raw) return "";
   const lower = raw.toLowerCase();
-  if (lower === "superadmin" || lower === "administration (admin)" || lower === "admin") return "Admin";
+  if (lower === "superadmin" || lower === "administration (admin)" || lower === "admin") return "Manager";
   if (lower === "management" || lower === "branch manager" || lower === "operations manager" || lower === "regional manager" || lower.includes("director") || lower.includes("ceo")) return "Manager";
   if (lower === "manager") return "Manager";
   if (lower === "team leader" || lower === "tl" || lower === "teamleader") return "Team Leader";
@@ -52,7 +52,6 @@ const authorize = (...roles) => {
     const isAuthorized = roles.some(role => {
       const targetRole = role.toLowerCase();
       if (userRole === targetRole) return true;
-      if (targetRole === 'admin' && (userRole === 'administration (admin)' || userRole === 'superadmin' || userRole === 'admin')) return true;
       if (targetRole === 'hr' && (userRole === 'human resources (hr)' || userRole === 'hr')) return true;
       if (targetRole === 'sales' && (userRole === 'sales department' || userRole === 'sales')) return true;
       if (targetRole === 'team leader' && (userRole === 'team leader' || userRole === 'tl' || userRole === 'teamleader')) return true;

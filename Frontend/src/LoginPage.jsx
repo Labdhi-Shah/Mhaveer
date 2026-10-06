@@ -41,12 +41,12 @@ function Login() {
         localStorage.setItem("token", data.token);
         
         if (data.employee) {
-          // Employee Login
+          // Employee / Manager Login
           const employeeData = {
             fullName: data.employee.fullName,
             role: data.employee.role,
             email: email, // use logged in email as official email fallback
-            employeeId: "EMP-" + Math.floor(100000 + Math.random() * 900000) // unique mock ID
+            employeeId: data.employee.employeeId || ("EMP-" + Math.floor(100000 + Math.random() * 900000))
           };
           localStorage.setItem("user", JSON.stringify(employeeData));
           
@@ -55,11 +55,6 @@ function Login() {
             localStorage.setItem("loginTime", new Date().toISOString());
           }
           
-          setMessage("✅ Login Successful");
-          navigate("/dashboard");
-        } else {
-          // Super Admin Login
-          localStorage.setItem("user", JSON.stringify({ email, name: "Super Admin", role: "SuperAdmin" }));
           setMessage("✅ Login Successful");
           navigate("/dashboard");
         }

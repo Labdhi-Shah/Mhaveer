@@ -14,7 +14,6 @@ export default function Header({ onToggleSidebar }) {
   const dropdownRef = useRef(null);
 
   const roleCategory = getUserRoleCategory(user);
-  const isSuperAdmin = roleCategory === "Admin";
 
   const [attendance, setAttendance] = useState(null);
   const [elapsed, setElapsed] = useState("00:00:00");
@@ -48,10 +47,10 @@ export default function Header({ onToggleSidebar }) {
   };
 
   useEffect(() => {
-    if (user && !isSuperAdmin) {
+    if (user) {
       fetchAttendanceStatus();
     }
-  }, [user, isSuperAdmin, roleCategory]);
+  }, [user, roleCategory]);
 
   useEffect(() => {
     if (!attendance || !attendance.attendanceStarted || !attendance.loginTime) {
@@ -227,36 +226,29 @@ export default function Header({ onToggleSidebar }) {
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                   Role: <span className="text-[#d4af37]">{user?.role || "Representative"}</span>
                 </p>
-                {!isSuperAdmin && (
-                  <>
-                    <p className="text-[9px] font-mono text-slate-400">ID: {user?.employeeId || "N/A"}</p>
-                    <p className="text-[9px] font-mono text-slate-400">Email: {user?.email || "N/A"}</p>
-                    <p className="text-[9px] font-extrabold text-[#0a2540] uppercase tracking-widest mt-1">Branch: Corporate Gujarat</p>
-                  </>
-                )}
-                {isSuperAdmin && (
-                  <p className="text-[9px] font-mono text-slate-400">Email: admin@mhaveerfincap.com</p>
-                )}
+                <>
+                  <p className="text-[9px] font-mono text-slate-400">ID: {user?.employeeId || "N/A"}</p>
+                  <p className="text-[9px] font-mono text-slate-400">Email: {user?.email || "N/A"}</p>
+                  <p className="text-[9px] font-extrabold text-[#0a2540] uppercase tracking-widest mt-1">Branch: Corporate Gujarat</p>
+                </>
               </div>
 
               {/* Action Menu Links */}
               <div className="p-2 space-y-0.5">
-                {!isSuperAdmin && (
-                  <>
-                    <button
-                      onClick={() => { navigate("/profile"); setDropdownOpen(false); }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-600 hover:bg-slate-100 hover:text-[#0a2540] font-bold transition text-left"
-                    >
-                      <User size={14} /> My Profile
-                    </button>
-                    <button
-                      onClick={() => { navigate("/attendance"); setDropdownOpen(false); }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-600 hover:bg-slate-100 hover:text-[#0a2540] font-bold transition text-left"
-                    >
-                      <Clock size={14} /> Attendance Logs
-                    </button>
-                  </>
-                )}
+                <>
+                  <button
+                    onClick={() => { navigate("/profile"); setDropdownOpen(false); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-600 hover:bg-slate-100 hover:text-[#0a2540] font-bold transition text-left"
+                  >
+                    <User size={14} /> My Profile
+                  </button>
+                  <button
+                    onClick={() => { navigate("/attendance"); setDropdownOpen(false); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-600 hover:bg-slate-100 hover:text-[#0a2540] font-bold transition text-left"
+                  >
+                    <Clock size={14} /> Attendance Logs
+                  </button>
+                </>
 
 
                 <div className="h-px bg-slate-100 my-1" />

@@ -23,12 +23,10 @@ export const AuthProvider = ({ children }) => {
       const res = await api.post("/auth/login", { email, password });
       if (res.data.success) {
         const token = res.data.token;
-        const userData = res.data.employee || {
-          email,
-          name: "Super Admin",
-          role: "SuperAdmin",
-          department: "Admin"
-        };
+        const userData = res.data.employee;
+        if (!userData) {
+          return { success: false, message: "Invalid user data." };
+        }
         localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("token", token);
         setUser(userData);

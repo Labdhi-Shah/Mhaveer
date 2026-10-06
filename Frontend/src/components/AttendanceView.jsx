@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend
 } from 'recharts';
+import * as XLSX from 'xlsx';
 import { getUserRoleCategory, filterAttendanceRecords } from "../utils/hierarchy";
 import LeaveManagement from "./LeaveManagement";
 
@@ -36,6 +37,7 @@ export default function AttendanceView() {
   const [totalPages, setTotalPages] = useState(1);
 
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [leaveCounts, setLeaveCounts] = useState({});
 
   const processRecord = (r) => {
     const login = r.loginTime ? new Date(r.loginTime) : null;
@@ -80,14 +82,6 @@ export default function AttendanceView() {
           
           let filtered = await filterAttendanceRecords(user, allRecords);
 
-          if (searchTerm) {
-            const searchLower = searchTerm.toLowerCase();
-            filtered = filtered.filter(r => 
-              (r.employeeName || "").toLowerCase().includes(searchLower) ||
-              (r.employeeId || "").toLowerCase().includes(searchLower)
-            );
-          }
-
           const now = new Date();
           const getStartOfDay = (date = new Date()) => {
             const d = new Date(date);
@@ -98,6 +92,34 @@ export default function AttendanceView() {
           if (filterRange === "Today") {
             const todayStart = getStartOfDay();
             filtered = filtered.filter(r => new Date(r.date) >= todayStart);
+            
+            // Inject Absent records for employees who haven't logged in today
+            try {
+              const empRes = await api.get("/employees?limit=1000");
+              if (empRes.data.success) {
+                const allEmployees = empRes.data.data;
+                const employeesWithAttendance = new Set(filtered.map(r => r.employeeId));
+                
+                // For Admin/Manager, the backend /employees endpoint already filters by hierarchy
+                const absentEmployees = allEmployees.filter(emp => !employeesWithAttendance.has(emp._id) && !employeesWithAttendance.has(emp.employeeId));
+                
+                const absentRecords = absentEmployees.map(emp => ({
+                  employeeId: emp._id,
+                  employeeName: emp.name || emp.fullName,
+                  date: todayStart.toISOString(),
+                  loginTime: null,
+                  logoutTime: null,
+                  totalWorkingHours: "-",
+                  totalWorkingMinutes: 0,
+                  status: "Absent"
+                }));
+                
+                filtered = [...filtered, ...absentRecords];
+              }
+            } catch (err) {
+              console.error("Failed to fetch employees for absent calculation", err);
+            }
+            
           } else if (filterRange === "This Week") {
             const day = now.getDay();
             const diff = now.getDate() - day + (day === 0 ? -6 : 1);
@@ -134,6 +156,14 @@ export default function AttendanceView() {
             });
           }
 
+          if (searchTerm) {
+            const searchLower = searchTerm.toLowerCase();
+            filtered = filtered.filter(r => 
+              (r.employeeName || "").toLowerCase().includes(searchLower) ||
+              (r.employeeId || "").toLowerCase().includes(searchLower)
+            );
+          }
+
           calculateStats(filtered);
 
           const limit = 10;
@@ -165,9 +195,32 @@ export default function AttendanceView() {
     }
   };
 
+  const fetchLeaveCounts = async () => {
+    try {
+      const cat = getUserRoleCategory(user);
+      const endpoint = cat === "Manager" || cat === "Admin" ? "/leaves/manager-leaves" : "/leaves/my-leaves";
+      const res = await api.get(endpoint);
+      if (res.data.success) {
+        const counts = {};
+        res.data.data.forEach(leave => {
+          if (leave.status === "Approved" || leave.status === "Pending") {
+            const start = new Date(leave.startDate);
+            const end = new Date(leave.endDate);
+            const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            counts[leave.employeeId] = (counts[leave.employeeId] || 0) + days;
+          }
+        });
+        setLeaveCounts(counts);
+      }
+    } catch (err) {
+      console.error("Failed to fetch leaves for counts:", err);
+    }
+  };
+
   useEffect(() => {
     fetchAttendance();
     fetchTodayAttendance();
+    fetchLeaveCounts();
   }, [user, page, filterRange, searchTerm]);
 
   const handleAttendanceAction = async (action) => {
@@ -235,6 +288,22 @@ export default function AttendanceView() {
     });
   };
 
+  const handleExportExcel = () => {
+    const dataToExport = records.map(r => ({
+      Date: formatDate(r.date),
+      Employee: r.employeeName || "-",
+      "Start Time": formatTime(r.loginTime),
+      "End Time": formatTime(r.logoutTime),
+      "Total Leave": `${leaveCounts[r.employeeId] || 0} Day(s)`,
+      Status: r.status || "Absent",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Attendance Logs");
+    XLSX.writeFile(wb, `Attendance_Logs_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
       case "Working":
@@ -243,6 +312,8 @@ export default function AttendanceView() {
         return <span className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-amber-100 text-amber-700">On Break</span>;
       case "Completed":
         return <span className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700">Completed</span>;
+      case "Absent":
+        return <span className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-rose-100 text-rose-700">Absent</span>;
       default:
         return <span className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-slate-100 text-slate-500">{status || "-"}</span>;
     }
@@ -305,9 +376,81 @@ export default function AttendanceView() {
 
       {mainTab === "logs" ? (
         <>
+          {/* FILTERS SECTION */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6 flex flex-col md:flex-row items-end gap-4">
+            <div className="w-full md:w-64">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Date Range</label>
+              <select
+                value={filterRange}
+                onChange={(e) => setFilterRange(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+              >
+                <option value="Today">Today</option>
+                <option value="This Week">This Week</option>
+                <option value="Last Week">Last Week</option>
+                <option value="This Month">This Month</option>
+                <option value="Last Month">Last Month</option>
+                <option value="Custom">Custom Date Range</option>
+              </select>
+            </div>
+
+            {filterRange === "Custom" && (
+              <div className="flex gap-2 w-full md:w-auto animate-in slide-in-from-left-2 duration-300">
+                <div className="w-full md:w-auto">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Start Date</label>
+                  <input
+                    type="date"
+                    value={customStart}
+                    onChange={e => setCustomStart(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                  />
+                </div>
+                <div className="w-full md:w-auto">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">End Date</label>
+                  <input
+                    type="date"
+                    value={customEnd}
+                    onChange={e => setCustomEnd(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                  />
+                </div>
+                <button
+                  onClick={handleApplyCustomDate}
+                  className="bg-[#0a2540] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#0a2540]/90 transition whitespace-nowrap mb-0 mt-auto h-[38px]"
+                >
+                  Apply
+                </button>
+              </div>
+            )}
+
+            {["Manager", "Team Leader", "SuperAdmin", "Admin"].includes(user?.role) && (
+              <div className="w-full md:w-80 ml-auto flex gap-2 items-end">
+                <div className="flex-1">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Search Employee</label>
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by name..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl pl-9 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={handleExportExcel}
+                  className="bg-emerald-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-emerald-700 transition whitespace-nowrap mb-0 mt-auto h-[42px] flex items-center justify-center"
+                >
+                  Export Excel
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* SUMMARY CARDS - Only for normal employees */}
           {!["SuperAdmin", "Admin", "Administration (Admin)", "Manager", "Team Leader"].includes(user?.role) && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
               {[
                 { label: "Today", value: stats.today, icon: <Clock size={16} /> },
                 { label: "This Week", value: stats.thisWeek, icon: <Activity size={16} /> },
@@ -327,100 +470,7 @@ export default function AttendanceView() {
             </div>
           )}
 
-          {/* CHART & FILTERS */}
-          <div className={`grid grid-cols-1 ${!["SuperAdmin", "Admin", "Administration (Admin)", "Manager", "Team Leader"].includes(user?.role) ? "lg:grid-cols-3" : "lg:grid-cols-1"} gap-6`}>
-            
-            {/* CHART SECTION - Only for normal employees */}
-            {!["SuperAdmin", "Admin", "Administration (Admin)", "Manager", "Team Leader"].includes(user?.role) && (
-              <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-                <h2 className="text-sm font-bold text-[#0a2540] mb-6 flex items-center gap-2">
-                  <Activity size={16} className="text-[#d4af37]" /> Working Hours Trend
-                </h2>
-                <div className="h-64 w-full">
-                  {chartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} dy={10} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} />
-                        <RechartsTooltip
-                          cursor={{ fill: '#f8fafc' }}
-                          contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                        />
-                        <Bar dataKey="hours" name="Working Hours" fill="#0a2540" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-full flex items-center justify-center text-sm font-bold text-slate-400">
-                      No chart data available for selected range
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
-            {/* FILTERS SECTION */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col gap-4">
-          <h2 className="text-sm font-bold text-[#0a2540] flex items-center gap-2">
-            <Filter size={16} className="text-[#d4af37]" /> Filter Records
-          </h2>
-
-          <div className="space-y-3 flex-1">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Date Range</label>
-            <select
-              value={filterRange}
-              onChange={(e) => setFilterRange(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/30"
-            >
-              <option value="Today">Today</option>
-              <option value="This Week">This Week</option>
-              <option value="Last Week">Last Week</option>
-              <option value="This Month">This Month</option>
-              <option value="Last Month">Last Month</option>
-              <option value="Custom">Custom Date Range</option>
-            </select>
-
-            {filterRange === "Custom" && (
-              <div className="grid grid-cols-2 gap-2 mt-2 animate-in slide-in-from-top-2 duration-300">
-                <input
-                  type="date"
-                  value={customStart}
-                  onChange={e => setCustomStart(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2.5"
-                />
-                <input
-                  type="date"
-                  value={customEnd}
-                  onChange={e => setCustomEnd(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2.5"
-                />
-                <button
-                  onClick={handleApplyCustomDate}
-                  className="col-span-2 mt-1 bg-[#0a2540] text-white text-xs font-bold py-2.5 rounded-xl hover:bg-[#0a2540]/90 transition"
-                >
-                  Apply Custom Range
-                </button>
-              </div>
-            )}
-
-            {["SuperAdmin", "Admin", "Administration (Admin)", "Manager", "Team Leader"].includes(user?.role) && (
-              <div className="mt-4">
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Search Employee</label>
-                <div className="relative">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search by name..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl pl-9 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/30"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* DATA TABLE */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
@@ -434,7 +484,7 @@ export default function AttendanceView() {
                 )}
                 <th className="py-4 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Start Time</th>
                 <th className="py-4 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">End Time</th>
-                <th className="py-4 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Working</th>
+                <th className="py-4 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Leave</th>
                 <th className="py-4 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</th>
               </tr>
             </thead>
@@ -462,7 +512,7 @@ export default function AttendanceView() {
                       )}
                       <td className="py-4 px-6 text-sm font-semibold text-emerald-600">{formatTime(r.loginTime)}</td>
                       <td className="py-4 px-6 text-sm font-semibold text-rose-500">{formatTime(r.logoutTime)}</td>
-                      <td className="py-4 px-6 text-sm font-black text-[#0a2540]">{r.totalWorkingHours}</td>
+                      <td className="py-4 px-6 text-sm font-black text-[#0a2540]">{leaveCounts[r.employeeId] || 0} Day(s)</td>
                       <td className="py-4 px-6">{getStatusBadge(r.status)}</td>
                     </tr>
                   )
@@ -541,8 +591,8 @@ export default function AttendanceView() {
                 </div>
 
                 <div className="flex justify-between items-center pt-2">
-                  <span className="text-xs font-black text-[#0a2540] uppercase tracking-widest">Total Working Time</span>
-                  <span className="text-xl font-black text-[#0a2540]">{selectedRecord.totalWorkingHours}</span>
+                  <span className="text-xs font-black text-[#0a2540] uppercase tracking-widest">Total Leave</span>
+                  <span className="text-xl font-black text-[#0a2540]">{leaveCounts[selectedRecord.employeeId] || 0} Day(s)</span>
                 </div>
 
                 <div className="mt-6 flex justify-end">

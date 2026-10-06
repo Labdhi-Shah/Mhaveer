@@ -52,23 +52,7 @@ exports.getManagerLeaves = async (req, res) => {
     }
 
     let filter = {};
-
-    if (req.user.role === "Manager") {
-      const teamLeaders = await Employee.find({ managerId: req.user.id, role: "Team Leader" }).select('_id');
-      const tlIds = teamLeaders.map(tl => tl._id.toString());
-      
-      const managedEmployees = await Employee.find({
-        $or: [
-          { managerId: req.user.id },
-          { teamLeaderId: { $in: tlIds } }
-        ]
-      }).select('_id');
-      
-      const managedEmpIds = managedEmployees.map(emp => emp._id.toString());
-      managedEmpIds.push(req.user.id); // Manager's own leaves
-      
-      filter = { employeeId: { $in: managedEmpIds } };
-    }
+    // Managers and Admins see all leaves
 
     const leaves = await Leave.find(filter).sort({ createdAt: -1 });
 

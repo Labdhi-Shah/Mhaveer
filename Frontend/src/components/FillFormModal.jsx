@@ -46,6 +46,19 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
 
   // Form State
   const [loanType, setLoanType] = useState("");
+  const [homeLoanType, setHomeLoanType] = useState("");
+  const [propertyLoanCategory, setPropertyLoanCategory] = useState("");
+  const [propertyLocation, setPropertyLocation] = useState("");
+  const [durationOfRentProperty, setDurationOfRentProperty] = useState("");
+  const [lapPropertyType, setLapPropertyType] = useState("");
+  const [lapPropertyLocation, setLapPropertyLocation] = useState("");
+  const [lapPropertyMarketValue, setLapPropertyMarketValue] = useState("");
+  const [businessLoanType, setBusinessLoanType] = useState("");
+  const [btBankName, setBtBankName] = useState("");
+  const [btRateOfInterest, setBtRateOfInterest] = useState("");
+  const [btPropertyType, setBtPropertyType] = useState("");
+  const [btMarketValue, setBtMarketValue] = useState("");
+  const [btLocation, setBtLocation] = useState("");
   const [propertyLoanType, setPropertyLoanType] = useState("");
   const [propertyOwnershipType, setPropertyOwnershipType] = useState("");
   const [propertyDetails, setPropertyDetails] = useState({ propertyType: "", address: "", estimatedValue: "" });
@@ -100,8 +113,16 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
   // Step 1 Validation
   const isStep1Valid = () => {
     if (!loanType) return false;
+    if (loanType === "Home Loan") return !!homeLoanType;
+    if (loanType === "Business Loan") return !!businessLoanType && !!businessType;
     if (loanType === "Property Loan") {
+      if (!propertyLoanCategory) return false;
+      if (propertyLoanCategory !== "LAP" && (!propertyLocation || !durationOfRentProperty)) return false;
+      if (propertyLoanCategory === "LAP" && (!lapPropertyType || !lapPropertyLocation || !lapPropertyMarketValue)) return false;
       return !!propertyLoanType;
+    }
+    if (loanType === "Balance Transfer") {
+      return !!btBankName && !!btRateOfInterest && !!btPropertyType && !!btMarketValue && !!btLocation;
     }
     return true;
   };
@@ -159,7 +180,10 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
     setLoanType(typeId);
     if (typeId !== "Property Loan") {
       setPropertyLoanType("");
+      setPropertyLoanCategory("");
     }
+    if (typeId !== "Home Loan") setHomeLoanType("");
+    if (typeId !== "Business Loan") setBusinessLoanType("");
   };
 
   const handleEligibilityChange = (e) => {
@@ -291,6 +315,19 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
 
       // ── Step 1: Loan type ─────────────────────────────────────────────────
       formData.append("loanType", loanType);
+      if (homeLoanType) formData.append("homeLoanType", homeLoanType);
+      if (propertyLoanCategory) formData.append("propertyLoanCategory", propertyLoanCategory);
+      if (propertyLocation) formData.append("propertyLocation", propertyLocation);
+      if (durationOfRentProperty) formData.append("durationOfRentProperty", durationOfRentProperty);
+      if (lapPropertyType) formData.append("lapPropertyType", lapPropertyType);
+      if (lapPropertyLocation) formData.append("lapPropertyLocation", lapPropertyLocation);
+      if (lapPropertyMarketValue) formData.append("lapPropertyMarketValue", lapPropertyMarketValue);
+      if (businessLoanType) formData.append("businessLoanType", businessLoanType);
+      if (btBankName) formData.append("btBankName", btBankName);
+      if (btRateOfInterest) formData.append("btRateOfInterest", btRateOfInterest);
+      if (btPropertyType) formData.append("btPropertyType", btPropertyType);
+      if (btMarketValue) formData.append("btMarketValue", btMarketValue);
+      if (btLocation) formData.append("btLocation", btLocation);
       if (propertyLoanType) formData.append("propertyLoanType", propertyLoanType);
 
       // ── Step 2: Eligibility ───────────────────────────────────────────────
@@ -554,11 +591,111 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
 
                   {/* Dynamic UI based on Loan Type */}
                   <AnimatePresence>
+                    {/* HOME LOAN UI */}
+                    {loanType === "Home Loan" && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-4 overflow-hidden">
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                          <h4 className="text-sm font-black text-[#0a2540] border-b pb-2 border-slate-100">Home Loan Requirement</h4>
+                          <div>
+                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Home Loan Type *</label>
+                            <select value={homeLoanType} onChange={(e) => setHomeLoanType(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20">
+                              <option value="">Select Category</option>
+                              <option value="Home Purchase">Home Purchase</option>
+                              <option value="Existing Home">Existing Home</option>
+                            </select>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* BALANCE TRANSFER UI */}
+                    {loanType === "Balance Transfer" && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-4 overflow-hidden">
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                          <h4 className="text-sm font-black text-[#0a2540] border-b pb-2 border-slate-100">Balance Transfer Details</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Bank Name *</label>
+                              <input type="text" placeholder="Enter bank name" value={btBankName} onChange={(e) => setBtBankName(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Rate of Interest (%) *</label>
+                              <input type="number" step="0.01" placeholder="e.g. 8.5" value={btRateOfInterest} onChange={(e) => setBtRateOfInterest(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Property Type *</label>
+                              <input type="text" placeholder="Enter property type" value={btPropertyType} onChange={(e) => setBtPropertyType(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Market Value *</label>
+                              <input type="number" placeholder="Enter market value" value={btMarketValue} onChange={(e) => setBtMarketValue(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Location *</label>
+                              <input type="text" placeholder="Enter location" value={btLocation} onChange={(e) => setBtLocation(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
                     {/* PROPERTY LOAN UI */}
                     {loanType === "Property Loan" && (
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-4 overflow-hidden">
 
                         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                          <h4 className="text-sm font-black text-[#0a2540] border-b pb-2 mb-4 border-slate-100">Property Loan Requirement</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Property Loan Category *</label>
+                              <select value={propertyLoanCategory} onChange={(e) => setPropertyLoanCategory(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20">
+                                <option value="">Select Category</option>
+                                <option value="Working Capital">Working Capital</option>
+                                <option value="Plot Loan">Plot Loan</option>
+                                <option value="Lease Rental Discounting">Lease Rental Discounting</option>
+                                <option value="LAP">LAP</option>
+                              </select>
+                            </div>
+                            
+                            {propertyLoanCategory && propertyLoanCategory !== "LAP" && (
+                              <>
+                                <div>
+                                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Property Location *</label>
+                                  <input type="text" placeholder="Enter location" value={propertyLocation} onChange={(e) => setPropertyLocation(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Duration of Rent Property *</label>
+                                  <input type="text" placeholder="e.g. 5 Years" value={durationOfRentProperty} onChange={(e) => setDurationOfRentProperty(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
+                                </div>
+                              </>
+                            )}
+
+                            {propertyLoanCategory === "LAP" && (
+                              <>
+                                <div>
+                                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Property Type *</label>
+                                  <select value={lapPropertyType} onChange={(e) => setLapPropertyType(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20">
+                                    <option value="">Select Property Type</option>
+                                    <option value="Commercial">Commercial</option>
+                                    <option value="Residential">Residential</option>
+                                    <option value="Industrial">Industrial</option>
+                                  </select>
+                                </div>
+                                {lapPropertyType && (
+                                  <>
+                                    <div>
+                                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Property Location *</label>
+                                      <input type="text" placeholder="Enter location" value={lapPropertyLocation} onChange={(e) => setLapPropertyLocation(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
+                                    </div>
+                                    <div>
+                                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Property Market Value *</label>
+                                      <input type="number" placeholder="Enter market value" value={lapPropertyMarketValue} onChange={(e) => setLapPropertyMarketValue(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20" />
+                                    </div>
+                                  </>
+                                )}
+                              </>
+                            )}
+                          </div>
                           <h4 className="text-sm font-black text-[#0a2540] border-b pb-2 border-slate-100">Property Details</h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -631,6 +768,16 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-4 overflow-hidden">
 
                         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                          <h4 className="text-sm font-black text-[#0a2540] border-b pb-2 mb-4 border-slate-100">Business Loan Requirement</h4>
+                          <div className="mb-4">
+                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Business Loan Type *</label>
+                            <select value={businessLoanType} onChange={(e) => setBusinessLoanType(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0a2540]/20">
+                              <option value="">Select Category</option>
+                              <option value="CGTMS">CGTMS</option>
+                              <option value="MSME">MSME</option>
+                              <option value="Unsecured">Unsecured</option>
+                            </select>
+                          </div>
                           <h4 className="text-sm font-black text-[#0a2540] border-b pb-2 border-slate-100">Business Details</h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>

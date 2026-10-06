@@ -148,39 +148,23 @@ exports.stopAttendance = async (req, res) => {
       return res.status(404).json({ success: false, message: "No active attendance record found for today." });
     }
 
-    if (record.status === "Completed") {
+    if (record.logoutTime) {
       return res.status(400).json({ success: false, message: "Attendance already completed for today." });
     }
 
-    if (record.status === "On Break" && record.breaks.length > 0) {
-      const lastBreak = record.breaks[record.breaks.length - 1];
-      if (!lastBreak.endTime) {
-        lastBreak.endTime = new Date();
-      }
-    }
-
     const endTime = new Date();
-    record.endTime = endTime;
-    record.status = "Completed";
-
-    // Calculate total break time
-    let totalBreakMs = 0;
-    record.breaks.forEach((b) => {
-      if (b.startTime && b.endTime) {
-        totalBreakMs += (b.endTime - b.startTime);
-      }
-    });
-    const totalBreakMins = Math.floor(totalBreakMs / 60000);
-    record.totalBreakMinutes = totalBreakMins;
+    record.logoutTime = endTime; // Setting logoutTime as per your schema
 
     // Calculate working time
     let diffMs = 0;
-    if (record.startTime) {
-      diffMs = record.endTime - record.startTime;
+    // Using loginTime since that's what's in your schema
+    if (record.loginTime) {
+      diffMs = record.logoutTime - record.loginTime;
     }
-    const totalWorkMins = Math.floor(diffMs / 60000) - totalBreakMins;
+    const totalWorkMins = Math.floor(diffMs / 60000);
 
     const finalWorkMins = totalWorkMins > 0 ? totalWorkMins : 0;
+    // Note: totalWorkingMinutes is not in your schema, but we'll set it just in case you add it
     record.totalWorkingMinutes = finalWorkMins;
 
     const hours = Math.floor(finalWorkMins / 60);

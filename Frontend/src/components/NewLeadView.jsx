@@ -10,6 +10,7 @@ export default function NewLeadView() {
   const [activeCompanyIndex, setActiveCompanyIndex] = useState(0);
   const [activeContactIndex, setActiveContactIndex] = useState(0);
   const [activePhoneIndex, setActivePhoneIndex] = useState(0);
+  const [activeTurnoverIndex, setActiveTurnoverIndex] = useState(0);
 
   const { 
     register, 
@@ -305,11 +306,38 @@ export default function NewLeadView() {
               ))}
             </div>
 
-            <div className="flex flex-col h-full">
-              <label className={labelClass}>City</label>
-              <div className="mt-auto">
-                <input type="text" placeholder="Enter city" {...register("city")} className={getInputClass(false)} />
+            <div>
+              <label className={labelClass}>Company Turnover (INR) *</label>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {['T1', 'T2', 'T3'].map((t, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveTurnoverIndex(idx)}
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border ${
+                      activeTurnoverIndex === idx 
+                        ? "bg-[#0a2540] text-white border-[#0a2540] shadow-md" 
+                        : errors[idx === 0 ? 'companyTurnover' : `companyTurnover${idx}`]
+                          ? "bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
               </div>
+              {['T1', 'T2', 'T3'].map((t, idx) => (
+                <div key={idx} className={activeTurnoverIndex === idx ? "block" : "hidden"}>
+                  <input 
+                    type="number" 
+                    placeholder="e.g. 600000" 
+                    {...register(idx === 0 ? "companyTurnover" : `companyTurnover${idx}`, { required: idx === 0 ? "Company Turnover is required" : false, min: { value: 1, message: "Turnover must be greater than 0" } })} 
+                    className={getInputClass(idx === 0 ? errors.companyTurnover : errors[`companyTurnover${idx}`])} 
+                  />
+                  {idx === 0 && errors.companyTurnover && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.companyTurnover.message}</p>}
+                  {idx !== 0 && errors[`companyTurnover${idx}`] && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors[`companyTurnover${idx}`].message}</p>}
+                </div>
+              ))}
             </div>
 
             <div>
@@ -318,9 +346,8 @@ export default function NewLeadView() {
             </div>
 
             <div>
-              <label className={labelClass}>Company Turnover (INR) *</label>
-              <input type="number" placeholder="e.g. 600000" {...register("companyTurnover", { required: "Company Turnover is required", min: { value: 1, message: "Turnover must be greater than 0" } })} className={getInputClass(errors.companyTurnover)} />
-              {errors.companyTurnover && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.companyTurnover.message}</p>}
+              <label className={labelClass}>City</label>
+              <input type="text" placeholder="Enter city" {...register("city")} className={getInputClass(false)} />
             </div>
 
             <div>

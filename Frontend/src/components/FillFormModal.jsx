@@ -9,12 +9,10 @@ import api from "../api";
 
 
 const LOAN_TYPES = [
-  { id: "Personal Loan", title: "Personal Loan", icon: User, desc: "For personal expenses & cash needs" },
-  { id: "Business Loan", title: "Business Loan", icon: Briefcase, desc: "To expand or fund your business" },
   { id: "Home Loan", title: "Home Loan", icon: Home, desc: "For buying or constructing a house" },
+  { id: "Business Loan", title: "Business Loan", icon: Briefcase, desc: "To expand or fund your business" },
   { id: "Property Loan", title: "Property Loan", icon: Landmark, desc: "Unlock value from residential/commercial property" },
-  { id: "Insurance", title: "Insurance", icon: ShieldCheck, desc: "Secure your life, health, or assets" },
-  { id: "Credit Cards", title: "Credit Cards", icon: CreditCard, desc: "Reward points & short-term credit" }
+  { id: "Balance Transfer", title: "Balance Transfer", icon: RefreshCw, desc: "Transfer your existing loan" }
 ];
 
 const ALL_DOCUMENTS = {
@@ -31,12 +29,10 @@ const ALL_DOCUMENTS = {
 };
 
 const LOAN_DOCUMENTS_MAPPING = {
-  "Personal Loan": ["aadhaar", "pan", "bankStatement", "salaryOrItr"],
-  "Business Loan": ["aadhaar", "pan", "bankStatement", "itr", "gstCertificate", "businessDocs"],
   "Home Loan": ["aadhaar", "pan", "bankStatement", "addressProof", "electricityBill"],
+  "Business Loan": ["aadhaar", "pan", "bankStatement", "itr", "gstCertificate", "businessDocs"],
   "Property Loan": ["aadhaar", "pan", "bankStatement", "addressProof", "propertyDocs"],
-  "Insurance": ["aadhaar", "pan", "bankStatement"],
-  "Credit Cards": ["aadhaar", "pan", "bankStatement", "salaryOrItr"]
+  "Balance Transfer": ["aadhaar", "pan", "bankStatement", "propertyDocs"]
 };
 
 export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {

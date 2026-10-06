@@ -13,7 +13,7 @@ exports.startAttendance = async (req, res) => {
   try {
     const employeeId = req.user.id;
     const employee = await Employee.findById(employeeId);
-    
+
     if (!employee) {
       return res.status(404).json({ success: false, message: "Employee not found." });
     }
@@ -81,7 +81,7 @@ exports.pauseAttendance = async (req, res) => {
 
     record.status = "On Break";
     record.breaks.push({ startTime: new Date() });
-    
+
     await record.save();
 
     return res.status(200).json({
@@ -118,7 +118,7 @@ exports.resumeAttendance = async (req, res) => {
     }
 
     record.status = "Working";
-    
+
     await record.save();
 
     return res.status(200).json({
@@ -162,7 +162,7 @@ exports.stopAttendance = async (req, res) => {
     const endTime = new Date();
     record.endTime = endTime;
     record.status = "Completed";
-    
+
     // Calculate total break time
     let totalBreakMs = 0;
     record.breaks.forEach((b) => {
@@ -182,11 +182,11 @@ exports.stopAttendance = async (req, res) => {
 
     const finalWorkMins = totalWorkMins > 0 ? totalWorkMins : 0;
     record.totalWorkingMinutes = finalWorkMins;
-    
+
     const hours = Math.floor(finalWorkMins / 60);
     const minutes = finalWorkMins % 60;
     record.totalWorkingHours = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    
+
     await record.save();
 
     return res.status(200).json({
@@ -196,6 +196,7 @@ exports.stopAttendance = async (req, res) => {
     });
   } catch (error) {
     console.error("Stop Attendance Error:", error);
+    console.log(error, "eroor ----------");
     return res.status(500).json({ success: false, message: "Internal server error.", error: error.message });
   }
 };
@@ -241,9 +242,9 @@ exports.getAttendanceHistory = async (req, res) => {
   try {
     const employeeId = req.user.id;
     const { page = 1, limit = 10, employeeName, status, startDate, endDate, range } = req.query;
-    
+
     let query = {};
-    
+
     if (req.user.role !== "SuperAdmin" && req.user.role !== "Admin" && req.user.role !== "Administration (Admin)" && req.user.role !== "Manager") {
       let hierarchyFilter = {};
       if (req.user.role === "Manager") {
@@ -268,11 +269,11 @@ exports.getAttendanceHistory = async (req, res) => {
       }
       Object.assign(query, hierarchyFilter);
     }
-    
+
     if (employeeName) {
       query.employeeName = { $regex: employeeName, $options: "i" };
     }
-    
+
     if (status) {
       query.status = status;
     }
@@ -343,7 +344,7 @@ exports.getAttendanceHistory = async (req, res) => {
 exports.getAdminAttendance = async (req, res) => {
   try {
     const { page = 1, limit = 10, employeeName, employeeId, status, startDate, endDate, range } = req.query;
-    
+
     let query = {};
 
     if (req.user && req.user.role !== "SuperAdmin" && req.user.role !== "Admin") {
@@ -370,7 +371,7 @@ exports.getAdminAttendance = async (req, res) => {
       }
       Object.assign(query, hierarchyFilter);
     }
-    
+
     if (employeeName) {
       query.employeeName = { $regex: employeeName, $options: "i" };
     }

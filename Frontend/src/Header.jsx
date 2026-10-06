@@ -104,10 +104,10 @@ export default function Header({ onToggleSidebar }) {
       if (attendance && attendance.status !== "Completed" && attendance.status !== "Not Started") {
         await api.post("/attendance/stop");
       }
-      // Also call auth logout just to clear any old state
-      const attendanceId = localStorage.getItem("attendanceId");
-      if (attendanceId) {
-        await api.post("/auth/logout", { attendanceId });
+      
+      if (user && (user.id || user._id)) {
+        const employeeId = user.id || user._id;
+        await api.post("/auth/logout", { employeeId });
       }
     } catch (err) {
       console.error("Logout API failed", err);

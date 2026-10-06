@@ -229,7 +229,7 @@ exports.getAttendanceHistory = async (req, res) => {
 
     let query = {};
 
-    if (req.user.role !== "SuperAdmin" && req.user.role !== "Admin" && req.user.role !== "Administration (Admin)" && req.user.role !== "Manager") {
+    if (req.user.role !== "SuperAdmin" && req.user.role !== "Admin" && req.user.role !== "Administration (Admin)") {
       let hierarchyFilter = {};
       if (req.user.role === "Manager") {
         const teamLeaders = await Employee.find({ managerId: req.user.id, role: "Team Leader" }).select('_id');

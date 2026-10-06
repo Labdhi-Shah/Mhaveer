@@ -305,58 +305,62 @@ export default function AttendanceView() {
 
       {mainTab === "logs" ? (
         <>
-          {/* SUMMARY CARDS */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {[
-          { label: "Today", value: stats.today, icon: <Clock size={16} /> },
-          { label: "This Week", value: stats.thisWeek, icon: <Activity size={16} /> },
-          { label: "Last Week", value: stats.lastWeek, icon: <Calendar size={16} /> },
-          { label: "This Month", value: stats.thisMonth, icon: <Briefcase size={16} /> },
-          { label: "Last Month", value: stats.lastMonth, icon: <Calendar size={16} /> },
-          { label: "Total Working Time", value: stats.total, icon: <Activity size={16} />, highlight: true }
-        ].map((card, idx) => (
-          <div key={idx} className={`p-4 rounded-xl border ${card.highlight ? 'bg-[#0a2540] text-white border-[#0a2540] shadow-md' : 'bg-white text-slate-700 border-slate-200'} flex flex-col justify-center items-center text-center transition-all hover:scale-[1.02]`}>
-            <div className={`p-2 rounded-full mb-2 ${card.highlight ? 'bg-[#d4af37]/20 text-[#d4af37]' : 'bg-slate-100 text-slate-500'}`}>
-              {card.icon}
+          {/* SUMMARY CARDS - Only for normal employees */}
+          {!["SuperAdmin", "Admin", "Administration (Admin)", "Manager", "Team Leader"].includes(user?.role) && (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {[
+                { label: "Today", value: stats.today, icon: <Clock size={16} /> },
+                { label: "This Week", value: stats.thisWeek, icon: <Activity size={16} /> },
+                { label: "Last Week", value: stats.lastWeek, icon: <Calendar size={16} /> },
+                { label: "This Month", value: stats.thisMonth, icon: <Briefcase size={16} /> },
+                { label: "Last Month", value: stats.lastMonth, icon: <Calendar size={16} /> },
+                { label: "Total Working Time", value: stats.total, icon: <Activity size={16} />, highlight: true }
+              ].map((card, idx) => (
+                <div key={idx} className={`p-4 rounded-xl border ${card.highlight ? 'bg-[#0a2540] text-white border-[#0a2540] shadow-md' : 'bg-white text-slate-700 border-slate-200'} flex flex-col justify-center items-center text-center transition-all hover:scale-[1.02]`}>
+                  <div className={`p-2 rounded-full mb-2 ${card.highlight ? 'bg-[#d4af37]/20 text-[#d4af37]' : 'bg-slate-100 text-slate-500'}`}>
+                    {card.icon}
+                  </div>
+                  <p className={`text-[10px] font-extrabold uppercase tracking-wider ${card.highlight ? 'text-slate-300' : 'text-slate-500'}`}>{card.label}</p>
+                  <p className="text-lg font-black mt-1">{card.value} Hrs</p>
+                </div>
+              ))}
             </div>
-            <p className={`text-[10px] font-extrabold uppercase tracking-wider ${card.highlight ? 'text-slate-300' : 'text-slate-500'}`}>{card.label}</p>
-            <p className="text-lg font-black mt-1">{card.value} Hrs</p>
-          </div>
-        ))}
-      </div>
+          )}
 
-      {/* CHART & FILTERS */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* CHART SECTION */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-          <h2 className="text-sm font-bold text-[#0a2540] mb-6 flex items-center gap-2">
-            <Activity size={16} className="text-[#d4af37]" /> Working Hours Trend
-          </h2>
-          <div className="h-64 w-full">
-            {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} />
-                  <RechartsTooltip
-                    cursor={{ fill: '#f8fafc' }}
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  />
-                  <Bar dataKey="hours" name="Working Hours" fill="#0a2540" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-sm font-bold text-slate-400">
-                No chart data available for selected range
+          {/* CHART & FILTERS */}
+          <div className={`grid grid-cols-1 ${!["SuperAdmin", "Admin", "Administration (Admin)", "Manager", "Team Leader"].includes(user?.role) ? "lg:grid-cols-3" : "lg:grid-cols-1"} gap-6`}>
+            
+            {/* CHART SECTION - Only for normal employees */}
+            {!["SuperAdmin", "Admin", "Administration (Admin)", "Manager", "Team Leader"].includes(user?.role) && (
+              <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <h2 className="text-sm font-bold text-[#0a2540] mb-6 flex items-center gap-2">
+                  <Activity size={16} className="text-[#d4af37]" /> Working Hours Trend
+                </h2>
+                <div className="h-64 w-full">
+                  {chartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} dy={10} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} />
+                        <RechartsTooltip
+                          cursor={{ fill: '#f8fafc' }}
+                          contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        />
+                        <Bar dataKey="hours" name="Working Hours" fill="#0a2540" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-sm font-bold text-slate-400">
+                      No chart data available for selected range
+                    </div>
+                  )}
+                </div>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* FILTERS SECTION */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col gap-4">
+            {/* FILTERS SECTION */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col gap-4">
           <h2 className="text-sm font-bold text-[#0a2540] flex items-center gap-2">
             <Filter size={16} className="text-[#d4af37]" /> Filter Records
           </h2>
@@ -399,7 +403,7 @@ export default function AttendanceView() {
               </div>
             )}
 
-            {user?.role === "SuperAdmin" && (
+            {["SuperAdmin", "Admin", "Administration (Admin)", "Manager", "Team Leader"].includes(user?.role) && (
               <div className="mt-4">
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Search Employee</label>
                 <div className="relative">
@@ -425,7 +429,7 @@ export default function AttendanceView() {
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-100">
                 <th className="py-4 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>
-                {user?.role === "SuperAdmin" && (
+                {["SuperAdmin", "Admin", "Administration (Admin)", "Manager", "Team Leader"].includes(user?.role) && (
                   <th className="py-4 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Employee</th>
                 )}
                 <th className="py-4 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Start Time</th>
@@ -453,7 +457,7 @@ export default function AttendanceView() {
                   return (
                     <tr key={i} className="hover:bg-slate-50/50 transition-colors group cursor-pointer" onClick={() => setSelectedRecord(r)}>
                       <td className="py-4 px-6 text-sm font-bold text-[#0a2540]">{formatDate(r.date)}</td>
-                      {user?.role === "SuperAdmin" && (
+                      {["SuperAdmin", "Admin", "Administration (Admin)", "Manager", "Team Leader"].includes(user?.role) && (
                         <td className="py-4 px-6 text-sm font-semibold text-slate-600">{r.employeeName}</td>
                       )}
                       <td className="py-4 px-6 text-sm font-semibold text-emerald-600">{formatTime(r.loginTime)}</td>

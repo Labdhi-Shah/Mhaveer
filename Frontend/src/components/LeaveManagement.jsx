@@ -44,10 +44,9 @@ export default function LeaveManagement() {
   };
 
   useEffect(() => {
+    fetchMyLeaves();
     if (isManagerOrAdmin) {
       fetchTeamLeaves();
-    } else {
-      fetchMyLeaves();
     }
   }, [isManagerOrAdmin]);
 
@@ -114,62 +113,62 @@ export default function LeaveManagement() {
       )}
 
       {/* Role Based Views */}
-      {!isManagerOrAdmin ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Apply Leave Form */}
-          <div className="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
-            <h3 className="text-lg font-black text-[#0a2540] mb-4">Apply for Leave</h3>
-            <form onSubmit={handleApplyLeave} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Start Date</label>
-                <input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#d4af37]" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">End Date</label>
-                <input type="date" value={form.endDate} onChange={e => setForm({...form, endDate: e.target.value})} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#d4af37]" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Reason</label>
-                <textarea rows={3} value={form.reason} onChange={e => setForm({...form, reason: e.target.value})} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#d4af37]" placeholder="Why do you need leave?"></textarea>
-              </div>
-              <button type="submit" disabled={submitting} className="w-full bg-[#d4af37] text-white font-black py-2.5 rounded-xl hover:bg-[#b5952f] transition flex justify-center items-center gap-2">
-                {submitting ? <Loader2 size={18} className="animate-spin" /> : "Submit Application"}
-              </button>
-            </form>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Apply Leave Form */}
+        <div className="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
+          <h3 className="text-lg font-black text-[#0a2540] mb-4">Apply for Leave</h3>
+          <form onSubmit={handleApplyLeave} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Start Date</label>
+              <input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#d4af37]" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">End Date</label>
+              <input type="date" value={form.endDate} onChange={e => setForm({...form, endDate: e.target.value})} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#d4af37]" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Reason</label>
+              <textarea rows={3} value={form.reason} onChange={e => setForm({...form, reason: e.target.value})} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#d4af37]" placeholder="Why do you need leave?"></textarea>
+            </div>
+            <button type="submit" disabled={submitting} className="w-full bg-[#d4af37] text-white font-black py-2.5 rounded-xl hover:bg-[#b5952f] transition flex justify-center items-center gap-2">
+              {submitting ? <Loader2 size={18} className="animate-spin" /> : "Submit Application"}
+            </button>
+          </form>
+        </div>
 
-          {/* My Leaves List */}
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="p-6 border-b border-slate-100">
-              <h3 className="text-lg font-black text-[#0a2540]">My Leave History</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50 border-b border-slate-100">
-                  <tr>
-                    <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase">Dates</th>
-                    <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase">Reason</th>
-                    <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase">Status</th>
+        {/* My Leaves List */}
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="p-6 border-b border-slate-100">
+            <h3 className="text-lg font-black text-[#0a2540]">My Leave History</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase">Dates</th>
+                  <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase">Reason</th>
+                  <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading && !isManagerOrAdmin ? (
+                  <tr><td colSpan={3} className="py-8 text-center text-slate-400 font-bold">Loading...</td></tr>
+                ) : myLeaves.length === 0 ? (
+                  <tr><td colSpan={3} className="py-8 text-center text-slate-400 font-bold">No leaves applied yet.</td></tr>
+                ) : myLeaves.map((leave) => (
+                  <tr key={leave._id} className="border-b border-slate-50 hover:bg-slate-50">
+                    <td className="py-3 px-4 text-sm font-bold text-[#0a2540]">{formatDate(leave.startDate)} - {formatDate(leave.endDate)}</td>
+                    <td className="py-3 px-4 text-sm text-slate-600">{leave.reason}</td>
+                    <td className="py-3 px-4">{getStatusBadge(leave.status)}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr><td colSpan={3} className="py-8 text-center text-slate-400 font-bold">Loading...</td></tr>
-                  ) : myLeaves.length === 0 ? (
-                    <tr><td colSpan={3} className="py-8 text-center text-slate-400 font-bold">No leaves applied yet.</td></tr>
-                  ) : myLeaves.map((leave) => (
-                    <tr key={leave._id} className="border-b border-slate-50 hover:bg-slate-50">
-                      <td className="py-3 px-4 text-sm font-bold text-[#0a2540]">{formatDate(leave.startDate)} - {formatDate(leave.endDate)}</td>
-                      <td className="py-3 px-4 text-sm text-slate-600">{leave.reason}</td>
-                      <td className="py-3 px-4">{getStatusBadge(leave.status)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-      ) : (
+      </div>
+
+      {isManagerOrAdmin && (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-6 border-b border-slate-100">
             <h3 className="text-lg font-black text-[#0a2540]">Team Leave Requests</h3>

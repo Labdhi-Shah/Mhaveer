@@ -8,6 +8,7 @@ import {
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import { getMergedLeadsAndStats } from "../utils/hierarchy";
+import socket from "../utils/socket";
 
 const formatFriendlyDate = (dateStr) => {
   if (!dateStr) return null;
@@ -138,6 +139,20 @@ export default function MyLeadsView() {
 
   useEffect(() => {
     fetchLeads();
+    
+    if (!socket.connected) {
+      socket.connect();
+    }
+    
+    const handleUpdate = () => {
+      fetchLeads();
+    };
+    
+    socket.on("data-updated", handleUpdate);
+    
+    return () => {
+      socket.off("data-updated", handleUpdate);
+    };
   }, [page, search, filterType, filterInterested]);
 
   // Open edit modal and populate values

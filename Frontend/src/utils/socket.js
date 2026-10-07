@@ -11,7 +11,7 @@ const BACKEND_URL = rawAPI.endsWith("/") ? rawAPI.slice(0, -1) : rawAPI;
 
 const socket = io(BACKEND_URL, {
   withCredentials: true,
-  autoConnect: false, // Prevents auto-connecting, you can connect it manually where needed using socket.connect()
+  autoConnect: true,
 });
 
 export default socket;

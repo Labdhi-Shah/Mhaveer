@@ -11,7 +11,6 @@ const leadRoutes = require("./routes/leadRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const meetingRoutes = require("./routes/meetingRoutes");
-const creditRoutes = require("./routes/creditRoutes");
 const path = require("path");
 
 
@@ -46,7 +45,6 @@ app.use("/api/leads", leadRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/meetings", meetingRoutes);
-app.use("/api/credit", creditRoutes);
 const adminRoutes = require("./routes/adminRoutes");
 const bankRoutes = require("./routes/bankRoutes");
 const leaveRoutes = require("./routes/leaveRoutes");

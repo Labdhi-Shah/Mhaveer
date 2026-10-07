@@ -2,6 +2,7 @@ const Lead = require("../models/Lead");
 const Employee = require("../models/Employee");
 const Meeting = require("../models/Meeting");
 const { assignMeetingToSalesEmployee } = require("../services/salesAssignmentService");
+const { getIO } = require("../services/websocket");
 
 // @desc    Create a new lead
 // @route   POST /api/leads
@@ -70,6 +71,10 @@ exports.createLead = async (req, res) => {
         console.error("[SalesAssignment] Lead meeting assignment error:", assignErr.message);
       }
     }
+
+    try {
+      getIO().emit("data-updated");
+    } catch (err) {}
 
     res.status(201).json({
       success: true,
@@ -264,6 +269,10 @@ exports.updateLead = async (req, res) => {
       }
     }
 
+    try {
+      getIO().emit("data-updated");
+    } catch (err) {}
+
     res.status(200).json({
       success: true,
       message: "Lead updated successfully",
@@ -306,6 +315,10 @@ exports.deleteLead = async (req, res) => {
     }
 
     await lead.deleteOne();
+
+    try {
+      getIO().emit("data-updated");
+    } catch (err) {}
 
     res.status(200).json({
       success: true,

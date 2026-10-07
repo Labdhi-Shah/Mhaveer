@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Phone, Loader2, AlertCircle, CheckCircle, MapPin, Plus, X, Filter, ClipboardList, Pencil, Trash2 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import api from "../api";
+import socket from "../utils/socket";
 import FillFormModal from "./FillFormModal";
 
 export default function MeetingsView() {
@@ -91,6 +92,20 @@ export default function MeetingsView() {
 
   useEffect(() => {
     fetchMeetings();
+    
+    if (!socket.connected) {
+      socket.connect();
+    }
+    
+    const handleUpdate = () => {
+      fetchMeetings();
+    };
+    
+    socket.on("data-updated", handleUpdate);
+    
+    return () => {
+      socket.off("data-updated", handleUpdate);
+    };
   }, []);
 
   const handleInputChange = (e) => {

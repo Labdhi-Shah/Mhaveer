@@ -8,6 +8,7 @@ import {
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import { getMergedLeadsAndStats } from "../utils/hierarchy";
+import socket from "../utils/socket";
 
 const formatFriendlyDate = (dateStr) => {
   if (!dateStr) return null;
@@ -112,6 +113,20 @@ export default function EmployeeDashboard() {
 
   useEffect(() => {
     fetchData();
+    
+    if (!socket.connected) {
+      socket.connect();
+    }
+    
+    const handleUpdate = () => {
+      fetchData();
+    };
+    
+    socket.on("data-updated", handleUpdate);
+    
+    return () => {
+      socket.off("data-updated", handleUpdate);
+    };
   }, []);
 
 

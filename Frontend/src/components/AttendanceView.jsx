@@ -395,7 +395,7 @@ export default function AttendanceView() {
             </div>
 
             {filterRange === "Custom" && (
-              <div className="flex gap-2 w-full md:w-auto animate-in slide-in-from-left-2 duration-300">
+              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto animate-in slide-in-from-left-2 duration-300">
                 <div className="w-full md:w-auto">
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Start Date</label>
                   <input
@@ -424,8 +424,8 @@ export default function AttendanceView() {
             )}
 
             {["Manager", "Team Leader", "SuperAdmin", "Admin"].includes(user?.role) && (
-              <div className="w-full md:w-80 ml-auto flex gap-2 items-end">
-                <div className="flex-1">
+              <div className="w-full md:w-80 ml-auto flex flex-col sm:flex-row gap-2 items-end sm:items-end">
+                <div className="flex-1 w-full">
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Search Employee</label>
                   <div className="relative">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -450,7 +450,7 @@ export default function AttendanceView() {
 
           {/* SUMMARY CARDS - Only for normal employees */}
           {!["SuperAdmin", "Admin", "Administration (Admin)", "Manager", "Team Leader"].includes(user?.role) && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
               {[
                 { label: "Today", value: stats.today, icon: <Clock size={16} /> },
                 { label: "This Week", value: stats.thisWeek, icon: <Activity size={16} /> },

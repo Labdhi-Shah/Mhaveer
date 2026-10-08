@@ -387,7 +387,7 @@ export default function MeetingsView() {
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
                       <div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Phone</p>
                         <p className="font-semibold text-slate-700 mt-0.5 flex items-center gap-1">
@@ -401,7 +401,7 @@ export default function MeetingsView() {
                     </div>
 
                     {meeting.leadId && (
-                      <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 mt-2 pt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 mt-2 pt-2">
                         <div>
                           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Company</p>
                           <p className="font-semibold text-slate-700 mt-0.5 truncate">{meeting.leadId.companyName || "N/A"}</p>
@@ -534,7 +534,7 @@ export default function MeetingsView() {
                       className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-purple-500/20"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Customer Name *</label>
                       <input
@@ -558,7 +558,7 @@ export default function MeetingsView() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Date *</label>
                       <input
@@ -583,7 +583,7 @@ export default function MeetingsView() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Type</label>
                       <select

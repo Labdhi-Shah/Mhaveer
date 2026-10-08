@@ -16,7 +16,8 @@ export default function NewLeadView() {
     register, 
     handleSubmit, 
     watch, 
-    reset, 
+    reset,
+    setValue, 
     formState: { errors } 
   } = useForm({
     defaultValues: {
@@ -96,6 +97,7 @@ export default function NewLeadView() {
   const loanTypeValue = watch("loanType");
   const lapPropertyTypeValue = watch("lapPropertyType");
   const propertyLoanCategoryValue = watch("propertyLoanCategory");
+  const unsoldYesNoValue = watch("unsoldYesNo");
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -522,9 +524,47 @@ export default function NewLeadView() {
                   <input type="number" placeholder="Enter M.V" {...register("unsoldMV", { required: "M.V is required", min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.unsoldMV)} />
                   {errors.unsoldMV && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.unsoldMV.message}</p>}
                 </div>
-                <div className="flex items-center gap-2 mt-7">
-                  <input type="checkbox" id="unsoldYesNo" {...register("unsoldYesNo")} className="w-4 h-4 text-[#0a2540] bg-slate-100 border-slate-300 rounded focus:ring-[#0a2540] focus:ring-2" />
-                  <label htmlFor="unsoldYesNo" className="text-[13px] font-semibold text-slate-700">Yes / No</label>
+                <div>
+                  <label className={labelClass}>Selection</label>
+                  <div className="flex items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setValue("unsoldYesNo", true, { shouldValidate: true })}
+                      className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
+                        unsoldYesNoValue === true
+                          ? "border-[#0a2540] bg-[#0a2540]/5 text-[#0a2540]"
+                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      Yes
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        unsoldYesNoValue === true
+                          ? "border-[#0a2540] bg-[#0a2540]"
+                          : "border-slate-300"
+                      }`}>
+                        {unsoldYesNoValue === true && <CheckCircle size={14} className="text-white" />}
+                      </div>
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setValue("unsoldYesNo", false, { shouldValidate: true })}
+                      className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
+                        unsoldYesNoValue === false
+                          ? "border-[#0a2540] bg-[#0a2540]/5 text-[#0a2540]"
+                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      No
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        unsoldYesNoValue === false
+                          ? "border-[#0a2540] bg-[#0a2540]"
+                          : "border-slate-300"
+                      }`}>
+                        {unsoldYesNoValue === false && <CheckCircle size={14} className="text-white" />}
+                      </div>
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className={labelClass}>B.V *</label>

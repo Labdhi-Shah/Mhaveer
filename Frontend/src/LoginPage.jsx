@@ -78,12 +78,14 @@ function Login() {
         alignItems: "center",
         background: "#f0f4f8",
         fontFamily: "'Inter', sans-serif",
+        padding: "16px",
+        boxSizing: "border-box"
       }}
     >
       <div
         style={{
           width: "100%",
-          maxWidth: "420px",
+          maxWidth: "380px",
           background: "#fff",
           borderRadius: "16px",
           boxShadow: "0 10px 30px rgba(0,0,0,0.05)",

@@ -555,7 +555,7 @@ export default function MyLeadsView() {
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
                       <DollarSign size={14} className="text-emerald-500" /> Loan & Financials
                     </h4>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Loan Type</span>
                         <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.loanType || "N/A"}</p>
@@ -597,7 +597,7 @@ export default function MyLeadsView() {
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
                       Status Overview
                     </h4>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Interested</span>
                         <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.interested || "N/A"}</p>
@@ -845,7 +845,7 @@ export default function MyLeadsView() {
 
               {/* Conditional Follow Up */}
               {editInterestedValue === "Call Back Later" && (
-                <div className="border border-amber-200 bg-amber-50/50 p-4 rounded-2xl grid grid-cols-2 gap-4">
+                <div className="border border-amber-200 bg-amber-50/50 p-4 rounded-2xl grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <p className="col-span-full text-xs font-bold text-[#d4af37] flex items-center gap-1.5"><Clock size={14} /> Update Follow-up Schedule</p>
                   <div>
                     <label className="block text-xs font-bold text-slate-600 mb-1">Follow-up Date *</label>

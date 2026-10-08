@@ -304,7 +304,7 @@ export default function MyLeadsView() {
               className="px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs bg-white outline-none focus:border-[#0a2540] transition"
             >
               <option value="">All Loan Types</option>
-              <option value="Home Loan">Home Loan</option>
+              <option value="Property Purchase Loan">Property Purchase Loan</option>
               <option value="Business Loan">Business Loan</option>
               <option value="Property Loan">Property Loan</option>
             </select>
@@ -770,7 +770,7 @@ export default function MyLeadsView() {
                     {...register("loanType", { required: "Loan Type is required" })}
                     className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540] bg-white"
                   >
-                    <option value="Home Loan">Home Loan</option>
+                    <option value="Property Purchase Loan">Property Purchase Loan</option>
                     <option value="Business Loan">Business Loan</option>
                     <option value="Property Loan">Property Loan</option>
                   </select>

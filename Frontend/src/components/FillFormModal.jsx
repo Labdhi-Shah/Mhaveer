@@ -9,7 +9,7 @@ import api from "../api";
 
 
 const LOAN_TYPES = [
-  { id: "Home Loan", title: "Home Loan", icon: Home, desc: "For buying or constructing a house" },
+  { id: "Property Purchase Loan", title: "Property Purchase Loan", icon: Home, desc: "For buying or constructing a property" },
   { id: "Business Loan", title: "Business Loan", icon: Briefcase, desc: "To expand or fund your business" },
   { id: "Property Loan", title: "Property Loan", icon: Landmark, desc: "Unlock value from residential/commercial property" },
   { id: "Balance Transfer", title: "Balance Transfer", icon: RefreshCw, desc: "Transfer your existing loan" }
@@ -29,7 +29,7 @@ const ALL_DOCUMENTS = {
 };
 
 const LOAN_DOCUMENTS_MAPPING = {
-  "Home Loan": ["aadhaar", "pan", "bankStatement", "addressProof", "electricityBill"],
+  "Property Purchase Loan": ["aadhaar", "pan", "bankStatement", "addressProof", "electricityBill"],
   "Business Loan": ["aadhaar", "pan", "bankStatement", "itr", "gstCertificate", "businessDocs"],
   "Property Loan": ["aadhaar", "pan", "bankStatement", "addressProof", "propertyDocs"],
   "Balance Transfer": ["aadhaar", "pan", "bankStatement", "propertyDocs"]
@@ -46,19 +46,50 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
 
   // Form State
   const [loanType, setLoanType] = useState("");
-  const [homeLoanType, setHomeLoanType] = useState("");
+  const [propertyPurchaseCategory, setPropertyPurchaseCategory] = useState("");
+  const [ppLocation, setPpLocation] = useState("");
+  const [ppMarketRate, setPpMarketRate] = useState("");
+  const [ppDastavejRate, setPpDastavejRate] = useState("");
+  const [ppDastavejName, setPpDastavejName] = useState("");
   const [propertyLoanCategory, setPropertyLoanCategory] = useState("");
   const [propertyLocation, setPropertyLocation] = useState("");
   const [durationOfRentProperty, setDurationOfRentProperty] = useState("");
   const [lapPropertyType, setLapPropertyType] = useState("");
   const [lapPropertyLocation, setLapPropertyLocation] = useState("");
   const [lapPropertyMarketValue, setLapPropertyMarketValue] = useState("");
+  const [unsoldUnit, setUnsoldUnit] = useState("");
+  const [unsoldMV, setUnsoldMV] = useState("");
+  const [unsoldYesNo, setUnsoldYesNo] = useState(false);
+  const [unsoldBV, setUnsoldBV] = useState("");
+  const [unsoldScheme, setUnsoldScheme] = useState("");
+  const [unsoldLocation, setUnsoldLocation] = useState("");
+  const [unsoldFloor, setUnsoldFloor] = useState("");
+  const [unsoldDastavej, setUnsoldDastavej] = useState("");
+  const [unsoldPartnership, setUnsoldPartnership] = useState("");
+  const [lrdRent, setLrdRent] = useState("");
+  const [lrdMarketValue, setLrdMarketValue] = useState("");
+  const [lrdLocation, setLrdLocation] = useState("");
+  const [lrdLoiYear, setLrdLoiYear] = useState("");
+  const [lrdSchemeName, setLrdSchemeName] = useState("");
+  const [lrdDastavej, setLrdDastavej] = useState("");
+  const [naPlotLocation, setNaPlotLocation] = useState("");
+  const [naPlotMV, setNaPlotMV] = useState("");
+  const [naPlotYesNo, setNaPlotYesNo] = useState(false);
+  const [naPlotDastavej, setNaPlotDastavej] = useState("");
+  const [naPlotVAR, setNaPlotVAR] = useState("");
+  const [naPlotScheme, setNaPlotScheme] = useState("");
+  const [naPlotLavani, setNaPlotLavani] = useState("");
+  const [naPlotVacant, setNaPlotVacant] = useState(false);
   const [businessLoanType, setBusinessLoanType] = useState("");
   const [btBankName, setBtBankName] = useState("");
   const [btRateOfInterest, setBtRateOfInterest] = useState("");
   const [btPropertyType, setBtPropertyType] = useState("");
   const [btMarketValue, setBtMarketValue] = useState("");
   const [btLocation, setBtLocation] = useState("");
+  const [btYear, setBtYear] = useState("");
+  const [btAmount, setBtAmount] = useState("");
+  const [btOutstanding, setBtOutstanding] = useState("");
+  const [btForeclosureCharge, setBtForeclosureCharge] = useState("");
   const [propertyLoanType, setPropertyLoanType] = useState("");
   const [propertyOwnershipType, setPropertyOwnershipType] = useState("");
   const [propertyDetails, setPropertyDetails] = useState({ propertyType: "", address: "", estimatedValue: "" });
@@ -113,16 +144,19 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
   // Step 1 Validation
   const isStep1Valid = () => {
     if (!loanType) return false;
-    if (loanType === "Home Loan") return !!homeLoanType;
+    if (loanType === "Property Purchase Loan") return !!propertyPurchaseCategory && !!ppLocation && !!ppMarketRate && !!ppDastavejRate && !!ppDastavejName;
     if (loanType === "Business Loan") return !!businessLoanType && !!businessType;
     if (loanType === "Property Loan") {
       if (!propertyLoanCategory) return false;
-      if (propertyLoanCategory !== "LAP" && (!propertyLocation || !durationOfRentProperty)) return false;
+      if (["Working Capital", "Plot Loan", "Lease Rental Discounting"].includes(propertyLoanCategory) && (!propertyLocation || !durationOfRentProperty)) return false;
       if (propertyLoanCategory === "LAP" && (!lapPropertyType || !lapPropertyLocation || !lapPropertyMarketValue)) return false;
+      if (propertyLoanCategory === "Unsold" && (!unsoldUnit || !unsoldMV || !unsoldBV || !unsoldScheme || !unsoldLocation || !unsoldFloor || !unsoldDastavej || !unsoldPartnership)) return false;
+      if (propertyLoanCategory === "LRD" && (!lrdRent || !lrdMarketValue || !lrdLocation || !lrdLoiYear || !lrdSchemeName || !lrdDastavej)) return false;
+      if (propertyLoanCategory === "NA Plot" && (!naPlotLocation || !naPlotMV || !naPlotDastavej || !naPlotVAR || !naPlotScheme || !naPlotLavani)) return false;
       return !!propertyLoanType;
     }
     if (loanType === "Balance Transfer") {
-      return !!btBankName && !!btRateOfInterest && !!btPropertyType && !!btMarketValue && !!btLocation;
+      return !!btBankName && !!btRateOfInterest && !!btPropertyType && !!btMarketValue && !!btLocation && !!btYear && !!btAmount && !!btOutstanding && !!btForeclosureCharge;
     }
     return true;
   };
@@ -182,7 +216,13 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
       setPropertyLoanType("");
       setPropertyLoanCategory("");
     }
-    if (typeId !== "Home Loan") setHomeLoanType("");
+    if (typeId !== "Property Purchase Loan") {
+      setPropertyPurchaseCategory("");
+      setPpLocation("");
+      setPpMarketRate("");
+      setPpDastavejRate("");
+      setPpDastavejName("");
+    }
     if (typeId !== "Business Loan") setBusinessLoanType("");
   };
 
@@ -315,19 +355,50 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
 
       // ── Step 1: Loan type ─────────────────────────────────────────────────
       formData.append("loanType", loanType);
-      if (homeLoanType) formData.append("homeLoanType", homeLoanType);
+      if (propertyPurchaseCategory) formData.append("propertyPurchaseCategory", propertyPurchaseCategory);
+      if (ppLocation) formData.append("ppLocation", ppLocation);
+      if (ppMarketRate) formData.append("ppMarketRate", ppMarketRate);
+      if (ppDastavejRate) formData.append("ppDastavejRate", ppDastavejRate);
+      if (ppDastavejName) formData.append("ppDastavejName", ppDastavejName);
       if (propertyLoanCategory) formData.append("propertyLoanCategory", propertyLoanCategory);
       if (propertyLocation) formData.append("propertyLocation", propertyLocation);
       if (durationOfRentProperty) formData.append("durationOfRentProperty", durationOfRentProperty);
       if (lapPropertyType) formData.append("lapPropertyType", lapPropertyType);
       if (lapPropertyLocation) formData.append("lapPropertyLocation", lapPropertyLocation);
       if (lapPropertyMarketValue) formData.append("lapPropertyMarketValue", lapPropertyMarketValue);
+      if (unsoldUnit) formData.append("unsoldUnit", unsoldUnit);
+      if (unsoldMV) formData.append("unsoldMV", unsoldMV);
+      formData.append("unsoldYesNo", unsoldYesNo);
+      if (unsoldBV) formData.append("unsoldBV", unsoldBV);
+      if (unsoldScheme) formData.append("unsoldScheme", unsoldScheme);
+      if (unsoldLocation) formData.append("unsoldLocation", unsoldLocation);
+      if (unsoldFloor) formData.append("unsoldFloor", unsoldFloor);
+      if (unsoldDastavej) formData.append("unsoldDastavej", unsoldDastavej);
+      if (unsoldPartnership) formData.append("unsoldPartnership", unsoldPartnership);
+      if (lrdRent) formData.append("lrdRent", lrdRent);
+      if (lrdMarketValue) formData.append("lrdMarketValue", lrdMarketValue);
+      if (lrdLocation) formData.append("lrdLocation", lrdLocation);
+      if (lrdLoiYear) formData.append("lrdLoiYear", lrdLoiYear);
+      if (lrdSchemeName) formData.append("lrdSchemeName", lrdSchemeName);
+      if (lrdDastavej) formData.append("lrdDastavej", lrdDastavej);
+      if (naPlotLocation) formData.append("naPlotLocation", naPlotLocation);
+      if (naPlotMV) formData.append("naPlotMV", naPlotMV);
+      formData.append("naPlotYesNo", naPlotYesNo);
+      if (naPlotDastavej) formData.append("naPlotDastavej", naPlotDastavej);
+      if (naPlotVAR) formData.append("naPlotVAR", naPlotVAR);
+      if (naPlotScheme) formData.append("naPlotScheme", naPlotScheme);
+      if (naPlotLavani) formData.append("naPlotLavani", naPlotLavani);
+      formData.append("naPlotVacant", naPlotVacant);
       if (businessLoanType) formData.append("businessLoanType", businessLoanType);
       if (btBankName) formData.append("btBankName", btBankName);
       if (btRateOfInterest) formData.append("btRateOfInterest", btRateOfInterest);
       if (btPropertyType) formData.append("btPropertyType", btPropertyType);
       if (btMarketValue) formData.append("btMarketValue", btMarketValue);
       if (btLocation) formData.append("btLocation", btLocation);
+      if (btYear) formData.append("btYear", btYear);
+      if (btAmount) formData.append("btAmount", btAmount);
+      if (btOutstanding) formData.append("btOutstanding", btOutstanding);
+      if (btForeclosureCharge) formData.append("btForeclosureCharge", btForeclosureCharge);
       if (propertyLoanType) formData.append("propertyLoanType", propertyLoanType);
 
       // ── Step 2: Eligibility ───────────────────────────────────────────────
@@ -591,18 +662,43 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
 
                   {/* Dynamic UI based on Loan Type */}
                   <AnimatePresence>
-                    {/* HOME LOAN UI */}
-                    {loanType === "Home Loan" && (
+                    {/* PROPERTY PURCHASE LOAN UI */}
+                    {loanType === "Property Purchase Loan" && (
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-6 overflow-hidden">
                         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-                          <h4 className="text-base font-black text-[#0a2540] border-b pb-3 border-slate-100">Home Loan Requirement</h4>
-                          <div>
-                            <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Home Loan Type *</label>
-                            <select value={homeLoanType} onChange={(e) => setHomeLoanType(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all">
-                              <option value="">Select Category</option>
-                              <option value="Home Purchase">Home Purchase</option>
-                              <option value="Existing Home">Existing Home</option>
-                            </select>
+                          <h4 className="text-base font-black text-[#0a2540] border-b pb-3 border-slate-100">Property Purchase Details</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                            <div className="md:col-span-2">
+                              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Type of Category *</label>
+                              <select value={propertyPurchaseCategory} onChange={(e) => setPropertyPurchaseCategory(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all">
+                                <option value="">Select Category</option>
+                                <option value="Home">Home</option>
+                                <option value="NA Plot">NA Plot</option>
+                                <option value="Commercial">Commercial</option>
+                                <option value="Residential">Residential</option>
+                                <option value="Industrial">Industrial</option>
+                              </select>
+                            </div>
+                            {propertyPurchaseCategory && (
+                              <>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Location *</label>
+                                  <input type="text" placeholder="Enter location" value={ppLocation} onChange={(e) => setPpLocation(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Market Rate *</label>
+                                  <input type="number" placeholder="Enter market rate" value={ppMarketRate} onChange={(e) => setPpMarketRate(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" min="0" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Dastavej Rate *</label>
+                                  <input type="number" placeholder="Enter dastavej rate" value={ppDastavejRate} onChange={(e) => setPpDastavejRate(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" min="0" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Dastavej Name *</label>
+                                  <input type="text" placeholder="Enter dastavej name" value={ppDastavejName} onChange={(e) => setPpDastavejName(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                              </>
+                            )}
                           </div>
                         </div>
                       </motion.div>
@@ -632,7 +728,28 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                             </div>
                             <div className="md:col-span-2">
                               <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Location *</label>
-                              <input type="text" placeholder="Enter location" value={btLocation} onChange={(e) => setBtLocation(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                              <input type="text" placeholder="Enter Location" value={btLocation} onChange={(e) => setBtLocation(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                            </div>
+                            <div>
+                              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Year *</label>
+                              <select value={btYear} onChange={(e) => setBtYear(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all">
+                                <option value="">Select Year</option>
+                                <option value="T1">T1</option>
+                                <option value="T2">T2</option>
+                                <option value="T3">T3</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Amount *</label>
+                              <input type="number" placeholder="Enter amount" value={btAmount} onChange={(e) => setBtAmount(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                            </div>
+                            <div>
+                              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Outstanding *</label>
+                              <input type="number" placeholder="Enter outstanding" value={btOutstanding} onChange={(e) => setBtOutstanding(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                            </div>
+                            <div>
+                              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Foreclosure Charge *</label>
+                              <input type="number" placeholder="Enter foreclosure charge" value={btForeclosureCharge} onChange={(e) => setBtForeclosureCharge(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
                             </div>
                           </div>
                         </div>
@@ -654,10 +771,13 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                                 <option value="Plot Loan">Plot Loan</option>
                                 <option value="Lease Rental Discounting">Lease Rental Discounting</option>
                                 <option value="LAP">LAP</option>
+                                <option value="Unsold">Unsold</option>
+                                <option value="LRD">LRD</option>
+                                <option value="NA Plot">NA Plot</option>
                               </select>
                             </div>
                             
-                            {propertyLoanCategory && propertyLoanCategory !== "LAP" && (
+                            {propertyLoanCategory && ["Working Capital", "Plot Loan", "Lease Rental Discounting"].includes(propertyLoanCategory) && (
                               <>
                                 <div>
                                   <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Property Location *</label>
@@ -693,6 +813,113 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                                     </div>
                                   </>
                                 )}
+                              </>
+                            )}
+
+                            {propertyLoanCategory === "Unsold" && (
+                              <>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Unit *</label>
+                                  <input type="text" placeholder="Enter unit" value={unsoldUnit} onChange={(e) => setUnsoldUnit(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">M.V *</label>
+                                  <input type="number" placeholder="Enter M.V" value={unsoldMV} onChange={(e) => setUnsoldMV(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" min="0" />
+                                </div>
+                                <div className="flex items-center gap-2 mt-7">
+                                  <input type="checkbox" id="unsoldYesNoModal" checked={unsoldYesNo} onChange={(e) => setUnsoldYesNo(e.target.checked)} className="w-4 h-4 text-[#0a2540] bg-slate-100 border-slate-300 rounded focus:ring-[#0a2540] focus:ring-2" />
+                                  <label htmlFor="unsoldYesNoModal" className="text-[13px] font-semibold text-slate-700">Yes / No</label>
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">B.V *</label>
+                                  <input type="number" placeholder="Enter B.V" value={unsoldBV} onChange={(e) => setUnsoldBV(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" min="0" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Scheme *</label>
+                                  <input type="text" placeholder="Enter scheme" value={unsoldScheme} onChange={(e) => setUnsoldScheme(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Location *</label>
+                                  <input type="text" placeholder="Enter location" value={unsoldLocation} onChange={(e) => setUnsoldLocation(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Floor *</label>
+                                  <input type="text" placeholder="Enter floor" value={unsoldFloor} onChange={(e) => setUnsoldFloor(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Dastavej *</label>
+                                  <input type="text" placeholder="Enter dastavej" value={unsoldDastavej} onChange={(e) => setUnsoldDastavej(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Partnership *</label>
+                                  <input type="text" placeholder="Enter partnership" value={unsoldPartnership} onChange={(e) => setUnsoldPartnership(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                              </>
+                            )}
+
+                            {propertyLoanCategory === "LRD" && (
+                              <>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Rent *</label>
+                                  <input type="number" placeholder="Enter rent" value={lrdRent} onChange={(e) => setLrdRent(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" min="0" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Market Value *</label>
+                                  <input type="number" placeholder="Enter market value" value={lrdMarketValue} onChange={(e) => setLrdMarketValue(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" min="0" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Location *</label>
+                                  <input type="text" placeholder="Enter location" value={lrdLocation} onChange={(e) => setLrdLocation(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">LOI Year *</label>
+                                  <input type="text" placeholder="Enter LOI year" value={lrdLoiYear} onChange={(e) => setLrdLoiYear(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Scheme Name *</label>
+                                  <input type="text" placeholder="Enter scheme name" value={lrdSchemeName} onChange={(e) => setLrdSchemeName(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Dastavej *</label>
+                                  <input type="text" placeholder="Enter dastavej" value={lrdDastavej} onChange={(e) => setLrdDastavej(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                              </>
+                            )}
+
+                            {propertyLoanCategory === "NA Plot" && (
+                              <>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Location *</label>
+                                  <input type="text" placeholder="Enter location" value={naPlotLocation} onChange={(e) => setNaPlotLocation(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">M.V *</label>
+                                  <input type="number" placeholder="Enter M.V" value={naPlotMV} onChange={(e) => setNaPlotMV(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" min="0" />
+                                </div>
+                                <div className="flex items-center gap-2 mt-7">
+                                  <input type="checkbox" id="naPlotYesNoModal" checked={naPlotYesNo} onChange={(e) => setNaPlotYesNo(e.target.checked)} className="w-4 h-4 text-[#0a2540] bg-slate-100 border-slate-300 rounded focus:ring-[#0a2540] focus:ring-2" />
+                                  <label htmlFor="naPlotYesNoModal" className="text-[13px] font-semibold text-slate-700">Yes / No</label>
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Dastavej *</label>
+                                  <input type="text" placeholder="Enter dastavej" value={naPlotDastavej} onChange={(e) => setNaPlotDastavej(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">VAR *</label>
+                                  <input type="text" placeholder="Enter VAR" value={naPlotVAR} onChange={(e) => setNaPlotVAR(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Scheme *</label>
+                                  <input type="text" placeholder="Enter scheme" value={naPlotScheme} onChange={(e) => setNaPlotScheme(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Lavani *</label>
+                                  <input type="text" placeholder="Enter lavani" value={naPlotLavani} onChange={(e) => setNaPlotLavani(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0a2540]/20 focus:bg-white transition-all" />
+                                </div>
+                                <div className="flex items-center gap-2 mt-7">
+                                  <input type="checkbox" id="naPlotVacantModal" checked={naPlotVacant} onChange={(e) => setNaPlotVacant(e.target.checked)} className="w-4 h-4 text-[#0a2540] bg-slate-100 border-slate-300 rounded focus:ring-[#0a2540] focus:ring-2" />
+                                  <label htmlFor="naPlotVacantModal" className="text-[13px] font-semibold text-slate-700">Plot Vacant — Yes / No</label>
+                                </div>
                               </>
                             )}
                           </div>

@@ -1,5 +1,4 @@
 import { io } from "socket.io-client";
-
 // URL Options:
 // const BACKEND_URL = "http://localhost:5000";
 // const BACKEND_URL = "http://192.168.1.21:5000";

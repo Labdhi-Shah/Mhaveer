@@ -12,6 +12,7 @@ import AttendanceView from "./components/AttendanceView";
 import ProfileView from "./components/ProfileView";
 import EmployeeManagementView from "./components/EmployeeManagementView";
 import DepartmentRoleDashboard from "./components/DepartmentRoleDashboard";
+import DocumentsView from "./components/DocumentsView";
 import { getDepartmentRoute, getUserDepartment, getUserRole } from "./utils/hierarchy";
 
 const ProtectedRoute = ({ children }) => {
@@ -137,6 +138,15 @@ export default function App() {
               element={
                 <DepartmentRoleProtectedRoute allowedRoles={["Manager"]}>
                   <TeamPerformanceView />
+                </DepartmentRoleProtectedRoute>
+              }
+            />
+
+            <Route
+              path="documents"
+              element={
+                <DepartmentRoleProtectedRoute allowedRoles={["Manager"]}>
+                  <DocumentsView />
                 </DepartmentRoleProtectedRoute>
               }
             />

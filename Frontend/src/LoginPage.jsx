@@ -85,7 +85,7 @@ function Login() {
       <div
         style={{
           width: "100%",
-          maxWidth: "380px",
+          maxWidth: "340px",
           background: "#fff",
           borderRadius: "16px",
           boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
@@ -95,9 +95,9 @@ function Login() {
         {/* Top Golden Border */}
         <div style={{ height: "6px", background: "#d4af37" }}></div>
 
-        <div style={{ padding: "40px 30px" }}>
+        <div style={{ padding: "32px 24px" }}>
           {/* Logo Area */}
-          <div style={{ textAlign: "center", marginBottom: "35px" }}>
+          <div style={{ textAlign: "center", marginBottom: "24px" }}>
             <div style={{ marginBottom: "15px", display: "flex", justifyContent: "center" }}>
               <img
                 src={logoSvg}
@@ -144,7 +144,7 @@ function Login() {
 
           <form onSubmit={handleLogin}>
             {/* Email Field */}
-            <div style={{ marginBottom: "20px" }}>
+            <div style={{ marginBottom: "16px" }}>
               <label
                 style={{
                   display: "block",
@@ -206,7 +206,7 @@ function Login() {
             </div>
 
             {/* Forgot Password */}
-            <div style={{ textAlign: "right", marginBottom: "25px" }}>
+            <div style={{ textAlign: "right", marginBottom: "20px" }}>
               <a
                 href="#"
                 style={{

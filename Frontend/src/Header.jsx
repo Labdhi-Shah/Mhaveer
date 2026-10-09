@@ -142,7 +142,7 @@ export default function Header({ onToggleSidebar }) {
         mobileLabel: `Done (${elapsed})`,
         icon: <CheckCircle size={16} />,
         color: "text-slate-400",
-        bg: "bg-slate-800/40 border-slate-700",
+        bg: "bg-transparent border-slate-700",
         showPulse: false
       };
     }
@@ -151,7 +151,7 @@ export default function Header({ onToggleSidebar }) {
   const widgetProps = getTimerWidgetProps();
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-[#162335] text-white border-b-2 border-[#9ca3af] z-50 flex items-center justify-between px-4 md:px-6 shadow-md select-none">
+    <header className="fixed top-0 left-0 right-0 h-16 bg-[#162335] text-white border-b-2 border-[#FFFFFF] z-50 flex items-center justify-between px-4 md:px-6 shadow-md select-none">
       {/* LEFT SECTION */}
       <div className="flex items-center gap-3">
         <button
@@ -179,7 +179,7 @@ export default function Header({ onToggleSidebar }) {
         </div>
 
         {/* Page Title */}
-        <div className="h-6 w-px bg-slate-700 mx-2 hidden md:block" />
+        <div className="h-6 w-px bg-[#FFFFFF] mx-2 hidden md:block" />
         <span className="font-extrabold text-xs text-slate-300 tracking-wider uppercase whitespace-nowrap hidden md:block">
           {getPageTitle()}
         </span>
@@ -200,10 +200,10 @@ export default function Header({ onToggleSidebar }) {
         )}
         <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#9ca3af] rounded-lg transition relative hidden sm:block" title="Notifications">
           <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#9ca3af] rounded-full" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FFFFFF] rounded-full" />
         </button>
 
-        <div className="h-6 w-px bg-slate-700" />
+        <div className="h-6 w-px bg-[#FFFFFF]" />
 
         {/* Profile Dropdown Container */}
         <div className="relative" ref={dropdownRef}>
@@ -211,7 +211,7 @@ export default function Header({ onToggleSidebar }) {
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-800/80 transition cursor-pointer"
           >
-            <div className="w-9 h-9 rounded-xl bg-[#9ca3af] text-[#162335] flex items-center justify-center font-black text-xs shadow-md">
+            <div className="w-9 h-9 rounded-xl bg-[#FFFFFF] text-[#162335] flex items-center justify-center font-black text-xs shadow-md">
               {initials}
             </div>
             <ChevronDown size={14} className={`text-slate-300 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />

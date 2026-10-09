@@ -913,7 +913,7 @@ export default function NewLeadView() {
             {errors.address && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.address.message}</p>}
           </div>
 
-          <button type="submit" disabled={loading} className="w-full bg-[#9ca3af] hover:bg-[#c39e2d] text-[#162335] font-bold py-4 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 text-sm uppercase tracking-widest disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 mt-4">
+          <button type="submit" disabled={loading} className="w-full bg-[#162335] hover:opacity-90 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 text-sm uppercase tracking-widest disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 mt-4">
             {loading ? "Processing..." : "Submit New Lead"}
           </button>
         </form>

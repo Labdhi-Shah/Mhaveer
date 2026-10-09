@@ -19,7 +19,6 @@ const leadSchema = new mongoose.Schema(
     phoneNumber: {
       type: String,
       required: [true, "Phone Number is required"],
-      match: [/^[6-9]\d{9}$/, "Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9"],
     },
     city: {
       type: String,
@@ -31,11 +30,9 @@ const leadSchema = new mongoose.Schema(
     },
     companyTurnover: {
       type: Number,
-      required: [true, "Company Turnover is required"],
     },
     loanAmount: {
       type: Number,
-      required: [true, "Loan Amount is required"],
     },
     loanType: {
       type: String,
@@ -43,18 +40,9 @@ const leadSchema = new mongoose.Schema(
     },
     propertyLoanCategory: {
       type: String,
-      required: [
-        function() {
-          return this.loanType === "Property Loan";
-        },
-        "Property Loan Category is required when Loan Type is Property Loan"
-      ]
     },
     cibilScore: {
       type: Number,
-      required: [true, "CIBIL Score is required"],
-      min: [700, "CIBIL Score must be at least 700"],
-      max: [900, "CIBIL Score cannot exceed 900"],
     },
     interested: {
       type: String,
@@ -127,6 +115,7 @@ const leadSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    strict: false
   }
 );
 

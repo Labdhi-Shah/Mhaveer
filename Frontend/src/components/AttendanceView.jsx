@@ -36,7 +36,7 @@ export default function AttendanceView() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const [selectedRecord, setSelectedRecord] = useState(null);
+
   const [leaveCounts, setLeaveCounts] = useState({});
 
   const processRecord = (r) => {
@@ -505,7 +505,7 @@ export default function AttendanceView() {
               ) : (
                 records.map((r, i) => {
                   return (
-                    <tr key={i} className="hover:bg-slate-50/50 transition-colors group cursor-pointer" onClick={() => setSelectedRecord(r)}>
+                    <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="py-4 px-6 text-sm font-bold text-[#162335]">{formatDate(r.date)}</td>
                       {["SuperAdmin", "Admin", "Administration (Admin)", "Manager", "Team Leader"].includes(user?.role) && (
                         <td className="py-4 px-6 text-sm font-semibold text-slate-600">{r.employeeName}</td>
@@ -548,61 +548,7 @@ export default function AttendanceView() {
         )}
       </div>
 
-      {/* VIEW MODAL */}
-      <AnimatePresence>
-        {selectedRecord && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setSelectedRecord(null)}
-              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-3xl shadow-2xl z-50 overflow-hidden"
-            >
-              <div className="bg-[#162335] p-6 relative">
-                <button onClick={() => setSelectedRecord(null)} className="absolute top-4 right-4 text-white/50 hover:text-white transition">
-                  <X size={20} />
-                </button>
-                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-[#9ca3af] mb-4">
-                  <User size={24} />
-                </div>
-                <h3 className="text-xl font-black text-white">{selectedRecord.employeeName}</h3>
-                <p className="text-xs font-bold text-[#9ca3af] uppercase tracking-widest mt-1">
-                  ID: {selectedRecord.employeeId?.toString().substring(0, 8) || "N/A"}
-                </p>
-              </div>
 
-              <div className="p-6 space-y-4">
-                <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Date</span>
-                  <span className="text-sm font-black text-[#162335]">{formatDate(selectedRecord.date)}</span>
-                </div>
-
-                <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Start Time</span>
-                  <span className="text-sm font-bold text-emerald-600">{formatTime(selectedRecord.loginTime)}</span>
-                </div>
-
-                <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">End Time</span>
-                  <span className="text-sm font-bold text-rose-500">{formatTime(selectedRecord.logoutTime)}</span>
-                </div>
-
-                <div className="flex justify-between items-center pt-2">
-                  <span className="text-xs font-black text-[#162335] uppercase tracking-widest">Total Leave</span>
-                  <span className="text-xl font-black text-[#162335]">{leaveCounts[selectedRecord.employeeId] || 0} Day(s)</span>
-                </div>
-
-                <div className="mt-6 flex justify-end">
-                  {getStatusBadge(selectedRecord.status)}
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
         </>
       ) : (
         <LeaveManagement />

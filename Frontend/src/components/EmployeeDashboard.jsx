@@ -79,10 +79,12 @@ export default function EmployeeDashboard() {
   };
 
   // Fetch Dashboard Stats and Recent Leads
-  const fetchData = async () => {
+  const fetchData = async (showLoading = true) => {
     try {
-      setStatsLoading(true);
-      setRecentLoading(true);
+      if (showLoading) {
+        setStatsLoading(true);
+        setRecentLoading(true);
+      }
 
       const [statsRes, leadsRes] = await Promise.all([
         api.get("/leads/stats"),
@@ -106,8 +108,10 @@ export default function EmployeeDashboard() {
       console.error("Error fetching dashboard data:", error);
       showToast(error.response?.data?.message || "Failed to load dashboard data.", "error");
     } finally {
-      setStatsLoading(false);
-      setRecentLoading(false);
+      if (showLoading) {
+        setStatsLoading(false);
+        setRecentLoading(false);
+      }
     }
   };
 
@@ -119,7 +123,7 @@ export default function EmployeeDashboard() {
     }
     
     const handleUpdate = () => {
-      fetchData();
+      fetchData(false);
     };
     
     socket.on("data-updated", handleUpdate);

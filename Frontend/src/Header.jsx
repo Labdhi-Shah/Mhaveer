@@ -103,7 +103,7 @@ export default function Header({ onToggleSidebar }) {
       if (attendance && attendance.status !== "Completed" && attendance.status !== "Not Started") {
         await api.post("/attendance/stop");
       }
-      
+
       if (user && (user.id || user._id)) {
         const employeeId = user.id || user._id;
         await api.post("/auth/logout", { employeeId });
@@ -202,6 +202,76 @@ export default function Header({ onToggleSidebar }) {
           <Bell size={18} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FFFFFF] rounded-full" />
         </button>
+
+
+        {/* Notifications Dropdown */}
+        <div className="relative" ref={notifRef}>
+          <button
+            className="p-1.5 sm:p-2 text-slate-300 hover:text-[#9ca3af] rounded-lg transition relative hidden sm:block cursor-pointer"
+            title="Notifications"
+            onClick={() => setNotificationsOpen(!notificationsOpen)}
+          >
+            <Bell size={18} />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-rose-500 rounded-full text-[8px] font-bold text-white flex items-center justify-center border-2 border-[#162335]">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {notificationsOpen && (
+            <div className="absolute right-0 mt-2.5 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 text-slate-700 overflow-hidden z-50 flex flex-col max-h-[400px]">
+              <div className="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                <h3 className="text-xs font-black text-[#162335]">Notifications</h3>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-[10px] font-bold text-[#9ca3af] hover:text-[#162335] transition flex items-center gap-1 cursor-pointer"
+                  >
+                    <Check size={12} /> Mark all read
+                  </button>
+                )}
+              </div>
+              <div className="overflow-y-auto p-2 space-y-1">
+                {notifications.length === 0 ? (
+                  <p className="text-xs text-slate-400 text-center py-4 font-bold">No notifications</p>
+                ) : (
+                  notifications.map((notif) => (
+                    <div
+                      key={notif._id}
+                      className={`p-3 rounded-xl flex items-start gap-3 transition ${notif.isRead ? 'bg-white opacity-70' : 'bg-[#9ca3af]/10'}`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs font-bold truncate ${notif.isRead ? 'text-slate-600' : 'text-[#162335]'}`}>
+                          {notif.title}
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">
+                          {notif.message}
+                        </p>
+                        <p className="text-[9px] font-mono text-slate-400 mt-1.5">
+                          {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
+                        </p>
+                      </div>
+                      {!notif.isRead && (
+                        <button
+                          onClick={() => markAsRead(notif._id)}
+                          className="text-[#9ca3af] hover:text-emerald-500 transition cursor-pointer p-1"
+                          title="Mark as read"
+                        >
+                          <CheckCircle size={14} />
+                        </button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+        <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#9ca3af] rounded-lg transition relative hidden sm:block" title="Notifications">
+          <Bell size={18} />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FFFFFF] rounded-full" />
+        </button>
         <div className="h-6 w-px bg-[#FFFFFF]" />
 
         {/* Profile Dropdown Container */}
@@ -262,7 +332,7 @@ export default function Header({ onToggleSidebar }) {
             </div>
           )}
         </div>
-      </div>
-    </header>
+      </div >
+    </header >
   );
 }

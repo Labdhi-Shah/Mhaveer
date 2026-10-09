@@ -3,6 +3,7 @@ const Employee = require("../models/Employee");
 const Meeting = require("../models/Meeting");
 const { assignMeetingToSalesEmployee } = require("../services/salesAssignmentService");
 const { getIO } = require("../services/websocket");
+const { createNotification } = require("../utils/notificationHelper");
 
 // @desc    Create a new lead
 // @route   POST /api/leads
@@ -75,6 +76,16 @@ exports.createLead = async (req, res) => {
     try {
       getIO().emit("data-updated");
     } catch (err) {}
+
+    if (managerId) {
+      await createNotification({
+        isForManager: true,
+        title: "New Lead Added",
+        message: `${employeeName} added a new lead: ${lead.companyName}`,
+        type: "NEW_LEAD",
+        relatedId: lead._id
+      });
+    }
 
     res.status(201).json({
       success: true,

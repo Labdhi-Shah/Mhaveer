@@ -53,12 +53,12 @@ exports.createEmployee = async (req, res) => {
 
     // Auto-generate official login email based on first name
     const firstName = empName.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-    let generatedEmail = `${firstName}@mhaveer.com`;
+    let generatedEmail = `${firstName}@nobalfinance.com`;
     let emailExists = await Employee.findOne({ officialEmail: generatedEmail });
     let counter = 1;
 
     while (emailExists) {
-      generatedEmail = `${firstName}${counter}@mhaveer.com`;
+      generatedEmail = `${firstName}${counter}@nobalfinance.com`;
       emailExists = await Employee.findOne({ officialEmail: generatedEmail });
       counter++;
     }

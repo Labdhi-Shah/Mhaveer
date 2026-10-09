@@ -788,8 +788,7 @@ export default function MyLeadsView() {
                       <option value="Commercial Loan">Commercial Loan</option>
                       <option value="Industrial Loan">Industrial Loan</option>
                       <option value="Residential Loan">Residential Loan</option>
-                      <option value="Plot Loan">Plot Loan</option>
-                    </select>
+                      </select>
                   </div>
                 )}
 

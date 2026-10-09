@@ -57,6 +57,8 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
   const [lapPropertyType, setLapPropertyType] = useState("");
   const [lapPropertyLocation, setLapPropertyLocation] = useState("");
   const [lapPropertyMarketValue, setLapPropertyMarketValue] = useState("");
+    const [lapPropertyWork, setLapPropertyWork] = useState("");
+    const [lapPropertyDocumentList, setLapPropertyDocumentList] = useState("");
   const [unsoldUnit, setUnsoldUnit] = useState("");
   const [unsoldMV, setUnsoldMV] = useState("");
   const [unsoldYesNo, setUnsoldYesNo] = useState(false);
@@ -86,8 +88,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
   const [btPropertyType, setBtPropertyType] = useState("");
   const [btMarketValue, setBtMarketValue] = useState("");
   const [btLocation, setBtLocation] = useState("");
-  const [btYear, setBtYear] = useState("");
-  const [btAmount, setBtAmount] = useState("");
+  const [btDuration, setBtDuration] = useState("");
   const [btOutstanding, setBtOutstanding] = useState("");
   const [btForeclosureCharge, setBtForeclosureCharge] = useState("");
   const [propertyLoanType, setPropertyLoanType] = useState("");
@@ -148,15 +149,15 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
     if (loanType === "Business Loan") return !!businessLoanType && !!businessType;
     if (loanType === "Property Loan") {
       if (!propertyLoanCategory) return false;
-      if (["Working Capital", "Plot Loan", "Lease Rental Discounting"].includes(propertyLoanCategory) && (!propertyLocation || !durationOfRentProperty)) return false;
-      if (propertyLoanCategory === "LAP" && (!lapPropertyType || !lapPropertyLocation || !lapPropertyMarketValue)) return false;
+      if (["Working Capital"].includes(propertyLoanCategory) && (!propertyLocation || !durationOfRentProperty)) return false;
+      if (propertyLoanCategory === "LAP" && (!lapPropertyType || !lapPropertyLocation || !lapPropertyMarketValue || !lapPropertyWork || !lapPropertyDocumentList)) return false;
       if (propertyLoanCategory === "Unsold" && (!unsoldUnit || !unsoldMV || !unsoldBV || !unsoldScheme || !unsoldLocation || !unsoldFloor || !unsoldDastavej || !unsoldPartnership)) return false;
       if (propertyLoanCategory === "LRD" && (!lrdRent || !lrdMarketValue || !lrdLocation || !lrdLoiYear || !lrdSchemeName || !lrdDastavej)) return false;
       if (propertyLoanCategory === "NA Plot" && (!naPlotLocation || !naPlotMV || !naPlotDastavej || !naPlotVAR || !naPlotScheme || !naPlotLavani)) return false;
       return !!propertyLoanType;
     }
     if (loanType === "Balance Transfer") {
-      return !!btBankName && !!btRateOfInterest && !!btPropertyType && !!btMarketValue && !!btLocation && !!btYear && !!btAmount && !!btOutstanding && !!btForeclosureCharge;
+      return !!btBankName && !!btRateOfInterest && !!btPropertyType && !!btMarketValue && !!btLocation && !!btDuration && !!btOutstanding && !!btForeclosureCharge;
     }
     return true;
   };
@@ -366,6 +367,8 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
       if (lapPropertyType) formData.append("lapPropertyType", lapPropertyType);
       if (lapPropertyLocation) formData.append("lapPropertyLocation", lapPropertyLocation);
       if (lapPropertyMarketValue) formData.append("lapPropertyMarketValue", lapPropertyMarketValue);
+        if (lapPropertyWork) formData.append("lapPropertyWork", lapPropertyWork);
+        if (lapPropertyDocumentList) formData.append("lapPropertyDocumentList", lapPropertyDocumentList);
       if (unsoldUnit) formData.append("unsoldUnit", unsoldUnit);
       if (unsoldMV) formData.append("unsoldMV", unsoldMV);
       formData.append("unsoldYesNo", unsoldYesNo);
@@ -395,8 +398,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
       if (btPropertyType) formData.append("btPropertyType", btPropertyType);
       if (btMarketValue) formData.append("btMarketValue", btMarketValue);
       if (btLocation) formData.append("btLocation", btLocation);
-      if (btYear) formData.append("btYear", btYear);
-      if (btAmount) formData.append("btAmount", btAmount);
+      if (btDuration) formData.append("btDuration", btDuration);
       if (btOutstanding) formData.append("btOutstanding", btOutstanding);
       if (btForeclosureCharge) formData.append("btForeclosureCharge", btForeclosureCharge);
       if (propertyLoanType) formData.append("propertyLoanType", propertyLoanType);
@@ -682,7 +684,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                             {propertyPurchaseCategory && (
                               <>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Location</label>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Property of Location</label>
                                   <input type="text" placeholder="Enter location" value={ppLocation} onChange={(e) => setPpLocation(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                                 <div>
@@ -690,11 +692,11 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                                   <input type="number" placeholder="Enter market rate" value={ppMarketRate} onChange={(e) => setPpMarketRate(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" min="0" />
                                 </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Dastavej Rate</label>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Document List Rate</label>
                                   <input type="number" placeholder="Enter dastavej rate" value={ppDastavejRate} onChange={(e) => setPpDastavejRate(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" min="0" />
                                 </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Dastavej Name</label>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Document List Name</label>
                                   <input type="text" placeholder="Enter dastavej name" value={ppDastavejName} onChange={(e) => setPpDastavejName(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                               </>
@@ -727,22 +729,14 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                               <input type="number" placeholder="Enter market value" value={btMarketValue} onChange={(e) => setBtMarketValue(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                             </div>
                             <div className="md:col-span-2">
-                              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Location</label>
+                              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Property of Location</label>
                               <input type="text" placeholder="Enter Location" value={btLocation} onChange={(e) => setBtLocation(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                             </div>
                             <div>
-                              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Year</label>
-                              <select value={btYear} onChange={(e) => setBtYear(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all">
-                                <option value="">Select Year</option>
-                                <option value="T1">T1</option>
-                                <option value="T2">T2</option>
-                                <option value="T3">T3</option>
-                              </select>
+                              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Duration</label>
+                              <input type="text" placeholder="Enter duration" value={btDuration} onChange={(e) => setBtDuration(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                             </div>
-                            <div>
-                              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Amount</label>
-                              <input type="number" placeholder="Enter amount" value={btAmount} onChange={(e) => setBtAmount(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
-                            </div>
+                            
                             <div>
                               <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Outstanding</label>
                               <input type="number" placeholder="Enter outstanding" value={btOutstanding} onChange={(e) => setBtOutstanding(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
@@ -768,8 +762,6 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                               <select value={propertyLoanCategory} onChange={(e) => setPropertyLoanCategory(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all">
                                 <option value="">Select Category</option>
                                 <option value="Working Capital">Working Capital</option>
-                                <option value="Plot Loan">Plot Loan</option>
-                                <option value="Lease Rental Discounting">Lease Rental Discounting</option>
                                 <option value="LAP">LAP</option>
                                 <option value="Unsold">Unsold</option>
                                 <option value="LRD">LRD</option>
@@ -777,7 +769,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                               </select>
                             </div>
                             
-                            {propertyLoanCategory && ["Working Capital", "Plot Loan", "Lease Rental Discounting"].includes(propertyLoanCategory) && (
+                            {propertyLoanCategory && ["Working Capital"].includes(propertyLoanCategory) && (
                               <>
                                 <div>
                                   <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Property Location</label>
@@ -811,6 +803,14 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                                       <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Property Market Value</label>
                                       <input type="number" placeholder="Enter market value" value={lapPropertyMarketValue} onChange={(e) => setLapPropertyMarketValue(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                     </div>
+                                      <div>
+                                        <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Work</label>
+                                        <input type="text" placeholder="Enter work" value={lapPropertyWork} onChange={(e) => setLapPropertyWork(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
+                                      </div>
+                                      <div>
+                                        <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Document List</label>
+                                        <input type="text" placeholder="Enter document list" value={lapPropertyDocumentList} onChange={(e) => setLapPropertyDocumentList(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
+                                      </div>
                                   </>
                                 )}
                               </>
@@ -823,23 +823,22 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                                   <input type="text" placeholder="Enter unit" value={unsoldUnit} onChange={(e) => setUnsoldUnit(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">M.V</label>
+                                  <label className="text-[13px] font-semibold text-slate-700 mb-1.5 block">Property Market Value</label>
                                   <input type="number" placeholder="Enter M.V" value={unsoldMV} onChange={(e) => setUnsoldMV(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" min="0" />
                                 </div>
-                                <div className="flex items-center gap-2 mt-7">
-                                  <input type="checkbox" id="unsoldYesNoModal" checked={unsoldYesNo} onChange={(e) => setUnsoldYesNo(e.target.checked)} className="w-4 h-4 text-[#162335] bg-slate-100 border-slate-300 rounded focus:ring-[#162335] focus:ring-2" />
-                                  <label htmlFor="unsoldYesNoModal" className="text-[13px] font-semibold text-slate-700">Yes / No</label>
-                                </div>
+                                <div className="hidden">
+                                    <input type="checkbox" id="unsoldYesNoModal" checked={unsoldYesNo} onChange={(e) => setUnsoldYesNo(e.target.checked)} />
+                                  </div>
                                 <div>
                                   <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">B.U</label>
                                   <input type="number" placeholder="Enter B.U" value={unsoldBV} onChange={(e) => setUnsoldBV(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" min="0" />
                                 </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Scheme</label>
+                                  <label className="text-[13px] font-semibold text-slate-700 mb-1.5 block">Scheme Name</label>
                                   <input type="text" placeholder="Enter scheme" value={unsoldScheme} onChange={(e) => setUnsoldScheme(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Location</label>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Property of Location</label>
                                   <input type="text" placeholder="Enter location" value={unsoldLocation} onChange={(e) => setUnsoldLocation(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                                 <div>
@@ -847,7 +846,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                                   <input type="text" placeholder="Enter floor" value={unsoldFloor} onChange={(e) => setUnsoldFloor(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Dastavej</label>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Document List</label>
                                   <input type="text" placeholder="Enter dastavej" value={unsoldDastavej} onChange={(e) => setUnsoldDastavej(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                                 <div>
@@ -868,7 +867,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                                   <input type="number" placeholder="Enter market value" value={lrdMarketValue} onChange={(e) => setLrdMarketValue(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" min="0" />
                                 </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Location</label>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Property of Location</label>
                                   <input type="text" placeholder="Enter location" value={lrdLocation} onChange={(e) => setLrdLocation(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                                 <div>
@@ -880,7 +879,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                                   <input type="text" placeholder="Enter scheme name" value={lrdSchemeName} onChange={(e) => setLrdSchemeName(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Dastavej</label>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Document List</label>
                                   <input type="text" placeholder="Enter dastavej" value={lrdDastavej} onChange={(e) => setLrdDastavej(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                               </>
@@ -889,19 +888,18 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                             {propertyLoanCategory === "NA Plot" && (
                               <>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Location</label>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Property of Location</label>
                                   <input type="text" placeholder="Enter location" value={naPlotLocation} onChange={(e) => setNaPlotLocation(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">M.V</label>
+                                  <label className="text-[13px] font-semibold text-slate-700 mb-1.5 block">Property Market Value</label>
                                   <input type="number" placeholder="Enter M.V" value={naPlotMV} onChange={(e) => setNaPlotMV(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" min="0" />
                                 </div>
-                                <div className="flex items-center gap-2 mt-7">
-                                  <input type="checkbox" id="naPlotYesNoModal" checked={naPlotYesNo} onChange={(e) => setNaPlotYesNo(e.target.checked)} className="w-4 h-4 text-[#162335] bg-slate-100 border-slate-300 rounded focus:ring-[#162335] focus:ring-2" />
-                                  <label htmlFor="naPlotYesNoModal" className="text-[13px] font-semibold text-slate-700">Yes / No</label>
-                                </div>
+                                <div className="hidden">
+                                    <input type="checkbox" id="naPlotYesNoModal" checked={naPlotYesNo} onChange={(e) => setNaPlotYesNo(e.target.checked)} />
+                                  </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Dastavej</label>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Document List</label>
                                   <input type="text" placeholder="Enter dastavej" value={naPlotDastavej} onChange={(e) => setNaPlotDastavej(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                                 <div>
@@ -909,17 +907,54 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                                   <input type="text" placeholder="Enter VAR" value={naPlotVAR} onChange={(e) => setNaPlotVAR(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Scheme</label>
+                                  <label className="text-[13px] font-semibold text-slate-700 mb-1.5 block">Scheme Name</label>
                                   <input type="text" placeholder="Enter scheme" value={naPlotScheme} onChange={(e) => setNaPlotScheme(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
+                                <div className="hidden">
+                                    <input type="text" value={naPlotLavani} onChange={(e) => setNaPlotLavani(e.target.value)} />
+                                  </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Lavani</label>
-                                  <input type="text" placeholder="Enter lavani" value={naPlotLavani} onChange={(e) => setNaPlotLavani(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
-                                </div>
-                                <div className="flex items-center gap-2 mt-7">
-                                  <input type="checkbox" id="naPlotVacantModal" checked={naPlotVacant} onChange={(e) => setNaPlotVacant(e.target.checked)} className="w-4 h-4 text-[#162335] bg-slate-100 border-slate-300 rounded focus:ring-[#162335] focus:ring-2" />
-                                  <label htmlFor="naPlotVacantModal" className="text-[13px] font-semibold text-slate-700">Plot Vacant — Yes / No</label>
-                                </div>
+                                    <label className="text-[13px] font-semibold text-slate-700 mb-1.5 block">Plot Vacant</label>
+                                    <div className="flex items-center gap-4 mt-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => setNaPlotVacant(true)}
+                                        className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
+                                          naPlotVacant === true
+                                            ? "border-[#162335] bg-[#162335]/5 text-[#162335]"
+                                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                                        }`}
+                                      >
+                                        Yes
+                                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                                          naPlotVacant === true
+                                            ? "border-[#162335] bg-[#162335]"
+                                            : "border-slate-300"
+                                        }`}>
+                                          {naPlotVacant === true && <CheckCircle size={14} className="text-white" />}
+                                        </div>
+                                      </button>
+                                      
+                                      <button
+                                        type="button"
+                                        onClick={() => setNaPlotVacant(false)}
+                                        className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
+                                          naPlotVacant === false
+                                            ? "border-[#162335] bg-[#162335]/5 text-[#162335]"
+                                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                                        }`}
+                                      >
+                                        No
+                                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                                          naPlotVacant === false
+                                            ? "border-[#162335] bg-[#162335]"
+                                            : "border-slate-300"
+                                        }`}>
+                                          {naPlotVacant === false && <CheckCircle size={14} className="text-white" />}
+                                        </div>
+                                      </button>
+                                    </div>
+                                  </div>
                               </>
                             )}
                           </div>
@@ -931,7 +966,6 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                                 <option value="">Select</option>
                                 <option value="Industrial Loan">Industrial</option>
                                 <option value="Commercial Loan">Commercial</option>
-                                <option value="Plot Loan">Plot</option>
                                 <option value="Residential Loan">Residential</option>
                               </select>
                             </div>

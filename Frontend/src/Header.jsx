@@ -3,7 +3,7 @@ import { Bell, Menu, ChevronDown, Clock, Circle, User, Key, LogOut, PauseCircle,
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import api from "./api";
-import logoSvg from "./assets/logo.png";
+import logoSvg from "./assets/new_logo.png";
 import { getUserRoleCategory } from "./utils/hierarchy";
 import io from "socket.io-client";
 import { formatDistanceToNow } from "date-fns";

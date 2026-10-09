@@ -7,7 +7,7 @@ const generatePassword = require("../utils/generatePassword");
 // @route   POST /api/employees
 exports.createEmployee = async (req, res) => {
   try {
-    const { fullName, name, personalEmail, phone, role, department, address, joiningDate, dateOfBirth, dob, managerId, teamLeaderId } = req.body;
+    const { fullName, name, personalEmail, phone, role, department, address, joiningDate, dateOfBirth, dob, managerId, teamLeaderId, aadhaarNumber, panNumber, fatherPhone, motherPhone, guardianPhone, bankName, ifscCode, accountNumber, accountHolderName } = req.body;
 
     const empName = fullName || name;
     const empDob = dateOfBirth || dob;
@@ -83,6 +83,15 @@ exports.createEmployee = async (req, res) => {
       role,
       department,
       address,
+      aadhaarNumber,
+      panNumber,
+      fatherPhone,
+      motherPhone,
+      guardianPhone,
+      bankName,
+      ifscCode,
+      accountNumber,
+      accountHolderName,
       joiningDate,
       dob: empDob,
       password: hashedPassword,
@@ -207,6 +216,15 @@ exports.getEmployeeById = async (req, res) => {
       role: employee.role,
       department: employee.department,
       address: employee.address,
+      aadhaarNumber: employee.aadhaarNumber,
+      panNumber: employee.panNumber,
+      fatherPhone: employee.fatherPhone,
+      motherPhone: employee.motherPhone,
+      guardianPhone: employee.guardianPhone,
+      bankName: employee.bankName,
+      ifscCode: employee.ifscCode,
+      accountNumber: employee.accountNumber,
+      accountHolderName: employee.accountHolderName,
       dob: employee.dob,
       dateOfBirth: employee.dob,
       joiningDate: employee.joiningDate,
@@ -225,7 +243,7 @@ exports.getEmployeeById = async (req, res) => {
 exports.updateEmployee = async (req, res) => {
   try {
     // Fields that are allowed to be updated
-    const { fullName, name, email, officialEmail, personalEmail, phone, role, department, address, joiningDate, dateOfBirth, dob, status, managerId, teamLeaderId } = req.body;
+    const { fullName, name, email, officialEmail, personalEmail, phone, role, department, address, joiningDate, dateOfBirth, dob, status, managerId, teamLeaderId, aadhaarNumber, panNumber, fatherPhone, motherPhone, guardianPhone, bankName, ifscCode, accountNumber, accountHolderName } = req.body;
 
     const empName = fullName || name;
     const empDob = dateOfBirth || dob;
@@ -259,6 +277,15 @@ exports.updateEmployee = async (req, res) => {
     if (role) employee.role = role;
     if (department !== undefined) employee.department = department;
     if (address !== undefined) employee.address = address;
+    if (aadhaarNumber !== undefined) employee.aadhaarNumber = aadhaarNumber;
+    if (panNumber !== undefined) employee.panNumber = panNumber;
+    if (fatherPhone !== undefined) employee.fatherPhone = fatherPhone;
+    if (motherPhone !== undefined) employee.motherPhone = motherPhone;
+    if (guardianPhone !== undefined) employee.guardianPhone = guardianPhone;
+    if (bankName !== undefined) employee.bankName = bankName;
+    if (ifscCode !== undefined) employee.ifscCode = ifscCode;
+    if (accountNumber !== undefined) employee.accountNumber = accountNumber;
+    if (accountHolderName !== undefined) employee.accountHolderName = accountHolderName;
     employee.joiningDate = joiningDate || employee.joiningDate;
     employee.dob = empDob || employee.dob;
     if (status) employee.status = status;

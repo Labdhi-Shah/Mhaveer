@@ -224,7 +224,6 @@ function Login() {
               </div>
             </div>
 
-            {/* Forgot Password */}
             <div style={{ textAlign: "right", marginBottom: "20px" }}>
               <a
                 href="#"

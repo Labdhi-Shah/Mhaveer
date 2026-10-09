@@ -69,7 +69,7 @@ export default function Header({ onToggleSidebar }) {
   const markAsRead = async (id) => {
     try {
       await api.patch(`/notifications/${id}/read`);
-      setNotifications(notifications.map(n => n._id === id ? { ...n, isRead: true } : n));
+      setNotifications(notifications.map(n => n._id === id ? { ...n, read: true } : n));
     } catch (err) {
       console.error("Failed to mark as read", err);
     }
@@ -78,13 +78,13 @@ export default function Header({ onToggleSidebar }) {
   const markAllAsRead = async () => {
     try {
       await api.patch("/notifications/read-all");
-      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+      setNotifications(notifications.map(n => ({ ...n, read: true })));
     } catch (err) {
       console.error("Failed to mark all as read", err);
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   // Format Page Title
   const getPageTitle = () => {
@@ -264,11 +264,6 @@ export default function Header({ onToggleSidebar }) {
             )}
           </div>
         )}
-        <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#9ca3af] rounded-lg transition relative hidden sm:block" title="Notifications">
-          <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FFFFFF] rounded-full" />
-        </button>
-
 
         {/* Notifications Dropdown */}
         <div className="relative" ref={notifRef}>
@@ -305,10 +300,10 @@ export default function Header({ onToggleSidebar }) {
                   notifications.map((notif) => (
                     <div
                       key={notif._id}
-                      className={`p-3 rounded-xl flex items-start gap-3 transition ${notif.isRead ? 'bg-white opacity-70' : 'bg-[#9ca3af]/10'}`}
+                      className={`p-3 rounded-xl flex items-start gap-3 transition ${notif.read ? 'bg-white opacity-70' : 'bg-[#9ca3af]/10'}`}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className={`text-xs font-bold truncate ${notif.isRead ? 'text-slate-600' : 'text-[#162335]'}`}>
+                        <p className={`text-xs font-bold truncate ${notif.read ? 'text-slate-600' : 'text-[#162335]'}`}>
                           {notif.title}
                         </p>
                         <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">
@@ -318,7 +313,7 @@ export default function Header({ onToggleSidebar }) {
                           {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
                         </p>
                       </div>
-                      {!notif.isRead && (
+                      {!notif.read && (
                         <button
                           onClick={() => markAsRead(notif._id)}
                           className="text-[#9ca3af] hover:text-emerald-500 transition cursor-pointer p-1"
@@ -334,10 +329,7 @@ export default function Header({ onToggleSidebar }) {
             </div>
           )}
         </div>
-        <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#9ca3af] rounded-lg transition relative hidden sm:block" title="Notifications">
-          <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FFFFFF] rounded-full" />
-        </button>
+
         <div className="h-6 w-px bg-[#FFFFFF]" />
 
         {/* Profile Dropdown Container */}

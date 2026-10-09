@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import logoSvg from '../assets/logo.png';
+import logoSvg from '../assets/new_login_logo.png';
 import { useAuth } from "../context/AuthContext";
 const rawAPI = import.meta.env.VITE_API_URL;
 const API = rawAPI && rawAPI.endsWith("/") ? rawAPI.slice(0, -1) : (rawAPI || "");
@@ -111,8 +111,8 @@ function Login() {
                 src={logoSvg}
                 alt="NOBAL FINANCE Logo"
                 style={{
-                  width: "100px",
-                  height: "100px",
+                  width: "80px",
+                  height: "80px",
                   objectFit: "contain",
                 }}
                 onError={(e) => {

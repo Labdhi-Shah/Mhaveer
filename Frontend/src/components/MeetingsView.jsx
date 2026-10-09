@@ -75,8 +75,8 @@ export default function MeetingsView() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  const fetchMeetings = async () => {
-    setLoading(true);
+  const fetchMeetings = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const res = await api.get("/meetings");
       if (res.data.success) {
@@ -86,7 +86,7 @@ export default function MeetingsView() {
       console.error(err);
       showToast("Failed to fetch meetings.", "error");
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -98,7 +98,7 @@ export default function MeetingsView() {
     }
     
     const handleUpdate = () => {
-      fetchMeetings();
+      fetchMeetings(false);
     };
     
     socket.on("data-updated", handleUpdate);

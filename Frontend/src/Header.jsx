@@ -1,17 +1,21 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, Menu, ChevronDown, Clock, Circle, User, Key, LogOut, PauseCircle, PlayCircle, CheckCircle } from "lucide-react";
+import { Bell, Menu, ChevronDown, Clock, Circle, User, Key, LogOut, PauseCircle, PlayCircle, CheckCircle, Check } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import api from "./api";
-import logoSvg from "./assets/logo.png";
+import logoSvg from "./assets/new_header_logo.png";
 import { getUserRoleCategory } from "./utils/hierarchy";
+import io from "socket.io-client";
+import { formatDistanceToNow } from "date-fns";
 
 export default function Header({ onToggleSidebar }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const notifRef = useRef(null);
 
   const roleCategory = getUserRoleCategory(user);
 
@@ -19,6 +23,66 @@ export default function Header({ onToggleSidebar }) {
   const [elapsed, setElapsed] = useState("00:00:00");
   const [loading, setLoading] = useState(false);
   const [meetingCount, setMeetingCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+
+  // Fetch Notifications
+  const fetchNotifications = async (showLoading = true) => {
+    try {
+      const res = await api.get("/notifications");
+      if (res.data.success) {
+        setNotifications(res.data.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch notifications", error);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+    }
+  }, [user]);
+
+  // Socket
+  useEffect(() => {
+    if (!user) return;
+    const socket = io(import.meta.env.VITE_API_BASE_URL?.replace("/api", "") || "http://localhost:5000");
+    
+    socket.on("connect", () => {
+      console.log("Header socket connected");
+    });
+    
+    const handleDataUpdated = () => {
+      fetchNotifications(false);
+    };
+
+    socket.on("data-updated", handleDataUpdated);
+
+    return () => {
+      socket.off("data-updated", handleDataUpdated);
+      socket.disconnect();
+    };
+  }, [user]);
+
+  const markAsRead = async (id) => {
+    try {
+      await api.patch(`/notifications/${id}/read`);
+      setNotifications(notifications.map(n => n._id === id ? { ...n, isRead: true } : n));
+    } catch (err) {
+      console.error("Failed to mark as read", err);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await api.patch("/notifications/read-all");
+      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+    } catch (err) {
+      console.error("Failed to mark all as read", err);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   // Format Page Title
   const getPageTitle = () => {
@@ -93,6 +157,9 @@ export default function Header({ onToggleSidebar }) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
       }
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setNotificationsOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -166,7 +233,7 @@ export default function Header({ onToggleSidebar }) {
           <img
             src={logoSvg}
             alt="NOBAL FINANCE Logo"
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain brightness-0 invert"
             onError={(e) => {
               e.target.style.display = 'none';
             }}
@@ -198,10 +265,71 @@ export default function Header({ onToggleSidebar }) {
             )}
           </div>
         )}
-        <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#9ca3af] rounded-lg transition relative hidden sm:block" title="Notifications">
-          <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#9ca3af] rounded-full" />
-        </button>
+
+        {/* Notifications Dropdown */}
+        <div className="relative" ref={notifRef}>
+          <button 
+            className="p-1.5 sm:p-2 text-slate-300 hover:text-[#9ca3af] rounded-lg transition relative hidden sm:block cursor-pointer" 
+            title="Notifications"
+            onClick={() => setNotificationsOpen(!notificationsOpen)}
+          >
+            <Bell size={18} />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-rose-500 rounded-full text-[8px] font-bold text-white flex items-center justify-center border-2 border-[#162335]">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {notificationsOpen && (
+            <div className="absolute right-0 mt-2.5 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 text-slate-700 overflow-hidden z-50 flex flex-col max-h-[400px]">
+              <div className="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                <h3 className="text-xs font-black text-[#162335]">Notifications</h3>
+                {unreadCount > 0 && (
+                  <button 
+                    onClick={markAllAsRead}
+                    className="text-[10px] font-bold text-[#9ca3af] hover:text-[#162335] transition flex items-center gap-1 cursor-pointer"
+                  >
+                    <Check size={12} /> Mark all read
+                  </button>
+                )}
+              </div>
+              <div className="overflow-y-auto p-2 space-y-1">
+                {notifications.length === 0 ? (
+                  <p className="text-xs text-slate-400 text-center py-4 font-bold">No notifications</p>
+                ) : (
+                  notifications.map((notif) => (
+                    <div 
+                      key={notif._id} 
+                      className={`p-3 rounded-xl flex items-start gap-3 transition ${notif.isRead ? 'bg-white opacity-70' : 'bg-[#9ca3af]/10'}`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs font-bold truncate ${notif.isRead ? 'text-slate-600' : 'text-[#162335]'}`}>
+                          {notif.title}
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">
+                          {notif.message}
+                        </p>
+                        <p className="text-[9px] font-mono text-slate-400 mt-1.5">
+                          {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
+                        </p>
+                      </div>
+                      {!notif.isRead && (
+                        <button 
+                          onClick={() => markAsRead(notif._id)}
+                          className="text-[#9ca3af] hover:text-emerald-500 transition cursor-pointer p-1"
+                          title="Mark as read"
+                        >
+                          <CheckCircle size={14} />
+                        </button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="h-6 w-px bg-slate-700" />
 

@@ -87,8 +87,8 @@ export default function MyLeadsView() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  const fetchLeads = async () => {
-    setLoading(true);
+  const fetchLeads = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const res = await api.get("/leads?limit=100");
       if (res.data.success) {
@@ -133,7 +133,7 @@ export default function MyLeadsView() {
       console.error(err);
       showToast("Failed to fetch leads.", "error");
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -145,7 +145,7 @@ export default function MyLeadsView() {
     }
     
     const handleUpdate = () => {
-      fetchLeads();
+      fetchLeads(false);
     };
     
     socket.on("data-updated", handleUpdate);

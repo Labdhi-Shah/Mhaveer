@@ -61,8 +61,9 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
     const [lapPropertyDocumentList, setLapPropertyDocumentList] = useState("");
   const [unsoldUnit, setUnsoldUnit] = useState("");
   const [unsoldMV, setUnsoldMV] = useState("");
-  const [unsoldYesNo, setUnsoldYesNo] = useState(false);
-  const [unsoldBV, setUnsoldBV] = useState("");
+  const [businessStartingYear, setBusinessStartingYear] = useState("");
+  const [businessTypeOfWork, setBusinessTypeOfWork] = useState("");
+const [unsoldBV, setUnsoldBV] = useState(false);
   const [unsoldScheme, setUnsoldScheme] = useState("");
   const [unsoldLocation, setUnsoldLocation] = useState("");
   const [unsoldFloor, setUnsoldFloor] = useState("");
@@ -146,7 +147,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
   const isStep1Valid = () => {
     if (!loanType) return false;
     if (loanType === "Property Purchase Loan") return !!propertyPurchaseCategory && !!ppLocation && !!ppMarketRate && !!ppDastavejRate && !!ppDastavejName;
-    if (loanType === "Business Loan") return !!businessLoanType && !!businessType;
+    if (loanType === "Business Loan") { if (businessLoanType === "Unsecured" && (!businessStartingYear || !businessTypeOfWork)) return false; return !!businessLoanType && !!businessType; }
     if (loanType === "Property Loan") {
       if (!propertyLoanCategory) return false;
       if (["Working Capital"].includes(propertyLoanCategory) && (!propertyLocation || !durationOfRentProperty)) return false;
@@ -371,7 +372,7 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
         if (lapPropertyDocumentList) formData.append("lapPropertyDocumentList", lapPropertyDocumentList);
       if (unsoldUnit) formData.append("unsoldUnit", unsoldUnit);
       if (unsoldMV) formData.append("unsoldMV", unsoldMV);
-      formData.append("unsoldYesNo", unsoldYesNo);
+      
       if (unsoldBV) formData.append("unsoldBV", unsoldBV);
       if (unsoldScheme) formData.append("unsoldScheme", unsoldScheme);
       if (unsoldLocation) formData.append("unsoldLocation", unsoldLocation);
@@ -393,6 +394,8 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
       if (naPlotLavani) formData.append("naPlotLavani", naPlotLavani);
       formData.append("naPlotVacant", naPlotVacant);
       if (businessLoanType) formData.append("businessLoanType", businessLoanType);
+      if (businessStartingYear) formData.append("businessStartingYear", businessStartingYear);
+      if (businessTypeOfWork) formData.append("businessTypeOfWork", businessTypeOfWork);
       if (btBankName) formData.append("btBankName", btBankName);
       if (btRateOfInterest) formData.append("btRateOfInterest", btRateOfInterest);
       if (btPropertyType) formData.append("btPropertyType", btPropertyType);
@@ -707,7 +710,21 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                     )}
 
                     {/* BALANCE TRANSFER UI */}
-                    {loanType === "Balance Transfer" && (
+                    
+                            {loanType === "Business Loan" && businessLoanType === "Unsecured" && (
+                              <>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Company Starting Year</label>
+                                  <input type="text" placeholder="Enter starting year" value={businessStartingYear} onChange={(e) => setBusinessStartingYear(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
+                                </div>
+                                <div>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Type of Work</label>
+                                  <input type="text" placeholder="Enter type of work" value={businessTypeOfWork} onChange={(e) => setBusinessTypeOfWork(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
+                                </div>
+                              </>
+                            )}
+
+                            {loanType === "Balance Transfer" && (
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-6 overflow-hidden">
                         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-6">
                           <h4 className="text-base font-black text-[#162335] border-b pb-3 border-slate-100">Balance Transfer Details</h4>
@@ -826,12 +843,47 @@ export default function FillFormModal({ isOpen, onClose, selectedMeeting }) {
                                   <label className="text-[13px] font-semibold text-slate-700 mb-1.5 block">Property Market Value</label>
                                   <input type="number" placeholder="Enter M.V" value={unsoldMV} onChange={(e) => setUnsoldMV(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" min="0" />
                                 </div>
-                                <div className="hidden">
-                                    <input type="checkbox" id="unsoldYesNoModal" checked={unsoldYesNo} onChange={(e) => setUnsoldYesNo(e.target.checked)} />
-                                  </div>
                                 <div>
                                   <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">B.U</label>
-                                  <input type="number" placeholder="Enter B.U" value={unsoldBV} onChange={(e) => setUnsoldBV(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" min="0" />
+                                  <div className="flex items-center gap-4">
+                                    <button
+                                      type="button"
+                                      onClick={() => setUnsoldBV(true)}
+                                      className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
+                                        unsoldBV === true
+                                          ? "border-[#162335] bg-[#162335]/5 text-[#162335]"
+                                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                                      }`}
+                                    >
+                                      Yes
+                                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                                        unsoldBV === true
+                                          ? "border-[#162335] bg-[#162335]"
+                                          : "border-slate-300"
+                                      }`}>
+                                        {unsoldBV === true && <CheckCircle size={14} className="text-white" />}
+                                      </div>
+                                    </button>
+                                    
+                                    <button
+                                      type="button"
+                                      onClick={() => setUnsoldBV(false)}
+                                      className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
+                                        unsoldBV === false
+                                          ? "border-[#162335] bg-[#162335]/5 text-[#162335]"
+                                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                                      }`}
+                                    >
+                                      No
+                                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                                        unsoldBV === false
+                                          ? "border-[#162335] bg-[#162335]"
+                                          : "border-slate-300"
+                                      }`}>
+                                        {unsoldBV === false && <CheckCircle size={14} className="text-white" />}
+                                      </div>
+                                    </button>
+                                  </div>
                                 </div>
                                 <div>
                                   <label className="text-[13px] font-semibold text-slate-700 mb-1.5 block">Scheme Name</label>

@@ -52,8 +52,9 @@ export default function NewLeadView() {
       lapPropertyDocumentList: "",
       unsoldUnit: "",
       unsoldMV: "",
-      unsoldYesNo: false,
-      unsoldBV: "",
+      businessStartingYear: "",
+      businessTypeOfWork: "",
+      unsoldBV: false,
       unsoldScheme: "",
       unsoldLocation: "",
       unsoldFloor: "",
@@ -98,7 +99,8 @@ export default function NewLeadView() {
   const loanTypeValue = watch("loanType");
   const lapPropertyTypeValue = watch("lapPropertyType");
   const propertyLoanCategoryValue = watch("propertyLoanCategory");
-  const unsoldYesNoValue = watch("unsoldYesNo");
+  const unsoldBVValue = watch("unsoldBV");
+  const businessLoanTypeValue = watch("businessLoanType");
   const naPlotVacantValue = watch("naPlotVacant");
 
   const showToast = (message, type = "success") => {
@@ -170,7 +172,6 @@ export default function NewLeadView() {
       if (payload.propertyLoanCategory !== "Unsold") {
         delete payload.unsoldUnit;
         delete payload.unsoldMV;
-        delete payload.unsoldYesNo;
         delete payload.unsoldBV;
         delete payload.unsoldScheme;
         delete payload.unsoldLocation;
@@ -198,6 +199,8 @@ export default function NewLeadView() {
       }
       if (payload.loanType !== "Business Loan") {
         delete payload.businessLoanType;
+          delete payload.businessStartingYear;
+          delete payload.businessTypeOfWork;
       }
       if (payload.loanType !== "Balance Transfer") {
         delete payload.btBankName;
@@ -278,7 +281,7 @@ export default function NewLeadView() {
         <form onSubmit={handleSubmit(onSubmitLead)} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
             <div>
-              <label className={labelClass}>Company Name</label>
+              <label className={labelClass}>Company Name *</label>
               <div className="flex flex-wrap gap-2 mb-3">
                 {[0, 1].map((idx) => (
                   <button
@@ -311,7 +314,7 @@ export default function NewLeadView() {
             </div>
 
             <div>
-              <label className={labelClass}>Contact Person Name</label>
+              <label className={labelClass}>Contact Person Name *</label>
               <div className="flex flex-wrap gap-2 mb-3">
                 {[0, 1, 2, 3].map((idx) => (
                   <button
@@ -344,7 +347,7 @@ export default function NewLeadView() {
             </div>
 
             <div>
-              <label className={labelClass}>Phone Number</label>
+              <label className={labelClass}>Phone Number *</label>
               <div className="flex flex-wrap gap-2 mb-3">
                 {[0, 1, 2, 3].map((idx) => (
                   <button
@@ -414,12 +417,12 @@ export default function NewLeadView() {
             </div>
 
             <div>
-              <label className={labelClass}>State</label>
+              <label className={labelClass}>State *</label>
               <input type="text" placeholder="Enter state" {...register("state")} className={getInputClass(false)} />
             </div>
 
             <div>
-              <label className={labelClass}>City</label>
+              <label className={labelClass}>City *</label>
               <input type="text" placeholder="Enter city" {...register("city")} className={getInputClass(false)} />
             </div>
 
@@ -430,7 +433,7 @@ export default function NewLeadView() {
             </div>
 
             <div>
-              <label className={labelClass}>Type of Loan</label>
+              <label className={labelClass}>Type of Loan *</label>
               <select {...register("loanType", { required: "Loan Type is required" })} className={getInputClass(errors.loanType)}>
                 <option value="">Select Loan Type</option>
                 <option value="Property Purchase Loan">Property Purchase Loan</option>
@@ -525,52 +528,48 @@ export default function NewLeadView() {
                   <input type="number" placeholder="Enter M.V" {...register("unsoldMV", { required: "M.V is required", min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.unsoldMV)} />
                   {errors.unsoldMV && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.unsoldMV.message}</p>}
                 </div>
+                
                 <div>
-                  <label className={labelClass}>Selection</label>
+                  <label className={labelClass}>B.U</label>
                   <div className="flex items-center gap-4">
                     <button
                       type="button"
-                      onClick={() => setValue("unsoldYesNo", true, { shouldValidate: true })}
+                      onClick={() => setValue("unsoldBV", true, { shouldValidate: true })}
                       className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
-                        unsoldYesNoValue === true
+                        unsoldBVValue === true
                           ? "border-[#162335] bg-[#162335]/5 text-[#162335]"
                           : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                       }`}
                     >
                       Yes
                       <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                        unsoldYesNoValue === true
+                        unsoldBVValue === true
                           ? "border-[#162335] bg-[#162335]"
                           : "border-slate-300"
                       }`}>
-                        {unsoldYesNoValue === true && <CheckCircle size={14} className="text-white" />}
+                        {unsoldBVValue === true && <CheckCircle size={14} className="text-white" />}
                       </div>
                     </button>
                     
                     <button
                       type="button"
-                      onClick={() => setValue("unsoldYesNo", false, { shouldValidate: true })}
+                      onClick={() => setValue("unsoldBV", false, { shouldValidate: true })}
                       className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
-                        unsoldYesNoValue === false
+                        unsoldBVValue === false
                           ? "border-[#162335] bg-[#162335]/5 text-[#162335]"
                           : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                       }`}
                     >
                       No
                       <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                        unsoldYesNoValue === false
+                        unsoldBVValue === false
                           ? "border-[#162335] bg-[#162335]"
                           : "border-slate-300"
                       }`}>
-                        {unsoldYesNoValue === false && <CheckCircle size={14} className="text-white" />}
+                        {unsoldBVValue === false && <CheckCircle size={14} className="text-white" />}
                       </div>
                     </button>
                   </div>
-                </div>
-                <div>
-                  <label className={labelClass}>B.U</label>
-                  <input type="number" placeholder="Enter B.U" {...register("unsoldBV", { required: "B.U is required", min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.unsoldBV)} />
-                  {errors.unsoldBV && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.unsoldBV.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Scheme Name</label>
@@ -765,6 +764,21 @@ export default function NewLeadView() {
               </div>
             )}
 
+              {loanTypeValue === "Business Loan" && businessLoanTypeValue === "Unsecured" && (
+                <>
+                  <div>
+                    <label className={labelClass}>Company Starting Year</label>
+                    <input type="text" placeholder="Enter starting year" {...register("businessStartingYear", { required: "Company Starting Year is required" })} className={getInputClass(errors.businessStartingYear)} />
+                    {errors.businessStartingYear && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.businessStartingYear.message}</p>}
+                  </div>
+                  <div>
+                    <label className={labelClass}>Type of Work</label>
+                    <input type="text" placeholder="Enter type of work" {...register("businessTypeOfWork", { required: "Type of Work is required" })} className={getInputClass(errors.businessTypeOfWork)} />
+                    {errors.businessTypeOfWork && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.businessTypeOfWork.message}</p>}
+                  </div>
+                </>
+              )}
+
             {loanTypeValue === "Balance Transfer" && (
               <>
                 <div>
@@ -888,7 +902,7 @@ export default function NewLeadView() {
           </div>
 
           <div>
-            <label className={labelClass}>Address</label>
+            <label className={labelClass}>Address *</label>
             <textarea 
               placeholder="Address" 
               {...register("address", {

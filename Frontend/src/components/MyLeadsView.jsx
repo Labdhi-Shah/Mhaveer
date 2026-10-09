@@ -694,7 +694,7 @@ export default function MyLeadsView() {
                 
                 {/* Company Name */}
                 <div>
-                  <label></label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Company Name *</label>
                   <input
                     type="text"
                     {...register("companyName", { required: "Company Name is required" })}
@@ -705,7 +705,7 @@ export default function MyLeadsView() {
 
                 {/* Contact Person Name */}
                 <div>
-                  <label></label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Contact Person Name *</label>
                   <input
                     type="text"
                     {...register("contactPerson", { required: "Contact Person Name is required" })}
@@ -716,7 +716,7 @@ export default function MyLeadsView() {
 
                 {/* Phone Number */}
                 <div>
-                  <label></label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Phone Number *</label>
                   <input
                     type="tel"
                     {...register("phone", { 
@@ -733,13 +733,13 @@ export default function MyLeadsView() {
 
                 {/* City */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">City</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">City *</label>
                   <input type="text" {...register("city")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335]" />
                 </div>
 
                 {/* State */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">State</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">State *</label>
                   <input type="text" {...register("state")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335]" />
                 </div>
 
@@ -765,7 +765,7 @@ export default function MyLeadsView() {
 
                 {/* Loan Type */}
                 <div>
-                  <label></label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Type of Loan *</label>
                   <select
                     {...register("loanType", { required: "Loan Type is required" })}
                     className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335] bg-white"
@@ -859,7 +859,7 @@ export default function MyLeadsView() {
 
               {/* Address */}
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Address</label>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Address *</label>
                 <textarea rows="3" {...register("address")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335]"></textarea>
               </div>
 

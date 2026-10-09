@@ -41,7 +41,7 @@ function Login() {
 
       if (response.ok && data.success) {
         localStorage.setItem("token", data.token);
-        
+
         if (data.employee) {
           // Employee / Manager Login
           const employeeData = {
@@ -51,12 +51,12 @@ function Login() {
             employeeId: data.employee.employeeId || ("EMP-" + Math.floor(100000 + Math.random() * 900000))
           };
           localStorage.setItem("user", JSON.stringify(employeeData));
-          
+
           // Start the working timer
           if (!localStorage.getItem("loginTime")) {
             localStorage.setItem("loginTime", new Date().toISOString());
           }
-          
+
           setMessage("✅ Login Successful");
           navigate("/dashboard");
         }
@@ -219,7 +219,7 @@ function Login() {
                     alignItems: "center"
                   }}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <CustomEyeOff size={22} color="#162335" /> : <CustomEye size={22} color="#162335" />}
                 </div>
               </div>
             </div>

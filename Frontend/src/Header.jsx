@@ -1,17 +1,21 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, Menu, ChevronDown, Clock, Circle, User, Key, LogOut, PauseCircle, PlayCircle, CheckCircle } from "lucide-react";
+import { Bell, Menu, ChevronDown, Clock, Circle, User, Key, LogOut, PauseCircle, PlayCircle, CheckCircle, Check } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import api from "./api";
 import logoSvg from "./assets/logo.png";
 import { getUserRoleCategory } from "./utils/hierarchy";
+import io from "socket.io-client";
+import { formatDistanceToNow } from "date-fns";
 
 export default function Header({ onToggleSidebar }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const notifRef = useRef(null);
 
   const roleCategory = getUserRoleCategory(user);
 
@@ -19,6 +23,68 @@ export default function Header({ onToggleSidebar }) {
   const [elapsed, setElapsed] = useState("00:00:00");
   const [loading, setLoading] = useState(false);
   const [meetingCount, setMeetingCount] = useState(0);
+
+  const [notifications, setNotifications] = useState([]);
+
+  // Fetch Notifications
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get("/notifications");
+      if (res.data.success) {
+        setNotifications(res.data.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch notifications", error);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchNotifications();
+    }
+  }, [user]);
+
+  // Socket
+  useEffect(() => {
+    if (!user) return;
+    const socket = io(import.meta.env.VITE_API_BASE_URL?.replace("/api", "") || "http://localhost:5000");
+    
+    socket.on("connect", () => {
+      console.log("Header socket connected");
+    });
+    
+    const handleDataUpdated = () => {
+      fetchNotifications();
+    };
+
+    socket.on("data-updated", handleDataUpdated);
+
+    return () => {
+      socket.off("data-updated", handleDataUpdated);
+      socket.disconnect();
+    };
+  }, [user]);
+
+  const markAsRead = async (id) => {
+    try {
+      await api.patch(`/notifications/${id}/read`);
+      setNotifications(notifications.map(n => n._id === id ? { ...n, isRead: true } : n));
+    } catch (err) {
+      console.error("Failed to mark as read", err);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await api.patch("/notifications/read-all");
+      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+    } catch (err) {
+      console.error("Failed to mark all as read", err);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   // Format Page Title
   const getPageTitle = () => {

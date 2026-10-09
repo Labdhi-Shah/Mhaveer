@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import logoSvg from '../assets/logo.svg';
+import logoSvg from '../assets/logo.png';
 import { useAuth } from "../context/AuthContext";
 const rawAPI = import.meta.env.VITE_API_URL;
 const API = rawAPI && rawAPI.endsWith("/") ? rawAPI.slice(0, -1) : (rawAPI || "");
@@ -101,7 +101,7 @@ function Login() {
         }}
       >
         {/* Top Golden Border */}
-        <div style={{ height: "6px", background: "#d4af37" }}></div>
+        <div style={{ height: "6px", background: "#9ca3af" }}></div>
 
         <div style={{ padding: "40px 30px" }}>
           {/* Logo Area */}
@@ -109,7 +109,7 @@ function Login() {
             <div style={{ marginBottom: "15px", display: "flex", justifyContent: "center" }}>
               <img
                 src={logoSvg}
-                alt="Mhaveer Fincap Logo"
+                alt="NOBAL FINANCE Logo"
                 style={{
                   width: "100px",
                   height: "100px",
@@ -121,27 +121,27 @@ function Login() {
                 }}
               />
               <svg width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'none' }}>
-                <path d="M20 75 V 30 L 45 50 L 60 30 V 75" stroke="#0b2746" strokeWidth="8" fill="none" strokeLinejoin="round" />
-                <path d="M45 75 V 50 L 80 25 V 75" fill="none" stroke="#d4af37" strokeWidth="8" strokeLinejoin="round" />
-                <path d="M72 32 L 80 25 L 88 32" fill="none" stroke="#d4af37" strokeWidth="8" strokeLinejoin="round" />
+                <path d="M20 75 V 30 L 45 50 L 60 30 V 75" stroke="#162335" strokeWidth="8" fill="none" strokeLinejoin="round" />
+                <path d="M45 75 V 50 L 80 25 V 75" fill="none" stroke="#9ca3af" strokeWidth="8" strokeLinejoin="round" />
+                <path d="M72 32 L 80 25 L 88 32" fill="none" stroke="#9ca3af" strokeWidth="8" strokeLinejoin="round" />
               </svg>
             </div>
             <h1
               style={{
                 fontSize: "24px",
                 fontWeight: "900",
-                color: "#0b2746",
+                color: "#162335",
                 margin: "0 0 10px 0",
                 letterSpacing: "1px",
               }}
             >
-              MHAVEER FINCAP
+              NOBAL FINANCE
             </h1>
             <div
               style={{
                 fontSize: "11px",
                 fontWeight: "700",
-                color: "#d4af37",
+                color: "#9ca3af",
                 letterSpacing: "1px",
                 textTransform: "uppercase",
               }}
@@ -220,7 +220,7 @@ function Login() {
                 style={{
                   fontSize: "13px",
                   fontWeight: "600",
-                  color: "#d4af37",
+                  color: "#9ca3af",
                   textDecoration: "none",
                 }}
               >
@@ -235,7 +235,7 @@ function Login() {
               style={{
                 width: "100%",
                 padding: "14px",
-                background: "#0b2746",
+                background: "#162335",
                 color: "#fff",
                 fontSize: "16px",
                 fontWeight: "600",

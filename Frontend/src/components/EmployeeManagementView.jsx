@@ -22,12 +22,12 @@ export default function EmployeeManagementView({ activeTab: propTab }) {
   return (
     <div className="space-y-6">
       {/* Telecalling Portal Employee Management Header */}
-      <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm border-l-8 border-l-[#0a2540] flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm border-l-8 border-l-[#162335] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-widest text-[#d4af37]">
+          <p className="text-xs font-extrabold uppercase tracking-widest text-[#9ca3af]">
             Telecalling Portal
           </p>
-          <h1 className="text-xl sm:text-2xl font-black text-[#0a2540] mt-1">
+          <h1 className="text-xl sm:text-2xl font-black text-[#162335] mt-1">
             Employee Management
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">

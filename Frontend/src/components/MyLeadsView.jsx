@@ -260,10 +260,10 @@ export default function MyLeadsView() {
       </AnimatePresence>
 
       {/* Header */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 border-l-8 border-l-[#0a2540]">
+      <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 border-l-8 border-l-[#162335]">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-[#0a2540]">My Assigned Leads</h1>
-          <p className="text-xs font-bold uppercase tracking-widest text-[#d4af37] mt-1">Loan Management CRM</p>
+          <h1 className="text-xl sm:text-2xl font-black text-[#162335]">My Assigned Leads</h1>
+          <p className="text-xs font-bold uppercase tracking-widest text-[#9ca3af] mt-1">Loan Management CRM</p>
         </div>
         <button 
           onClick={fetchLeads}
@@ -286,7 +286,7 @@ export default function MyLeadsView() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 hover:bg-slate-100/60 border border-slate-150 focus:border-[#0a2540] rounded-xl text-xs outline-none transition"
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 hover:bg-slate-100/60 border border-slate-150 focus:border-[#162335] rounded-xl text-xs outline-none transition"
           />
         </div>
 
@@ -301,7 +301,7 @@ export default function MyLeadsView() {
                 setFilterType(e.target.value);
                 setPage(1);
               }}
-              className="px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs bg-white outline-none focus:border-[#0a2540] transition"
+              className="px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs bg-white outline-none focus:border-[#162335] transition"
             >
               <option value="">All Loan Types</option>
               <option value="Property Purchase Loan">Property Purchase Loan</option>
@@ -317,7 +317,7 @@ export default function MyLeadsView() {
               setFilterInterested(e.target.value);
               setPage(1);
             }}
-            className="px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs bg-white outline-none focus:border-[#0a2540] transition"
+            className="px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs bg-white outline-none focus:border-[#162335] transition"
           >
             <option value="">All Interest Levels</option>
             <option value="Yes">Interested (Yes)</option>
@@ -331,7 +331,7 @@ export default function MyLeadsView() {
       <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Loader2 className="animate-spin text-[#0a2540]" size={32} />
+            <Loader2 className="animate-spin text-[#162335]" size={32} />
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Syncing Lead Logs...</p>
           </div>
         ) : leads.length === 0 ? (
@@ -341,7 +341,7 @@ export default function MyLeadsView() {
             <div className="overflow-x-auto scrollbar-thin">
               <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
                 <thead>
-                  <tr className="bg-[#0a2540] text-[#d4af37] font-extrabold uppercase whitespace-nowrap">
+                  <tr className="bg-[#162335] text-white font-extrabold uppercase whitespace-nowrap">
                     <th className="py-3.5 px-4 rounded-l-xl">LEAD ID</th>
                     <th className="py-3.5 px-4">COMPANY NAME</th>
                     <th className="py-3.5 px-4">CONTACT PERSON</th>
@@ -358,8 +358,8 @@ export default function MyLeadsView() {
                 <tbody className="divide-y divide-slate-100 text-slate-700 whitespace-nowrap">
                   {leads.map((lead) => (
                     <tr key={lead._id} className="hover:bg-slate-50 transition">
-                      <td className="py-3.5 px-4 font-mono font-black text-[#0a2540]">{lead.leadId}</td>
-                      <td className="py-3.5 px-4 font-bold text-[#0a2540]">{lead.companyName}</td>
+                      <td className="py-3.5 px-4 font-mono font-black text-[#162335]">{lead.leadId}</td>
+                      <td className="py-3.5 px-4 font-bold text-[#162335]">{lead.companyName}</td>
                       <td className="py-3.5 px-4 font-medium text-slate-800">{lead.contactPerson}</td>
                       <td className="py-3.5 px-4 text-slate-600">{lead.phone}</td>
                       <td className="py-3.5 px-4 font-extrabold text-slate-500">{lead.loanType}</td>
@@ -392,14 +392,14 @@ export default function MyLeadsView() {
                         <div className="flex justify-center gap-1.5">
                           <button 
                             onClick={() => setViewLead(lead)}
-                            className="p-1.5 text-slate-400 hover:text-[#0a2540] hover:bg-slate-100 rounded-lg transition"
+                            className="p-1.5 text-slate-400 hover:text-[#162335] hover:bg-slate-100 rounded-lg transition"
                             title="View Profile"
                           >
                             <Eye size={14} />
                           </button>
                           <button 
                             onClick={() => openEditModal(lead)}
-                            className="p-1.5 text-slate-400 hover:text-[#d4af37] hover:bg-slate-100 rounded-lg transition"
+                            className="p-1.5 text-slate-400 hover:text-[#9ca3af] hover:bg-slate-100 rounded-lg transition"
                             title="Edit Lead"
                           >
                             <Edit2 size={14} />
@@ -472,15 +472,15 @@ export default function MyLeadsView() {
             {/* Sticky Header */}
             <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#0a2540]/5 rounded-xl flex items-center justify-center text-[#0a2540]">
+                <div className="w-10 h-10 bg-[#162335]/5 rounded-xl flex items-center justify-center text-[#162335]">
                   <Briefcase size={20} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black text-[#0a2540]">Lead Profile</h3>
+                    <h3 className="text-base font-black text-[#162335]">Lead Profile</h3>
                     <span className="font-mono text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">{viewLead.leadId}</span>
                   </div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Mhaveer Fincap CRM</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">NOBAL FINANCE CRM</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -509,12 +509,12 @@ export default function MyLeadsView() {
                   {/* Company Info Card */}
                   <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-4">
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
-                      <User size={14} className="text-[#0a2540]" /> Company & Contact Information
+                      <User size={14} className="text-[#162335]" /> Company & Contact Information
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="sm:col-span-2">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Company Name</span>
-                        <p className="font-extrabold text-[#0a2540] text-sm mt-0.5">{viewLead.companyName || "N/A"}</p>
+                        <p className="font-extrabold text-[#162335] text-sm mt-0.5">{viewLead.companyName || "N/A"}</p>
                       </div>
                       <div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Contact Person</span>
@@ -612,7 +612,7 @@ export default function MyLeadsView() {
                   {/* Meeting Information Card */}
                   <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-3">
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
-                      <Calendar size={14} className="text-[#0a2540]" /> Meeting Details
+                      <Calendar size={14} className="text-[#162335]" /> Meeting Details
                     </h4>
                     {viewLead.meetingDate ? (
                       <div className="flex gap-4 items-center">
@@ -634,7 +634,7 @@ export default function MyLeadsView() {
                   {/* Follow-up Information highlighted card */}
                   <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${
                     viewLead.followUpDate 
-                      ? "bg-amber-50/60 border-amber-200/50 text-[#0a2540]" 
+                      ? "bg-amber-50/60 border-amber-200/50 text-[#162335]" 
                       : "bg-white border-slate-100 text-slate-700"
                   }`}>
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100/50 pb-2">
@@ -671,7 +671,7 @@ export default function MyLeadsView() {
               </button>
               <button 
                 onClick={() => setViewLead(null)}
-                className="px-6 py-2.5 bg-[#0a2540] hover:bg-[#0a2540]/90 text-white rounded-xl font-bold transition text-xs shadow-sm cursor-pointer"
+                className="px-6 py-2.5 bg-[#162335] hover:bg-[#162335]/90 text-white rounded-xl font-bold transition text-xs shadow-sm cursor-pointer"
               >
                 Close
               </button>
@@ -685,8 +685,8 @@ export default function MyLeadsView() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
           <div className="bg-white rounded-3xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-lg font-black text-[#0a2540]">Edit Lead Details: {editLead.leadId}</h3>
-              <button onClick={() => setEditLead(null)} className="text-slate-400 hover:text-[#0a2540] font-black text-sm">✕</button>
+              <h3 className="text-lg font-black text-[#162335]">Edit Lead Details: {editLead.leadId}</h3>
+              <button onClick={() => setEditLead(null)} className="text-slate-400 hover:text-[#162335] font-black text-sm">✕</button>
             </div>
             
             <form onSubmit={handleSubmit(onUpdateLead)} className="p-6 space-y-4">
@@ -694,29 +694,29 @@ export default function MyLeadsView() {
                 
                 {/* Company Name */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Company Name *</label>
+                  <label></label>
                   <input
                     type="text"
                     {...register("companyName", { required: "Company Name is required" })}
-                    className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#0a2540] ${errors.companyName ? "border-rose-455" : "border-slate-200"}`}
+                    className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#162335] ${errors.companyName ? "border-rose-455" : "border-slate-200"}`}
                   />
                   {errors.companyName && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.companyName.message}</p>}
                 </div>
 
                 {/* Contact Person Name */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Contact Person Name *</label>
+                  <label></label>
                   <input
                     type="text"
                     {...register("contactPerson", { required: "Contact Person Name is required" })}
-                    className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#0a2540] ${errors.contactPerson ? "border-rose-455" : "border-slate-200"}`}
+                    className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#162335] ${errors.contactPerson ? "border-rose-455" : "border-slate-200"}`}
                   />
                   {errors.contactPerson && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.contactPerson.message}</p>}
                 </div>
 
                 {/* Phone Number */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Phone Number *</label>
+                  <label></label>
                   <input
                     type="tel"
                     {...register("phone", { 
@@ -726,7 +726,7 @@ export default function MyLeadsView() {
                         message: "10 digit mobile starting with 6-9 only"
                       }
                     })}
-                    className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#0a2540] ${errors.phone ? "border-rose-455" : "border-slate-200"}`}
+                    className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#162335] ${errors.phone ? "border-rose-455" : "border-slate-200"}`}
                   />
                   {errors.phone && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.phone.message}</p>}
                 </div>
@@ -734,41 +734,41 @@ export default function MyLeadsView() {
                 {/* City */}
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">City</label>
-                  <input type="text" {...register("city")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540]" />
+                  <input type="text" {...register("city")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335]" />
                 </div>
 
                 {/* State */}
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">State</label>
-                  <input type="text" {...register("state")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540]" />
+                  <input type="text" {...register("state")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335]" />
                 </div>
 
                 {/* Company Turnover */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Company Turnover *</label>
+                  <label></label>
                   <input
                     type="number"
                     {...register("companyTurnover", { required: "Company Turnover is required", min: 1 })}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540]"
+                    className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335]"
                   />
                 </div>
 
                 {/* Loan Amount */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Loan Required *</label>
+                  <label></label>
                   <input
                     type="number"
                     {...register("loanAmount", { required: "Loan Amount required", min: 1 })}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540]"
+                    className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335]"
                   />
                 </div>
 
                 {/* Loan Type */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Type of Loan *</label>
+                  <label></label>
                   <select
                     {...register("loanType", { required: "Loan Type is required" })}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540] bg-white"
+                    className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335] bg-white"
                   >
                     <option value="Property Purchase Loan">Property Purchase Loan</option>
                     <option value="Business Loan">Business Loan</option>
@@ -779,10 +779,10 @@ export default function MyLeadsView() {
                 {/* Property Loan Category (if Loan Type is Property Loan) */}
                 {watch("loanType") === "Property Loan" && (
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">Property Loan Category *</label>
+                    <label></label>
                     <select
                       {...register("propertyLoanCategory", { required: "Property Loan Category is required" })}
-                      className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540] bg-white"
+                      className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335] bg-white"
                     >
                       <option value="">Select Category</option>
                       <option value="Commercial Loan">Commercial Loan</option>
@@ -795,20 +795,20 @@ export default function MyLeadsView() {
 
                 {/* CIBIL Score */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">CIBIL Score *</label>
+                  <label></label>
                   <input
                     type="number"
                     {...register("cibilScore", { required: "CIBIL score required", min: 700, max: 900 })}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540]"
+                    className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335]"
                   />
                 </div>
 
                 {/* Interested */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Interested *</label>
+                  <label></label>
                   <select
                     {...register("interested", { required: "Interested is required" })}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540] bg-white"
+                    className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335] bg-white"
                   >
                     <option value="Yes">Yes</option>
                     <option value="No">No</option>
@@ -818,10 +818,10 @@ export default function MyLeadsView() {
 
                 {/* Call Status */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Call Status *</label>
+                  <label></label>
                   <select
                     {...register("callStatus", { required: "Call status is required" })}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540] bg-white"
+                    className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335] bg-white"
                   >
                     <option value="Connected">Connected</option>
                     <option value="Not Picked">Not Picked</option>
@@ -833,27 +833,27 @@ export default function MyLeadsView() {
                 {/* Meeting Date */}
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">Meeting Date</label>
-                  <input type="date" {...register("meetingDate")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540] bg-white" />
+                  <input type="date" {...register("meetingDate")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335] bg-white" />
                 </div>
 
                 {/* Meeting Time */}
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">Meeting Time</label>
-                  <input type="time" {...register("meetingTime")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540] bg-white" />
+                  <input type="time" {...register("meetingTime")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335] bg-white" />
                 </div>
               </div>
 
               {/* Conditional Follow Up */}
               {editInterestedValue === "Call Back Later" && (
                 <div className="border border-amber-200 bg-amber-50/50 p-4 rounded-2xl grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <p className="col-span-full text-xs font-bold text-[#d4af37] flex items-center gap-1.5"><Clock size={14} /> Update Follow-up Schedule</p>
+                  <p className="col-span-full text-xs font-bold text-[#9ca3af] flex items-center gap-1.5"><Clock size={14} /> Update Follow-up Schedule</p>
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">Follow-up Date *</label>
-                    <input type="date" {...register("followUpDate", { required: true })} className="w-full px-4 py-2 border border-amber-300 rounded-xl text-xs bg-white outline-none focus:border-[#0a2540]" />
+                    <label></label>
+                    <input type="date" {...register("followUpDate", { required: true })} className="w-full px-4 py-2 border border-amber-300 rounded-xl text-xs bg-white outline-none focus:border-[#162335]" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">Follow-up Time *</label>
-                    <input type="time" {...register("followUpTime", { required: true })} className="w-full px-4 py-2 border border-amber-300 rounded-xl text-xs bg-white outline-none focus:border-[#0a2540]" />
+                    <label></label>
+                    <input type="time" {...register("followUpTime", { required: true })} className="w-full px-4 py-2 border border-amber-300 rounded-xl text-xs bg-white outline-none focus:border-[#162335]" />
                   </div>
                 </div>
               )}
@@ -861,14 +861,14 @@ export default function MyLeadsView() {
               {/* Address */}
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">Address</label>
-                <textarea rows="3" {...register("address")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0a2540]"></textarea>
+                <textarea rows="3" {...register("address")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335]"></textarea>
               </div>
 
               <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
                 <button type="button" onClick={() => setEditLead(null)} className="px-5 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 font-bold transition text-xs">
                   Cancel
                 </button>
-                <button type="submit" disabled={submittingEdit} className="px-5 py-2 bg-[#0a2540] hover:bg-[#153452] text-white font-bold rounded-xl transition text-xs flex items-center gap-1.5">
+                <button type="submit" disabled={submittingEdit} className="px-5 py-2 bg-[#162335] hover:bg-[#153452] text-white font-bold rounded-xl transition text-xs flex items-center gap-1.5">
                   {submittingEdit ? <Loader2 size={14} className="animate-spin" /> : "Save Changes"}
                 </button>
               </div>
@@ -885,7 +885,7 @@ export default function MyLeadsView() {
               <div className="w-12 h-12 bg-rose-50 border border-rose-200 text-rose-500 rounded-2xl flex items-center justify-center mx-auto">
                 <Trash2 size={24} />
               </div>
-              <h3 className="text-md font-black text-[#0a2540]">Confirm Delete</h3>
+              <h3 className="text-md font-black text-[#162335]">Confirm Delete</h3>
               <p className="text-xs text-slate-500">Are you sure you want to delete this lead? This action cannot be undone.</p>
             </div>
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end">

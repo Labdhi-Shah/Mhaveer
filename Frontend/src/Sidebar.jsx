@@ -49,8 +49,8 @@ export default function Sidebar({ isOpen, onClose }) {
             <button
               onClick={() => handleNavigation(dashboardRoute)}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${isDashboardActive
-                  ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                  ? "bg-[#162335] text-white shadow-md font-black"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-[#162335]"
                 }`}
             >
               <LayoutDashboard size={18} />
@@ -63,8 +63,8 @@ export default function Sidebar({ isOpen, onClose }) {
                   onClick={() => handleNavigation("/telecalling/employees")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
                     location.pathname === "/telecalling/employees" || location.pathname === "/employees"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                      ? "bg-[#162335] text-white shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#162335]"
                   }`}
                 >
                   <Users size={18} />
@@ -75,8 +75,8 @@ export default function Sidebar({ isOpen, onClose }) {
                   onClick={() => handleNavigation("/telecalling/add-employee")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
                     location.pathname === "/telecalling/add-employee" || location.pathname === "/add-employee"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                      ? "bg-[#162335] text-white shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#162335]"
                   }`}
                 >
                   <UserPlus size={18} />
@@ -86,8 +86,8 @@ export default function Sidebar({ isOpen, onClose }) {
                 <button
                   onClick={() => handleNavigation("/team-performance")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/team-performance"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                      ? "bg-[#162335] text-white shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#162335]"
                     }`}
                 >
                   <BarChart2 size={18} />
@@ -101,8 +101,8 @@ export default function Sidebar({ isOpen, onClose }) {
                 <button
                   onClick={() => handleNavigation("/new-lead")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/new-lead"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                      ? "bg-[#162335] text-white shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#162335]"
                     }`}
                 >
                   <PlusCircle size={18} />
@@ -112,8 +112,8 @@ export default function Sidebar({ isOpen, onClose }) {
                 <button
                   onClick={() => handleNavigation("/my-leads")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/my-leads"
-                      ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                      ? "bg-[#162335] text-white shadow-md font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-[#162335]"
                     }`}
                 >
                   <FolderHeart size={18} />
@@ -125,8 +125,8 @@ export default function Sidebar({ isOpen, onClose }) {
             <button
               onClick={() => handleNavigation("/follow-up")}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/follow-up"
-                  ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                  ? "bg-[#162335] text-white shadow-md font-black"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-[#162335]"
                 }`}
             >
               <Clock size={18} />
@@ -136,8 +136,8 @@ export default function Sidebar({ isOpen, onClose }) {
             <button
               onClick={() => handleNavigation("/meetings")}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/meetings"
-                  ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                  ? "bg-[#162335] text-white shadow-md font-black"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-[#162335]"
                 }`}
             >
               <Calendar size={18} />
@@ -147,8 +147,8 @@ export default function Sidebar({ isOpen, onClose }) {
             <button
               onClick={() => handleNavigation("/attendance")}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/attendance"
-                  ? "bg-[#0a2540] text-[#d4af37] shadow-md font-black"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-[#0a2540]"
+                  ? "bg-[#162335] text-white shadow-md font-black"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-[#162335]"
                 }`}
             >
               <ClipboardList size={18} />

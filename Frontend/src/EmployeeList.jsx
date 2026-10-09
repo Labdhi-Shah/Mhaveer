@@ -112,7 +112,7 @@ export default function EmployeeList() {
       
       {/* Search Header */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <h3 className="text-xl font-black text-[#0a2540]">All Employee Records</h3>
+        <h3 className="text-xl font-black text-[#162335]">All Employee Records</h3>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-72">
             <Search className="absolute left-3.5 top-3 text-slate-400" size={16} />
@@ -121,7 +121,7 @@ export default function EmployeeList() {
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Search employee..."
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-[#0a2540] outline-none focus:border-[#d4af37]"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-[#162335] outline-none focus:border-[#9ca3af]"
             />
           </div>
         </div>
@@ -130,12 +130,12 @@ export default function EmployeeList() {
       {/* Table */}
       {loading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="animate-spin text-[#0a2540]" size={32} />
+          <Loader2 className="animate-spin text-[#162335]" size={32} />
         </div>
       ) : (
         <div className="overflow-x-auto scrollbar-thin">
           <table className="w-full text-left text-xs min-w-[800px]">
-            <thead className="bg-[#0a2540] text-[#d4af37] font-extrabold uppercase tracking-wider whitespace-nowrap">
+            <thead className="bg-[#162335] text-white font-extrabold uppercase tracking-wider whitespace-nowrap">
               <tr>
                 <th className="py-3.5 px-4 rounded-l-xl">EMP ID</th>
                 <th className="py-3.5 px-4">NAME</th>
@@ -156,8 +156,8 @@ export default function EmployeeList() {
               ) : (
                 employees.map((emp) => (
                   <tr key={emp._id} className="hover:bg-slate-50 transition">
-                    <td className="py-4 px-4 font-mono font-black text-[#0a2540]">{emp.employeeId}</td>
-                    <td className="py-4 px-4 font-bold text-[#0a2540]">{emp.fullName}</td>
+                    <td className="py-4 px-4 font-mono font-black text-[#162335]">{emp.employeeId}</td>
+                    <td className="py-4 px-4 font-bold text-[#162335]">{emp.fullName}</td>
                     <td className="py-4 px-4 text-slate-500">{emp.personalEmail}</td>
                     <td className="py-4 px-4 text-slate-500">{emp.phone}</td>
                     <td className="py-4 px-4 text-slate-500">{emp.role} {emp.department ? `- ${emp.department}` : ''}</td>
@@ -218,20 +218,20 @@ export default function EmployeeList() {
       {/* 1. VIEW DETAILS MODAL */}
       {viewEmp && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative border-t-8 border-t-[#0a2540] max-h-[85vh] overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative border-t-8 border-t-[#162335] max-h-[85vh] overflow-y-auto">
             <button onClick={() => setViewEmp(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
               <X size={20} />
             </button>
-            <h3 className="text-lg font-black text-[#0a2540] mb-4">Employee Details</h3>
+            <h3 className="text-lg font-black text-[#162335] mb-4">Employee Details</h3>
 
             <div className="space-y-3 text-xs text-slate-700 bg-slate-50 p-4 rounded-2xl border border-slate-200">
               <div className="flex justify-between border-b pb-2">
                 <span className="font-bold text-slate-400">Employee ID</span>
-                <span className="font-mono font-black text-[#0a2540]">{viewEmp.employeeId}</span>
+                <span className="font-mono font-black text-[#162335]">{viewEmp.employeeId}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="font-bold text-slate-400">Full Name</span>
-                <span className="font-bold text-[#0a2540]">{viewEmp.fullName}</span>
+                <span className="font-bold text-[#162335]">{viewEmp.fullName}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="font-bold text-slate-400">Personal Email</span>
@@ -276,7 +276,7 @@ export default function EmployeeList() {
 
               {/* Bank Details Section */}
               <div className="pt-2">
-                <div className="flex items-center gap-1.5 mb-3 text-[#0a2540]">
+                <div className="flex items-center gap-1.5 mb-3 text-[#162335]">
                   <Building2 size={16} />
                   <h4 className="font-black text-sm uppercase tracking-wider">Bank Details</h4>
                 </div>
@@ -291,17 +291,17 @@ export default function EmployeeList() {
                   </div>
                   <div className="flex justify-between border-b pb-1.5">
                     <span className="font-bold text-slate-400 text-[11px]">Account Number</span>
-                    <span className="font-mono font-bold text-[#0a2540]">{viewEmp.accountNumber || "-"}</span>
+                    <span className="font-mono font-bold text-[#162335]">{viewEmp.accountNumber || "-"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-bold text-slate-400 text-[11px]">IFSC Code</span>
-                    <span className="font-mono font-bold text-[#0a2540]">{viewEmp.ifscCode || "-"}</span>
+                    <span className="font-mono font-bold text-[#162335]">{viewEmp.ifscCode || "-"}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <button onClick={() => setViewEmp(null)} className="w-full mt-5 py-2.5 bg-[#0a2540] text-white font-bold rounded-xl text-xs uppercase">
+            <button onClick={() => setViewEmp(null)} className="w-full mt-5 py-2.5 bg-[#162335] text-white font-bold rounded-xl text-xs uppercase">
               Close
             </button>
           </div>

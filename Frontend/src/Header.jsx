@@ -3,7 +3,7 @@ import { Bell, Menu, ChevronDown, Clock, Circle, User, Key, LogOut, PauseCircle,
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import api from "./api";
-import logoSvg from "./assets/logo.svg";
+import logoSvg from "./assets/logo.png";
 import { getUserRoleCategory } from "./utils/hierarchy";
 
 export default function Header({ onToggleSidebar }) {
@@ -151,7 +151,7 @@ export default function Header({ onToggleSidebar }) {
   const widgetProps = getTimerWidgetProps();
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-[#0a2540] text-white border-b-2 border-[#d4af37] z-50 flex items-center justify-between px-4 md:px-6 shadow-md select-none">
+    <header className="fixed top-0 left-0 right-0 h-16 bg-[#162335] text-white border-b-2 border-[#9ca3af] z-50 flex items-center justify-between px-4 md:px-6 shadow-md select-none">
       {/* LEFT SECTION */}
       <div className="flex items-center gap-3">
         <button
@@ -162,10 +162,10 @@ export default function Header({ onToggleSidebar }) {
           <Menu size={20} />
         </button>
 
-        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white p-1 rounded-xl flex items-center justify-center shadow-md overflow-hidden shrink-0">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden shrink-0">
           <img
             src={logoSvg}
-            alt="MHAVEER FINCAP Logo"
+            alt="NOBAL FINANCE Logo"
             className="w-full h-full object-contain"
             onError={(e) => {
               e.target.style.display = 'none';
@@ -174,7 +174,7 @@ export default function Header({ onToggleSidebar }) {
         </div>
         <div className="hidden sm:block">
           <span className="font-black text-sm sm:text-lg tracking-wide text-white whitespace-nowrap">
-            MHAVEER <span className="text-[#d4af37]">FINCAP</span>
+            NOBAL <span className="text-[#9ca3af]">FINANCE</span>
           </span>
         </div>
 
@@ -198,9 +198,9 @@ export default function Header({ onToggleSidebar }) {
             )}
           </div>
         )}
-        <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#d4af37] rounded-lg transition relative hidden sm:block" title="Notifications">
+        <button className="p-1.5 sm:p-2 text-slate-300 hover:text-[#9ca3af] rounded-lg transition relative hidden sm:block" title="Notifications">
           <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#d4af37] rounded-full" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#9ca3af] rounded-full" />
         </button>
 
         <div className="h-6 w-px bg-slate-700" />
@@ -211,7 +211,7 @@ export default function Header({ onToggleSidebar }) {
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-800/80 transition cursor-pointer"
           >
-            <div className="w-9 h-9 rounded-xl bg-[#d4af37] text-[#0a2540] flex items-center justify-center font-black text-xs shadow-md">
+            <div className="w-9 h-9 rounded-xl bg-[#9ca3af] text-[#162335] flex items-center justify-center font-black text-xs shadow-md">
               {initials}
             </div>
             <ChevronDown size={14} className={`text-slate-300 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
@@ -222,14 +222,14 @@ export default function Header({ onToggleSidebar }) {
             <div className="absolute right-0 mt-2.5 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 text-slate-700 overflow-hidden z-50">
               {/* Profile Details Header */}
               <div className="p-4 bg-slate-50 border-b border-slate-100 space-y-1">
-                <p className="text-xs font-black text-[#0a2540] truncate">{user?.fullName || user?.name || "Employee User"}</p>
+                <p className="text-xs font-black text-[#162335] truncate">{user?.fullName || user?.name || "Employee User"}</p>
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                  Role: <span className="text-[#d4af37]">{user?.role || "Representative"}</span>
+                  Role: <span className="text-[#9ca3af]">{user?.role || "Representative"}</span>
                 </p>
                 <>
                   <p className="text-[9px] font-mono text-slate-400">ID: {user?.employeeId || "N/A"}</p>
                   <p className="text-[9px] font-mono text-slate-400">Email: {user?.email || "N/A"}</p>
-                  <p className="text-[9px] font-extrabold text-[#0a2540] uppercase tracking-widest mt-1">Branch: Corporate Gujarat</p>
+                  <p className="text-[9px] font-extrabold text-[#162335] uppercase tracking-widest mt-1">Branch: Corporate Gujarat</p>
                 </>
               </div>
 
@@ -238,13 +238,13 @@ export default function Header({ onToggleSidebar }) {
                 <>
                   <button
                     onClick={() => { navigate("/profile"); setDropdownOpen(false); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-600 hover:bg-slate-100 hover:text-[#0a2540] font-bold transition text-left"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-600 hover:bg-slate-100 hover:text-[#162335] font-bold transition text-left"
                   >
                     <User size={14} /> My Profile
                   </button>
                   <button
                     onClick={() => { navigate("/attendance"); setDropdownOpen(false); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-600 hover:bg-slate-100 hover:text-[#0a2540] font-bold transition text-left"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-600 hover:bg-slate-100 hover:text-[#162335] font-bold transition text-left"
                   >
                     <Clock size={14} /> Attendance Logs
                   </button>

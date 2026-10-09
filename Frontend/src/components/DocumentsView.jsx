@@ -69,15 +69,15 @@ export default function DocumentsView() {
     <div className="p-4 md:p-8 max-w-7xl mx-auto min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-[#0a2540] flex items-center gap-3">
-            <FileText className="text-[#d4af37]" size={32} />
+          <h1 className="text-2xl md:text-3xl font-black text-[#162335] flex items-center gap-3">
+            <FileText className="text-[#9ca3af]" size={32} />
             Documents & Calling Lists
           </h1>
           <p className="text-slate-500 mt-2 font-medium">Manage and assign calling lists to your team members.</p>
         </div>
         <button 
           onClick={() => setIsAssigning(!isAssigning)}
-          className="bg-[#0a2540] text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-[#113255] transition shadow-md"
+          className="bg-[#162335] text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-[#113255] transition shadow-md"
         >
           {isAssigning ? "Cancel Assignment" : <><Plus size={20} /> Assign New List</>}
         </button>
@@ -85,8 +85,8 @@ export default function DocumentsView() {
 
       {isAssigning && (
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-8 animate-in fade-in slide-in-from-top-4 duration-300">
-          <h2 className="text-xl font-bold text-[#0a2540] mb-6 flex items-center gap-2">
-            <User className="text-[#d4af37]" size={24} />
+          <h2 className="text-xl font-bold text-[#162335] mb-6 flex items-center gap-2">
+            <User className="text-[#9ca3af]" size={24} />
             Assign New Calling List
           </h2>
           <form onSubmit={handleAssignTask} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -95,7 +95,7 @@ export default function DocumentsView() {
               <select 
                 value={formData.employeeId}
                 onChange={(e) => setFormData({...formData, employeeId: e.target.value})}
-                className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#d4af37]/50 focus:border-[#d4af37] outline-none transition font-medium text-slate-700"
+                className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#9ca3af]/50 focus:border-[#9ca3af] outline-none transition font-medium text-slate-700"
                 required
               >
                 <option value="">Choose an employee...</option>
@@ -113,7 +113,7 @@ export default function DocumentsView() {
                   min="1"
                   value={formData.targetCalls}
                   onChange={(e) => setFormData({...formData, targetCalls: e.target.value})}
-                  className="w-full pl-10 p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#d4af37]/50 focus:border-[#d4af37] outline-none transition font-medium text-slate-700"
+                  className="w-full pl-10 p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#9ca3af]/50 focus:border-[#9ca3af] outline-none transition font-medium text-slate-700"
                   placeholder="e.g., 50"
                   required
                 />
@@ -124,7 +124,7 @@ export default function DocumentsView() {
               <textarea 
                 value={formData.listDetails}
                 onChange={(e) => setFormData({...formData, listDetails: e.target.value})}
-                className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#d4af37]/50 focus:border-[#d4af37] outline-none transition font-medium text-slate-700 min-h-[100px]"
+                className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#9ca3af]/50 focus:border-[#9ca3af] outline-none transition font-medium text-slate-700 min-h-[100px]"
                 placeholder="Provide link to document, CRM filter, or description of the calling list..."
                 required
               />
@@ -132,7 +132,7 @@ export default function DocumentsView() {
             <div className="lg:col-span-3 flex justify-end">
               <button 
                 type="submit"
-                className="bg-[#d4af37] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-[#c19b2e] transition shadow-md"
+                className="bg-[#9ca3af] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-[#c19b2e] transition shadow-md"
               >
                 <CheckCircle2 size={20} />
                 Confirm Assignment
@@ -144,7 +144,7 @@ export default function DocumentsView() {
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50/50">
-          <h3 className="text-lg font-bold text-[#0a2540]">Active Assigned Lists</h3>
+          <h3 className="text-lg font-bold text-[#162335]">Active Assigned Lists</h3>
           <div className="flex gap-3 w-full md:w-auto">
             <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -153,7 +153,7 @@ export default function DocumentsView() {
                 placeholder="Search assignments..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 p-2.5 rounded-lg border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-[#0a2540]/20 outline-none"
+                className="w-full pl-10 p-2.5 rounded-lg border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-[#162335]/20 outline-none"
               />
             </div>
           </div>
@@ -175,7 +175,7 @@ export default function DocumentsView() {
                 filteredTasks.map((task) => (
                   <tr key={task.id} className="hover:bg-slate-50/50 transition">
                     <td className="p-4">
-                      <div className="font-bold text-[#0a2540]">{task.employeeName}</div>
+                      <div className="font-bold text-[#162335]">{task.employeeName}</div>
                     </td>
                     <td className="p-4 max-w-md">
                       <div className="text-sm font-medium text-slate-600 line-clamp-2">

@@ -91,9 +91,9 @@ export default function FollowUpView() {
       </AnimatePresence>
 
       {/* Header */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-l-8 border-l-[#d4af37]">
-        <h1 className="text-xl sm:text-2xl font-black text-[#0a2540] flex items-center gap-2">
-          <Clock className="text-[#d4af37]" />
+      <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-l-8 border-l-[#9ca3af]">
+        <h1 className="text-xl sm:text-2xl font-black text-[#162335] flex items-center gap-2">
+          <Clock className="text-[#9ca3af]" />
           Pending CRM Follow-ups
         </h1>
         <p className="text-xs text-slate-500 font-medium mt-1">
@@ -102,7 +102,7 @@ export default function FollowUpView() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#0a2540]" size={32} /></div>
+        <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#162335]" size={32} /></div>
       ) : leads.length === 0 ? (
         <div className="bg-white rounded-3xl border border-slate-200 p-8 text-center text-slate-400 text-xs shadow-sm">
           No pending follow-ups scheduled at this moment. Excellent work!
@@ -113,23 +113,23 @@ export default function FollowUpView() {
             <div key={lead._id} className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300">
               <div className="space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <span className="font-mono text-[10px] font-black text-[#0a2540] bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-xl">
+                  <span className="font-mono text-[10px] font-black text-[#162335] bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-xl">
                     {lead.leadId}
                   </span>
-                  <span className="text-[10px] font-extrabold text-[#d4af37] bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-100 uppercase tracking-wider flex items-center gap-1">
+                  <span className="text-[10px] font-extrabold text-[#9ca3af] bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-100 uppercase tracking-wider flex items-center gap-1">
                     <Clock size={12} /> Call Back
                   </span>
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-black text-[#0a2540]">{lead.companyName}</h3>
+                  <h3 className="text-sm font-black text-[#162335]">{lead.companyName}</h3>
                   <p className="text-xs text-slate-500 font-bold mt-0.5">{lead.contactPerson}</p>
                 </div>
 
                 <div className="space-y-1 bg-slate-50 p-3 rounded-2xl border border-slate-100 text-xs">
                   <p className="text-[10px] text-slate-400 font-extrabold uppercase">Follow-up Time</p>
-                  <p className="font-black text-[#0a2540] text-sm flex items-center gap-1.5 mt-0.5">
-                    <Calendar size={14} className="text-[#d4af37]" />
+                  <p className="font-black text-[#162335] text-sm flex items-center gap-1.5 mt-0.5">
+                    <Calendar size={14} className="text-[#9ca3af]" />
                     {lead.followUpDate} at {lead.followUpTime || "N/A"}
                   </p>
                 </div>

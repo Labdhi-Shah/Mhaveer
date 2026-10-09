@@ -32,29 +32,29 @@ export default function DashboardView({ onOpenForm }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 border-l-8 border-l-[#0a2540] text-center md:text-left">
+      <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 border-l-8 border-l-[#162335] text-center md:text-left">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-widest text-[#d4af37]">Executive Overview</p>
-          <h1 className="text-xl sm:text-2xl font-black text-[#0a2540]">Super Admin Dashboard</h1>
+          <p className="text-xs font-extrabold uppercase tracking-widest text-[#9ca3af]">Executive Overview</p>
+          <h1 className="text-xl sm:text-2xl font-black text-[#162335]">Super Admin Dashboard</h1>
         </div>
         <button
           onClick={onOpenForm || (() => navigate("/add-employee"))}
-          className="bg-[#d4af37] hover:bg-[#c39e2d] text-[#0a2540] px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition shadow-md whitespace-nowrap"
+          className="bg-[#9ca3af] hover:bg-[#c39e2d] text-[#162335] px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition shadow-md whitespace-nowrap"
         >
           Add New Employee
         </button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-[#0a2540] flex items-center justify-between">
+        <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-[#162335] flex items-center justify-between">
           <div>
             <p className="text-slate-400 text-[10px] font-extrabold uppercase">TOTAL EMPLOYEES</p>
-            <h2 className="text-2xl sm:text-3xl font-black text-[#0a2540] mt-1">{loading ? "..." : stats.totalEmployees}</h2>
+            <h2 className="text-2xl sm:text-3xl font-black text-[#162335] mt-1">{loading ? "..." : stats.totalEmployees}</h2>
           </div>
-          <div className="w-12 h-12 bg-[#0a2540] text-[#d4af37] rounded-2xl flex items-center justify-center shrink-0"><Users size={22} /></div>
+          <div className="w-12 h-12 bg-[#162335] text-white rounded-2xl flex items-center justify-center shrink-0"><Users size={22} /></div>
         </div>
 
-        <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-[#d4af37] flex items-center justify-between">
+        <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-[#9ca3af] flex items-center justify-between">
           <div>
             <p className="text-slate-400 text-[10px] font-extrabold uppercase">ACTIVE EMPLOYEES</p>
             <h2 className="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">{loading ? "..." : stats.activeEmployees}</h2>
@@ -73,18 +73,18 @@ export default function DashboardView({ onOpenForm }) {
 
       <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
-          <h3 className="text-lg font-black text-[#0a2540]">Recently Joined Employees</h3>
-          <button onClick={() => navigate("/employees")} className="text-xs text-[#0a2540] hover:text-[#d4af37] font-black flex items-center gap-1 w-fit">
+          <h3 className="text-lg font-black text-[#162335]">Recently Joined Employees</h3>
+          <button onClick={() => navigate("/employees")} className="text-xs text-[#162335] hover:text-[#9ca3af] font-black flex items-center gap-1 w-fit">
             View All <ArrowRight size={14} />
           </button>
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-8"><Loader2 className="animate-spin text-[#0a2540]" size={28} /></div>
+          <div className="flex justify-center py-8"><Loader2 className="animate-spin text-[#162335]" size={28} /></div>
         ) : (
           <div className="overflow-x-auto scrollbar-thin">
             <table className="w-full text-left text-xs min-w-[500px]">
-              <thead className="bg-[#0a2540] text-[#d4af37] font-extrabold uppercase whitespace-nowrap">
+              <thead className="bg-[#162335] text-white font-extrabold uppercase whitespace-nowrap">
                 <tr>
                   <th className="py-3.5 px-4 rounded-l-xl">EMP ID</th>
                   <th className="py-3.5 px-4">NAME</th>
@@ -95,8 +95,8 @@ export default function DashboardView({ onOpenForm }) {
               <tbody className="divide-y divide-slate-100 text-slate-700 whitespace-nowrap">
                 {recentEmployees.map((emp) => (
                   <tr key={emp._id || emp.employeeId} className="hover:bg-slate-50">
-                    <td className="py-4 px-4 font-mono font-black text-[#0a2540]">{emp.employeeId}</td>
-                    <td className="py-4 px-4 font-bold text-[#0a2540]">{emp.fullName}</td>
+                    <td className="py-4 px-4 font-mono font-black text-[#162335]">{emp.employeeId}</td>
+                    <td className="py-4 px-4 font-bold text-[#162335]">{emp.fullName}</td>
                     <td className="py-4 px-4 text-slate-500">{emp.role}</td>
                     <td className="py-4 px-4 text-center">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-black ${emp.status === "Active" ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"}`}>

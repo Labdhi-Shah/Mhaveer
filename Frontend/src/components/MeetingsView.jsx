@@ -310,7 +310,7 @@ export default function MeetingsView() {
       {/* Header */}
       <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-l-8 border-l-purple-500 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-[#0a2540] flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-black text-[#162335] flex items-center gap-2">
             <Calendar className="text-purple-500" />
             Client Meetings
           </h1>
@@ -353,7 +353,7 @@ export default function MeetingsView() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#0a2540]" size={32} /></div>
+        <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#162335]" size={32} /></div>
       ) : filteredMeetings.length === 0 ? (
         <div className="bg-white rounded-3xl border border-slate-200 p-8 text-center text-slate-400 text-xs shadow-sm flex flex-col items-center gap-3">
           <Calendar size={32} className="text-slate-300" />
@@ -368,7 +368,7 @@ export default function MeetingsView() {
             >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                      <h3 className="text-sm font-black text-[#0a2540] truncate max-w-[70%]">{meeting.title}</h3>
+                      <h3 className="text-sm font-black text-[#162335] truncate max-w-[70%]">{meeting.title}</h3>
                       <span className={`text-[9px] font-black px-2 py-1 rounded-full uppercase tracking-wider ${getStatusBadge(meeting.status)}`}>
                         {meeting.status}
                       </span>
@@ -376,12 +376,12 @@ export default function MeetingsView() {
 
                     <div>
                       <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Client / Customer</p>
-                      <p className="text-sm font-black text-[#0a2540]">{meeting.customerName || meeting.leadId?.contactPerson || meeting.leadId?.companyName || "N/A"}</p>
+                      <p className="text-sm font-black text-[#162335]">{meeting.customerName || meeting.leadId?.contactPerson || meeting.leadId?.companyName || "N/A"}</p>
                     </div>
 
                     <div className="space-y-1 bg-slate-50 border border-slate-100 p-3 rounded-2xl shadow-sm text-xs">
                       <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Schedule</p>
-                      <p className="font-black text-[#0a2540] text-sm flex items-center gap-1.5 mt-0.5">
+                      <p className="font-black text-[#162335] text-sm flex items-center gap-1.5 mt-0.5">
                         <Calendar size={14} className="text-purple-500" />
                         {meeting.date ? new Date(meeting.date).toLocaleDateString() : "N/A"} at {meeting.time || "N/A"}
                       </p>
@@ -396,7 +396,7 @@ export default function MeetingsView() {
                       </div>
                       <div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Type</p>
-                        <p className="font-bold text-[#0a2540] mt-0.5">{meeting.type}</p>
+                        <p className="font-bold text-[#162335] mt-0.5">{meeting.type}</p>
                       </div>
                     </div>
 
@@ -437,7 +437,7 @@ export default function MeetingsView() {
                       {(meeting.status === "Scheduled" || meeting.status === "Rescheduled") ? (
                         <button
                           onClick={() => handleFillFormForCard(meeting)}
-                          className="px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-xs bg-[#0a2540] hover:bg-[#0a2540]/90 text-[#d4af37]"
+                          className="px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-xs bg-[#162335] hover:bg-[#162335]/90 text-[#9ca3af]"
                         >
                           <ClipboardList size={13} /> Fill Form
                         </button>
@@ -512,7 +512,7 @@ export default function MeetingsView() {
               className="bg-white rounded-3xl shadow-2xl w-full max-w-lg z-50 overflow-hidden flex flex-col max-h-[90vh]"
             >
               <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
-                <h3 className="font-black text-[#0a2540] text-lg">
+                <h3 className="font-black text-[#162335] text-lg">
                   Edit Meeting
                 </h3>
                 <button onClick={closeModal} className="text-slate-400 hover:text-rose-500 transition">
@@ -652,7 +652,7 @@ export default function MeetingsView() {
                   type="submit"
                   form="meetingForm"
                   disabled={actionLoading}
-                  className="px-6 py-2.5 rounded-xl font-bold text-[#d4af37] bg-[#0a2540] hover:bg-[#0a2540]/90 transition text-sm flex items-center gap-2 disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl font-bold text-[#9ca3af] bg-[#162335] hover:bg-[#162335]/90 transition text-sm flex items-center gap-2 disabled:opacity-50"
                 >
                   {actionLoading ? <Loader2 size={16} className="animate-spin" /> : null}
                   Update Meeting

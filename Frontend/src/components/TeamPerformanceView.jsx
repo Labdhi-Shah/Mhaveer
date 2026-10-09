@@ -92,8 +92,8 @@ export default function TeamPerformanceView() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-black text-[#0a2540] flex items-center gap-3">
-              <Users className="text-[#d4af37]" size={28} />
+            <h1 className="text-2xl font-black text-[#162335] flex items-center gap-3">
+              <Users className="text-[#9ca3af]" size={28} />
               Team Performance
             </h1>
             <p className="text-sm font-medium text-slate-500 mt-1">
@@ -103,9 +103,9 @@ export default function TeamPerformanceView() {
           <div className="flex items-center gap-3">
             <button
               onClick={exportToCSV}
-              className="flex items-center gap-2 px-4 py-2 bg-[#0a2540] text-white font-bold rounded-xl text-sm hover:bg-[#0a2540]/90 transition shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-[#162335] text-white font-bold rounded-xl text-sm hover:bg-[#162335]/90 transition shadow-sm"
             >
-              <Download size={16} className="text-[#d4af37]" />
+              <Download size={16} className="text-[#9ca3af]" />
               Export
             </button>
           </div>
@@ -120,7 +120,7 @@ export default function TeamPerformanceView() {
               placeholder="Search Employees..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#d4af37]/30 transition"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#9ca3af]/30 transition"
             />
           </div>
         </div>
@@ -132,43 +132,43 @@ export default function TeamPerformanceView() {
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/50">
                   <th 
-                    className="py-4 px-6 text-xs font-black text-[#0a2540] uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition"
+                    className="py-4 px-6 text-xs font-black text-[#162335] uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition"
                     onClick={() => handleSort("name")}
                   >
                     <div className="flex items-center gap-2">Name {renderSortIcon("name")}</div>
                   </th>
                   <th 
-                    className="py-4 px-6 text-xs font-black text-[#0a2540] uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition"
+                    className="py-4 px-6 text-xs font-black text-[#162335] uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition"
                     onClick={() => handleSort("totalCalls")}
                   >
                     <div className="flex items-center gap-2">Total Calls {renderSortIcon("totalCalls")}</div>
                   </th>
                   <th 
-                    className="py-4 px-6 text-xs font-black text-[#0a2540] uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition"
+                    className="py-4 px-6 text-xs font-black text-[#162335] uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition"
                     onClick={() => handleSort("todaysCalls")}
                   >
                     <div className="flex items-center gap-2">Today's Calls {renderSortIcon("todaysCalls")}</div>
                   </th>
                   <th 
-                    className="py-4 px-6 text-xs font-black text-[#0a2540] uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition"
+                    className="py-4 px-6 text-xs font-black text-[#162335] uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition"
                     onClick={() => handleSort("interestedLeads")}
                   >
                     <div className="flex items-center gap-2">Interested Leads {renderSortIcon("interestedLeads")}</div>
                   </th>
                   <th 
-                    className="py-4 px-6 text-xs font-black text-[#0a2540] uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition"
+                    className="py-4 px-6 text-xs font-black text-[#162335] uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition"
                     onClick={() => handleSort("pendingFollowUps")}
                   >
                     <div className="flex items-center gap-2">Pending Follow-ups {renderSortIcon("pendingFollowUps")}</div>
                   </th>
                   <th 
-                    className="py-4 px-6 text-xs font-black text-[#0a2540] uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition"
+                    className="py-4 px-6 text-xs font-black text-[#162335] uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition"
                     onClick={() => handleSort("todaysMeetings")}
                   >
                     <div className="flex items-center gap-2">Today's Meetings {renderSortIcon("todaysMeetings")}</div>
                   </th>
                   <th 
-                    className="py-4 px-6 text-xs font-black text-[#0a2540] uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition"
+                    className="py-4 px-6 text-xs font-black text-[#162335] uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition"
                     onClick={() => handleSort("lastActivity")}
                   >
                     <div className="flex items-center gap-2">Last Activity {renderSortIcon("lastActivity")}</div>
@@ -179,7 +179,7 @@ export default function TeamPerformanceView() {
                 {loading ? (
                   <tr>
                     <td colSpan={8} className="py-12 text-center">
-                      <Loader2 className="w-8 h-8 text-[#d4af37] animate-spin mx-auto mb-3" />
+                      <Loader2 className="w-8 h-8 text-[#9ca3af] animate-spin mx-auto mb-3" />
                       <p className="text-sm font-bold text-slate-400">Loading performance data...</p>
                     </td>
                   </tr>
@@ -189,7 +189,7 @@ export default function TeamPerformanceView() {
                       <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <Users className="text-slate-300" size={32} />
                       </div>
-                      <p className="text-sm font-bold text-[#0a2540]">No records found</p>
+                      <p className="text-sm font-bold text-[#162335]">No records found</p>
                       <p className="text-xs font-medium text-slate-500 mt-1">Try adjusting your search</p>
                     </td>
                   </tr>
@@ -201,11 +201,11 @@ export default function TeamPerformanceView() {
                     >
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-[#0a2540]/5 flex items-center justify-center font-bold text-[#0a2540] text-xs">
+                          <div className="w-8 h-8 rounded-full bg-[#162335]/5 flex items-center justify-center font-bold text-[#162335] text-xs">
                             {item.name.charAt(0)}
                           </div>
                           <div>
-                            <p className="text-sm font-black text-[#0a2540]">{item.name}</p>
+                            <p className="text-sm font-black text-[#162335]">{item.name}</p>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{item.employeeId}</p>
                           </div>
                         </div>

@@ -173,15 +173,15 @@ export default function EmployeeDashboard() {
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { title: "Today's Calls", value: stats.todaysCalls || 0, color: "border-t-[#0a2540]", iconBg: "bg-blue-50 text-[#0a2540]", icon: <Phone size={22} /> },
+          { title: "Today's Calls", value: stats.todaysCalls || 0, color: "border-t-[#162335]", iconBg: "bg-blue-50 text-[#162335]", icon: <Phone size={22} /> },
           { title: "Interested Leads", value: stats.interestedLeads || 0, color: "border-t-emerald-500", iconBg: "bg-emerald-50 text-emerald-600", icon: <Award size={22} /> },
-          { title: "Pending Follow-ups", value: stats.pendingFollowUps || 0, color: "border-t-[#d4af37]", iconBg: "bg-amber-50 text-[#d4af37]", icon: <Clock size={22} /> },
+          { title: "Pending Follow-ups", value: stats.pendingFollowUps || 0, color: "border-t-[#9ca3af]", iconBg: "bg-amber-50 text-[#9ca3af]", icon: <Clock size={22} /> },
           { title: "Today's Meetings", value: stats.todaysMeetings || 0, color: "border-t-purple-500", iconBg: "bg-purple-50 text-purple-600", icon: <Calendar size={22} /> }
         ].map((card, idx) => (
           <div key={idx} className={`bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-t-4 ${card.color} flex items-center justify-between`}>
             <div>
               <p className="text-slate-400 text-[10px] font-extrabold uppercase tracking-wide">{card.title}</p>
-              <h2 className="text-2xl sm:text-3xl font-black text-[#0a2540] mt-1">
+              <h2 className="text-2xl sm:text-3xl font-black text-[#162335] mt-1">
                 {statsLoading ? (
                   <Loader2 className="animate-spin text-slate-300" size={24} />
                 ) : (
@@ -204,7 +204,7 @@ export default function EmployeeDashboard() {
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between h-fit w-full">
             <div>
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                <h3 className="text-md font-black text-[#0a2540] flex items-center gap-2">
+                <h3 className="text-md font-black text-[#162335] flex items-center gap-2">
                   <Clock size={18} className="text-amber-500" />
                   Upcoming Follow-Ups
                 </h3>
@@ -212,7 +212,7 @@ export default function EmployeeDashboard() {
 
               {recentLoading ? (
                 <div className="flex flex-col items-center justify-center py-12 gap-3">
-                  <Loader2 className="animate-spin text-[#0a2540]" size={28} />
+                  <Loader2 className="animate-spin text-[#162335]" size={28} />
                 </div>
               ) : recentLeads.filter(l => l.followUpDate).length === 0 ? (
                 <div className="text-center py-8 text-slate-400 text-xs">
@@ -229,7 +229,7 @@ export default function EmployeeDashboard() {
                         </span>
                       </div>
                       <div>
-                        <h4 className="text-xs font-black text-[#0a2540] truncate">{lead.companyName}</h4>
+                        <h4 className="text-xs font-black text-[#162335] truncate">{lead.companyName}</h4>
                         <p className="text-[10px] text-slate-500 font-medium">Contact: {lead.contactPerson} ({lead.phone})</p>
                       </div>
                     </div>
@@ -243,15 +243,15 @@ export default function EmployeeDashboard() {
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between h-fit w-full">
             <div>
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                <h3 className="text-md font-black text-[#0a2540] flex items-center gap-2">
-                  <Calendar size={18} className="text-[#0a2540]" />
+                <h3 className="text-md font-black text-[#162335] flex items-center gap-2">
+                  <Calendar size={18} className="text-[#162335]" />
                   Upcoming Meetings
                 </h3>
               </div>
 
               {recentLoading ? (
                 <div className="flex flex-col items-center justify-center py-12 gap-3">
-                  <Loader2 className="animate-spin text-[#0a2540]" size={28} />
+                  <Loader2 className="animate-spin text-[#162335]" size={28} />
                 </div>
               ) : recentLeads.filter(l => l.meetingDate).length === 0 ? (
                 <div className="text-center py-8 text-slate-400 text-xs">
@@ -268,7 +268,7 @@ export default function EmployeeDashboard() {
                         </span>
                       </div>
                       <div>
-                        <h4 className="text-xs font-black text-[#0a2540] truncate">{lead.companyName}</h4>
+                        <h4 className="text-xs font-black text-[#162335] truncate">{lead.companyName}</h4>
                         <p className="text-[10px] text-slate-500 font-medium">Contact: {lead.contactPerson} ({lead.phone})</p>
                       </div>
                     </div>
@@ -281,17 +281,17 @@ export default function EmployeeDashboard() {
 
         {/* Latest Leads Log */}
         <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm overflow-hidden w-full">
-          <h3 className="text-lg font-black text-[#0a2540] mb-5">Latest Leads Log</h3>
+          <h3 className="text-lg font-black text-[#162335] mb-5">Latest Leads Log</h3>
 
           {recentLoading ? (
-            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#0a2540]" size={28} /></div>
+            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#162335]" size={28} /></div>
           ) : recentLeads.length === 0 ? (
             <div className="text-center py-8 text-slate-400 text-xs">No leads logged.</div>
           ) : (
             <div className="overflow-x-auto scrollbar-thin">
               <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
                 <thead>
-                  <tr className="bg-[#0a2540] text-[#d4af37] font-extrabold uppercase whitespace-nowrap">
+                  <tr className="bg-[#162335] text-white font-extrabold uppercase whitespace-nowrap">
                     <th className="py-3 px-4 rounded-l-xl">LEAD ID</th>
                     <th className="py-3 px-4">COMPANY NAME</th>
                     <th className="py-3 px-4">CONTACT PERSON</th>
@@ -308,8 +308,8 @@ export default function EmployeeDashboard() {
                 <tbody className="divide-y divide-slate-100 text-slate-700 whitespace-nowrap">
                   {recentLeads.map((lead) => (
                     <tr key={lead._id} className="hover:bg-slate-50 transition">
-                      <td className="py-3.5 px-4 font-mono font-black text-[#0a2540]">{lead.leadId}</td>
-                      <td className="py-3.5 px-4 font-bold text-[#0a2540]">{lead.companyName}</td>
+                      <td className="py-3.5 px-4 font-mono font-black text-[#162335]">{lead.leadId}</td>
+                      <td className="py-3.5 px-4 font-bold text-[#162335]">{lead.companyName}</td>
                       <td className="py-3.5 px-4 font-medium text-slate-800">{lead.contactPerson}</td>
                       <td className="py-3.5 px-4 text-slate-600">{lead.phone}</td>
                       <td className="py-3.5 px-4 font-extrabold text-slate-500">{lead.loanType}</td>
@@ -340,7 +340,7 @@ export default function EmployeeDashboard() {
                         <div className="flex justify-center gap-1.5">
                           <button
                             onClick={() => setViewLead(lead)}
-                            className="p-1 text-slate-400 hover:text-[#0a2540] hover:bg-slate-100 rounded-lg transition"
+                            className="p-1 text-slate-400 hover:text-[#162335] hover:bg-slate-100 rounded-lg transition"
                             title="View Details"
                           >
                             <Eye size={14} />
@@ -387,15 +387,15 @@ export default function EmployeeDashboard() {
             {/* Sticky Header */}
             <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#0a2540]/5 rounded-xl flex items-center justify-center text-[#0a2540]">
+                <div className="w-10 h-10 bg-[#162335]/5 rounded-xl flex items-center justify-center text-[#162335]">
                   <Briefcase size={20} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black text-[#0a2540]">Lead Profile</h3>
+                    <h3 className="text-base font-black text-[#162335]">Lead Profile</h3>
                     <span className="font-mono text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">{viewLead.leadId}</span>
                   </div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Mhaveer Fincap CRM</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">NOBAL FINANCE CRM</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -423,12 +423,12 @@ export default function EmployeeDashboard() {
                   {/* Company Info Card */}
                   <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-4">
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
-                      <User size={14} className="text-[#0a2540]" /> Company & Contact Information
+                      <User size={14} className="text-[#162335]" /> Company & Contact Information
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="sm:col-span-2">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Company Name</span>
-                        <p className="font-extrabold text-[#0a2540] text-sm mt-0.5">{viewLead.companyName || "N/A"}</p>
+                        <p className="font-extrabold text-[#162335] text-sm mt-0.5">{viewLead.companyName || "N/A"}</p>
                       </div>
                       <div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Contact Person</span>
@@ -525,7 +525,7 @@ export default function EmployeeDashboard() {
                   {/* Meeting Information Card */}
                   <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-3">
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
-                      <Calendar size={14} className="text-[#0a2540]" /> Meeting Details
+                      <Calendar size={14} className="text-[#162335]" /> Meeting Details
                     </h4>
                     {viewLead.meetingDate ? (
                       <div className="flex gap-4 items-center">
@@ -546,7 +546,7 @@ export default function EmployeeDashboard() {
 
                   {/* Follow-up Information highlighted card */}
                   <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${viewLead.followUpDate
-                      ? "bg-amber-50/60 border-amber-200/50 text-[#0a2540]"
+                      ? "bg-amber-50/60 border-amber-200/50 text-[#162335]"
                       : "bg-white border-slate-100 text-slate-700"
                     }`}>
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100/50 pb-2">
@@ -583,7 +583,7 @@ export default function EmployeeDashboard() {
               </button>
               <button
                 onClick={() => setViewLead(null)}
-                className="px-6 py-2.5 bg-[#0a2540] hover:bg-[#0a2540]/90 text-white rounded-xl font-bold transition text-xs shadow-sm cursor-pointer"
+                className="px-6 py-2.5 bg-[#162335] hover:bg-[#162335]/90 text-white rounded-xl font-bold transition text-xs shadow-sm cursor-pointer"
               >
                 Close
               </button>
@@ -600,7 +600,7 @@ export default function EmployeeDashboard() {
               <div className="w-12 h-12 bg-rose-50 border border-rose-200 text-rose-500 rounded-2xl flex items-center justify-center mx-auto">
                 <Trash2 size={24} />
               </div>
-              <h3 className="text-md font-black text-[#0a2540]">Confirm Delete</h3>
+              <h3 className="text-md font-black text-[#162335]">Confirm Delete</h3>
               <p className="text-xs text-slate-500">Are you sure you want to delete this lead? This action cannot be undone.</p>
             </div>
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end">

@@ -39,31 +39,31 @@ export default function ProfileView() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-l-8 border-l-[#0a2540]">
-        <h1 className="text-xl sm:text-2xl font-black text-[#0a2540]">My Profile</h1>
-        <p className="text-xs font-bold uppercase tracking-widest text-[#d4af37] mt-1">Official Credentials & Settings</p>
+      <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-l-8 border-l-[#162335]">
+        <h1 className="text-xl sm:text-2xl font-black text-[#162335]">My Profile</h1>
+        <p className="text-xs font-bold uppercase tracking-widest text-[#9ca3af] mt-1">Official Credentials & Settings</p>
       </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <Loader2 className="animate-spin text-[#0a2540]" size={32} />
+          <Loader2 className="animate-spin text-[#162335]" size={32} />
           <p className="text-[10px] text-slate-400 font-bold uppercase">Loading profile...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Left Panel: Profile Badge */}
           <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col items-center text-center space-y-4">
-            <div className="w-24 h-24 rounded-3xl bg-[#0a2540] border-4 border-[#d4af37] text-white flex items-center justify-center text-3xl font-black shadow-md">
+            <div className="w-24 h-24 rounded-3xl bg-[#162335] border-4 border-[#9ca3af] text-white flex items-center justify-center text-3xl font-black shadow-md">
               {displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <h2 className="text-lg font-black text-[#0a2540]">{displayName}</h2>
-              <p className="text-xs font-bold text-[#d4af37] uppercase mt-0.5">{displayRole}</p>
+              <h2 className="text-lg font-black text-[#162335]">{displayName}</h2>
+              <p className="text-xs font-bold text-[#9ca3af] uppercase mt-0.5">{displayRole}</p>
             </div>
             <div className="w-full border-t border-slate-100 pt-4 flex justify-around text-center">
               <div>
                 <p className="text-[9px] font-extrabold text-slate-400 uppercase">Employee ID</p>
-                <p className="font-mono text-xs font-black text-[#0a2540] mt-0.5">
+                <p className="font-mono text-xs font-black text-[#162335] mt-0.5">
                   {profile?.employeeId || "EMP-2026-M04"}
                 </p>
               </div>
@@ -79,8 +79,8 @@ export default function ProfileView() {
 
           {/* Right Panel: Complete Profile details */}
           <div className="md:col-span-2 bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
-            <h3 className="text-sm font-black text-[#0a2540] border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
-              <Shield size={16} className="text-[#d4af37]" />
+            <h3 className="text-sm font-black text-[#162335] border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
+              <Shield size={16} className="text-[#9ca3af]" />
               Employment Details
             </h3>
 
@@ -89,7 +89,7 @@ export default function ProfileView() {
                 <p className="font-bold text-slate-400 uppercase text-[9px] tracking-wider">Official Email Address</p>
                 <p className="font-bold text-slate-800 flex items-center gap-1.5 mt-0.5">
                   <Mail size={14} className="text-slate-400" />
-                  {profile?.email || "employee@mhaveer.com"}
+                  {profile?.email || "employee@nobalfinance.com"}
                 </p>
               </div>
 
@@ -137,7 +137,7 @@ export default function ProfileView() {
                 <p className="font-bold text-slate-400 uppercase text-[9px] tracking-wider">Permanent Address</p>
                 <p className="font-semibold text-slate-700 flex items-start gap-1.5 mt-1 leading-relaxed">
                   <MapPin size={14} className="text-slate-400 mt-0.5 shrink-0" />
-                  {profile?.address || "Mhaveer Fincap Corporate Branch, Gujarat, India"}
+                  {profile?.address || "NOBAL FINANCE Corporate Branch, Gujarat, India"}
                 </p>
               </div>
             </div>

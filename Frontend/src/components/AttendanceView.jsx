@@ -351,8 +351,8 @@ export default function AttendanceView() {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <div>
-          <h1 className="text-2xl font-black text-[#0a2540] flex items-center gap-2">
-            <ClipboardList className="text-[#d4af37]" /> Attendance & Leave
+          <h1 className="text-2xl font-black text-[#162335] flex items-center gap-2">
+            <ClipboardList className="text-[#9ca3af]" /> Attendance & Leave
           </h1>
           <p className="text-sm font-semibold text-slate-500 mt-1">
             Track work sessions or manage leave applications.
@@ -361,13 +361,13 @@ export default function AttendanceView() {
         <div className="flex gap-2">
           <button 
             onClick={() => setMainTab("logs")} 
-            className={`px-4 py-2 font-bold rounded-xl text-sm transition ${mainTab === 'logs' ? 'bg-[#0a2540] text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+            className={`px-4 py-2 font-bold rounded-xl text-sm transition ${mainTab === 'logs' ? 'bg-[#162335] text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
           >
             Attendance Logs
           </button>
           <button 
             onClick={() => setMainTab("leave")} 
-            className={`px-4 py-2 font-bold rounded-xl text-sm transition ${mainTab === 'leave' ? 'bg-[#0a2540] text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+            className={`px-4 py-2 font-bold rounded-xl text-sm transition ${mainTab === 'leave' ? 'bg-[#162335] text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
           >
             Leave Management
           </button>
@@ -383,7 +383,7 @@ export default function AttendanceView() {
               <select
                 value={filterRange}
                 onChange={(e) => setFilterRange(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#9ca3af]/30"
               >
                 <option value="Today">Today</option>
                 <option value="This Week">This Week</option>
@@ -402,7 +402,7 @@ export default function AttendanceView() {
                     type="date"
                     value={customStart}
                     onChange={e => setCustomStart(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                    className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#9ca3af]/30"
                   />
                 </div>
                 <div className="w-full md:w-auto">
@@ -411,12 +411,12 @@ export default function AttendanceView() {
                     type="date"
                     value={customEnd}
                     onChange={e => setCustomEnd(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                    className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#9ca3af]/30"
                   />
                 </div>
                 <button
                   onClick={handleApplyCustomDate}
-                  className="bg-[#0a2540] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#0a2540]/90 transition whitespace-nowrap mb-0 mt-auto h-[38px]"
+                  className="bg-[#162335] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#162335]/90 transition whitespace-nowrap mb-0 mt-auto h-[38px]"
                 >
                   Apply
                 </button>
@@ -434,7 +434,7 @@ export default function AttendanceView() {
                       placeholder="Search by name..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl pl-9 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                      className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl pl-9 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#9ca3af]/30"
                     />
                   </div>
                 </div>
@@ -459,8 +459,8 @@ export default function AttendanceView() {
                 { label: "Last Month", value: stats.lastMonth, icon: <Calendar size={16} /> },
                 { label: "Total Working Time", value: stats.total, icon: <Activity size={16} />, highlight: true }
               ].map((card, idx) => (
-                <div key={idx} className={`p-4 rounded-xl border ${card.highlight ? 'bg-[#0a2540] text-white border-[#0a2540] shadow-md' : 'bg-white text-slate-700 border-slate-200'} flex flex-col justify-center items-center text-center transition-all hover:scale-[1.02]`}>
-                  <div className={`p-2 rounded-full mb-2 ${card.highlight ? 'bg-[#d4af37]/20 text-[#d4af37]' : 'bg-slate-100 text-slate-500'}`}>
+                <div key={idx} className={`p-4 rounded-xl border ${card.highlight ? 'bg-[#162335] text-white border-[#162335] shadow-md' : 'bg-white text-slate-700 border-slate-200'} flex flex-col justify-center items-center text-center transition-all hover:scale-[1.02]`}>
+                  <div className={`p-2 rounded-full mb-2 ${card.highlight ? 'bg-[#9ca3af]/20 text-[#9ca3af]' : 'bg-slate-100 text-slate-500'}`}>
                     {card.icon}
                   </div>
                   <p className={`text-[10px] font-extrabold uppercase tracking-wider ${card.highlight ? 'text-slate-300' : 'text-slate-500'}`}>{card.label}</p>
@@ -506,13 +506,13 @@ export default function AttendanceView() {
                 records.map((r, i) => {
                   return (
                     <tr key={i} className="hover:bg-slate-50/50 transition-colors group cursor-pointer" onClick={() => setSelectedRecord(r)}>
-                      <td className="py-4 px-6 text-sm font-bold text-[#0a2540]">{formatDate(r.date)}</td>
+                      <td className="py-4 px-6 text-sm font-bold text-[#162335]">{formatDate(r.date)}</td>
                       {["SuperAdmin", "Admin", "Administration (Admin)", "Manager", "Team Leader"].includes(user?.role) && (
                         <td className="py-4 px-6 text-sm font-semibold text-slate-600">{r.employeeName}</td>
                       )}
                       <td className="py-4 px-6 text-sm font-semibold text-emerald-600">{formatTime(r.loginTime)}</td>
                       <td className="py-4 px-6 text-sm font-semibold text-rose-500">{formatTime(r.logoutTime)}</td>
-                      <td className="py-4 px-6 text-sm font-black text-[#0a2540]">{leaveCounts[r.employeeId] || 0} Day(s)</td>
+                      <td className="py-4 px-6 text-sm font-black text-[#162335]">{leaveCounts[r.employeeId] || 0} Day(s)</td>
                       <td className="py-4 px-6">{getStatusBadge(r.status)}</td>
                     </tr>
                   )
@@ -532,14 +532,14 @@ export default function AttendanceView() {
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-white hover:text-[#0a2540] disabled:opacity-50 transition bg-transparent"
+                className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-white hover:text-[#162335] disabled:opacity-50 transition bg-transparent"
               >
                 <ChevronLeft size={16} />
               </button>
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-white hover:text-[#0a2540] disabled:opacity-50 transition bg-transparent"
+                className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-white hover:text-[#162335] disabled:opacity-50 transition bg-transparent"
               >
                 <ChevronRight size={16} />
               </button>
@@ -561,15 +561,15 @@ export default function AttendanceView() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-3xl shadow-2xl z-50 overflow-hidden"
             >
-              <div className="bg-[#0a2540] p-6 relative">
+              <div className="bg-[#162335] p-6 relative">
                 <button onClick={() => setSelectedRecord(null)} className="absolute top-4 right-4 text-white/50 hover:text-white transition">
                   <X size={20} />
                 </button>
-                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-[#d4af37] mb-4">
+                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-[#9ca3af] mb-4">
                   <User size={24} />
                 </div>
                 <h3 className="text-xl font-black text-white">{selectedRecord.employeeName}</h3>
-                <p className="text-xs font-bold text-[#d4af37] uppercase tracking-widest mt-1">
+                <p className="text-xs font-bold text-[#9ca3af] uppercase tracking-widest mt-1">
                   ID: {selectedRecord.employeeId?.toString().substring(0, 8) || "N/A"}
                 </p>
               </div>
@@ -577,7 +577,7 @@ export default function AttendanceView() {
               <div className="p-6 space-y-4">
                 <div className="flex justify-between items-center pb-4 border-b border-slate-100">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Date</span>
-                  <span className="text-sm font-black text-[#0a2540]">{formatDate(selectedRecord.date)}</span>
+                  <span className="text-sm font-black text-[#162335]">{formatDate(selectedRecord.date)}</span>
                 </div>
 
                 <div className="flex justify-between items-center pb-4 border-b border-slate-100">
@@ -591,8 +591,8 @@ export default function AttendanceView() {
                 </div>
 
                 <div className="flex justify-between items-center pt-2">
-                  <span className="text-xs font-black text-[#0a2540] uppercase tracking-widest">Total Leave</span>
-                  <span className="text-xl font-black text-[#0a2540]">{leaveCounts[selectedRecord.employeeId] || 0} Day(s)</span>
+                  <span className="text-xs font-black text-[#162335] uppercase tracking-widest">Total Leave</span>
+                  <span className="text-xl font-black text-[#162335]">{leaveCounts[selectedRecord.employeeId] || 0} Day(s)</span>
                 </div>
 
                 <div className="mt-6 flex justify-end">

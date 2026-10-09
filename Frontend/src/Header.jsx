@@ -202,7 +202,6 @@ export default function Header({ onToggleSidebar }) {
           <Bell size={18} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FFFFFF] rounded-full" />
         </button>
-
         <div className="h-6 w-px bg-[#FFFFFF]" />
 
         {/* Profile Dropdown Container */}

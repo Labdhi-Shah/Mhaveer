@@ -30,6 +30,7 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
     ifscCode: "",
     accountNumber: "",
     accountHolderName: "",
+    salary: "",
   });
 
   const [banks, setBanks] = useState([]);
@@ -105,6 +106,7 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
               ifscCode: data.ifscCode || "",
               accountNumber: data.accountNumber || "",
               accountHolderName: data.accountHolderName || "",
+              salary: data.salary || "",
             });
           }
         } catch (err) {
@@ -323,6 +325,11 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
           <input type="date" name="joiningDate" required value={form.joiningDate} onChange={handleChange} onClick={handleDateClick} className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#162335] outline-none focus:border-[#9ca3af] cursor-pointer" />
         </div>
 
+        <div>
+          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Salary</label>
+          <input type="number" name="salary" value={form.salary} onChange={handleChange} placeholder="e.g. 25000" min="0" step="1" className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#162335] outline-none focus:border-[#9ca3af]" />
+        </div>
+
         {/* --- BANK DETAILS --- */}
         <SectionHeader title="Bank Details" icon={Building2} />
 
@@ -432,7 +439,7 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
               </div>
 
               <div className="flex gap-2 mt-4">
-                <button type="button" onClick={() => { setCreatedData(null); setForm({ fullName: "", personalEmail: "", phone: "", dob: "", joiningDate: "", role: "", department: "", address: "", status: "Active", aadhaarNumber: "", panNumber: "", fatherPhone: "", motherPhone: "", guardianPhone: "", bankName: "", ifscCode: "", accountNumber: "", accountHolderName: ""}); }} className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs uppercase cursor-pointer transition">
+                <button type="button" onClick={() => { setCreatedData(null); setForm({ fullName: "", personalEmail: "", phone: "", dob: "", joiningDate: "", role: "", department: "", address: "", status: "Active", aadhaarNumber: "", panNumber: "", fatherPhone: "", motherPhone: "", guardianPhone: "", bankName: "", ifscCode: "", accountNumber: "", accountHolderName: "", salary: ""}); }} className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs uppercase cursor-pointer transition">
                   Add Another
                 </button>
                 <button type="button" onClick={() => { setCreatedData(null); navigate("/telecalling/employees"); }} className="flex-1 py-2.5 bg-[#162335] hover:bg-[#12385c] text-[#9ca3af] font-bold rounded-xl text-xs uppercase cursor-pointer transition">

@@ -16,6 +16,11 @@ const meetingRoutes = require("./routes/meetingRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const path = require("path");
 
+// Security Packages
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+const mongoSanitize = require("express-mongo-sanitize");
+const xss = require("xss-clean");
 
 const app = express();
 
@@ -37,7 +42,28 @@ app.use(cors({
   origin: allowedOrigins,
   credentials: true,
 }));
-app.use(express.json());
+
+// 1. Set Security HTTP Headers (Helmet)
+app.use(helmet());
+app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
+
+// 2. Limit Requests from same API (Rate Limiting / Basic Firewall)
+const limiter = rateLimit({
+  max: 1000, // Allow 1000 requests from the same IP
+  windowMs: 60 * 60 * 1000, // In 1 hour
+  message: "Too many requests from this IP, please try again in an hour!"
+});
+app.use("/api", limiter);
+
+// 3. Body parser, reading data from body into req.body
+app.use(express.json({ limit: "10kb" })); // Limit body size to 10kb to prevent DOS
+
+// 4. Data sanitization against NoSQL query injection
+app.use(mongoSanitize());
+
+// 5. Data sanitization against XSS
+app.use(xss());
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/auth", authRoutes);
@@ -64,13 +90,18 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+const server = process.env.NODE_ENV !== "test" 
+  ? app.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    }) 
+  : null;
 
 // Initialize WebSocket logic for managing data streams
-const { initWebSocket } = require("./services/websocket");
-initWebSocket(server);
+if (server) {
+  const { initWebSocket } = require("./services/websocket");
+  initWebSocket(server);
+}
+
 
 // Handle unhandled promise rejections gracefully
 process.on("unhandledRejection", (err) => {
@@ -87,3 +118,5 @@ process.on("uncaughtException", (err) => {
   console.log(err.name, err.message);
   process.exit(1);
 });
+
+module.exports = app;

@@ -1,5 +1,7 @@
 const dotenv = require("dotenv");
 dotenv.config();
+// Trigger nodemon restart
+
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");

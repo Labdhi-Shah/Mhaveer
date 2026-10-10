@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, ArrowUpDown, ChevronDown, ChevronUp, Download, Users, Loader2 } from "lucide-react";
+import { Search, ArrowUpDown, ChevronDown, ChevronUp, Download, Users, Loader2, X } from "lucide-react";
 import api from "./../api";
 import { useAuth } from "../context/AuthContext";
 import { getUserRole } from "../utils/hierarchy";
@@ -11,6 +11,11 @@ export default function TeamPerformanceView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: "name", direction: "asc" });
   
+  // Modal state
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [employeeLeads, setEmployeeLeads] = useState([]);
+  const [leadsLoading, setLeadsLoading] = useState(false);
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
@@ -73,6 +78,21 @@ export default function TeamPerformanceView() {
     link.href = URL.createObjectURL(blob);
     link.download = `TeamPerformance_${new Date().toLocaleDateString()}.csv`;
     link.click();
+  };
+
+  const handleEmployeeClick = async (employee) => {
+    setSelectedEmployee(employee);
+    setLeadsLoading(true);
+    try {
+      const res = await api.get(`/team-performance/${employee.id}/leads`);
+      if (res.data.success) {
+        setEmployeeLeads(res.data.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch employee leads", error);
+    } finally {
+      setLeadsLoading(false);
+    }
   };
 
   const role = getUserRole(user);
@@ -205,7 +225,12 @@ export default function TeamPerformanceView() {
                             {item.name.charAt(0)}
                           </div>
                           <div>
-                            <p className="text-sm font-black text-[#162335]">{item.name}</p>
+                            <button 
+                              onClick={() => handleEmployeeClick(item)}
+                              className="text-sm font-black text-[#162335] hover:text-blue-600 transition text-left"
+                            >
+                              {item.name}
+                            </button>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{item.employeeId}</p>
                           </div>
                         </div>
@@ -263,6 +288,81 @@ export default function TeamPerformanceView() {
           )}
         </div>
       </div>
+
+      {/* Employee Leads Modal */}
+      {selectedEmployee && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-xl">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-black text-[#162335]">
+                  {selectedEmployee.name}'s Customers
+                </h2>
+                <p className="text-sm font-medium text-slate-500 mt-1">
+                  Total Leads: {employeeLeads.length}
+                </p>
+              </div>
+              <button 
+                onClick={() => setSelectedEmployee(null)}
+                className="p-2 hover:bg-slate-100 rounded-xl transition text-slate-400 hover:text-slate-600"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1">
+              {leadsLoading ? (
+                <div className="py-12 text-center">
+                  <Loader2 className="w-8 h-8 text-[#9ca3af] animate-spin mx-auto mb-3" />
+                  <p className="text-sm font-bold text-slate-400">Loading customers...</p>
+                </div>
+              ) : employeeLeads.length === 0 ? (
+                <div className="py-12 text-center">
+                  <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Users className="text-slate-300" size={32} />
+                  </div>
+                  <p className="text-sm font-bold text-[#162335]">No customers found</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50/50">
+                        <th className="py-3 px-4 text-xs font-black text-[#162335] uppercase tracking-widest">Customer Name</th>
+                        <th className="py-3 px-4 text-xs font-black text-[#162335] uppercase tracking-widest">Contact Person</th>
+                        <th className="py-3 px-4 text-xs font-black text-[#162335] uppercase tracking-widest">Phone</th>
+                        <th className="py-3 px-4 text-xs font-black text-[#162335] uppercase tracking-widest">Date</th>
+                        <th className="py-3 px-4 text-xs font-black text-[#162335] uppercase tracking-widest">Loan Amount</th>
+                        <th className="py-3 px-4 text-xs font-black text-[#162335] uppercase tracking-widest">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {employeeLeads.map((lead) => (
+                        <tr key={lead._id || lead.leadId} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50">
+                          <td className="py-3 px-4 text-sm font-bold text-[#162335]">{lead.companyName}</td>
+                          <td className="py-3 px-4 text-sm font-medium text-slate-600">{lead.contactPerson}</td>
+                          <td className="py-3 px-4 text-sm font-medium text-slate-600">{lead.phoneNumber}</td>
+                          <td className="py-3 px-4 text-sm font-medium text-slate-600">
+                            {new Date(lead.createdAt).toLocaleDateString('en-GB')}
+                          </td>
+                          <td className="py-3 px-4 text-sm font-black text-slate-600">
+                            {lead.loanAmount ? `₹${lead.loanAmount.toLocaleString()}` : "N/A"}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="inline-flex px-2 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-600">
+                              {lead.interested}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

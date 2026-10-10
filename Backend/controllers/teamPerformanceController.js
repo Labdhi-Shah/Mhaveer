@@ -198,6 +198,27 @@ exports.getTeamPerformance = async (req, res) => {
   }
 };
 
+exports.getEmployeeLeads = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    
+    // Optional: add authorization logic if a manager can only see their team's leads.
+    // Assuming for now that if they can reach Team Performance, they have access.
+    const leads = await Lead.find({ 
+      $or: [
+        { employeeId: employeeId },
+        { teamLeaderId: employeeId }
+      ]
+    }).sort({ createdAt: -1 });
+    
+    console.log(`[getEmployeeLeads] Fetched leads for ${employeeId}. Count: ${leads.length}`);
+    res.json({ success: true, data: leads });
+  } catch (error) {
+    console.error("Get Employee Leads Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
 // Helper functions for MongoDB Aggregation
 async function getLeadsStatsForEmployees(employeeIds, todayStart, todayEnd, weekStart, monthStart) {
   const matchObj = { employeeId: { $in: employeeIds } };

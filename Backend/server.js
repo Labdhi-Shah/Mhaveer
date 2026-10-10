@@ -59,10 +59,30 @@ app.use("/api", limiter);
 app.use(express.json({ limit: "10kb" })); // Limit body size to 10kb to prevent DOS
 
 // 4. Data sanitization against NoSQL query injection
-app.use(mongoSanitize());
+app.use((req, res, next) => {
+  if (req.body) mongoSanitize.sanitize(req.body);
+  if (req.query) mongoSanitize.sanitize(req.query);
+  if (req.params) mongoSanitize.sanitize(req.params);
+  if (req.headers) mongoSanitize.sanitize(req.headers);
+  next();
+});
 
 // 5. Data sanitization against XSS
-app.use(xss());
+const { clean } = require("xss-clean/lib/xss");
+app.use((req, res, next) => {
+  if (req.body) req.body = clean(req.body);
+  if (req.query) {
+    const cleaned = clean(req.query);
+    for (const key in req.query) delete req.query[key];
+    for (const key in cleaned) req.query[key] = cleaned[key];
+  }
+  if (req.params) {
+    const cleaned = clean(req.params);
+    for (const key in req.params) delete req.params[key];
+    for (const key in cleaned) req.params[key] = cleaned[key];
+  }
+  next();
+});
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

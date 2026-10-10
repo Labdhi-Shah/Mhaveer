@@ -121,7 +121,7 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
     const { name, value } = e.target;
     let finalValue = value;
     
-    if (name.includes("Phone") || name === "phone" || name === "aadhaarNumber" || name === "accountNumber") {
+    if (name.includes("Phone") || name === "phone" || name === "aadhaarNumber" || name === "accountNumber" || name === "salary") {
        finalValue = value.replace(/\D/g, ""); 
     }
     if (name === "panNumber" || name === "ifscCode") {
@@ -327,7 +327,7 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
 
         <div>
           <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Salary</label>
-          <input type="number" name="salary" value={form.salary} onChange={handleChange} placeholder="e.g. 25000" min="0" step="1" className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#162335] outline-none focus:border-[#9ca3af]" />
+          <input type="text" name="salary" value={form.salary} onChange={handleChange} placeholder="e.g. 25000" className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#162335] outline-none focus:border-[#9ca3af]" />
         </div>
 
         {/* --- BANK DETAILS --- */}

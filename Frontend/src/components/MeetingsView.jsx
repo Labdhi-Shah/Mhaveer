@@ -5,11 +5,17 @@ import { useLocation } from "react-router-dom";
 import api from "../api";
 import socket from "../utils/socket";
 import FillFormModal from "./FillFormModal";
+import { useAuth } from "../context/AuthContext";
+import { getUserRole } from "../utils/hierarchy";
 
 export default function MeetingsView() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const isNewView = searchParams.get("type") === "new";
+
+  const { user } = useAuth();
+  const role = getUserRole(user);
+  const isManager = role === "Manager";
 
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +31,10 @@ export default function MeetingsView() {
   const [selectedMeeting, setSelectedMeeting] = useState(null);
 
   const handleFillFormForCard = async (meeting) => {
+    if (!isManager) {
+      showToast("Only managers are authorized to fill the form.", "error");
+      return;
+    }
     if (meeting.status !== "Scheduled" && meeting.status !== "Rescheduled") {
       showToast("Please select a scheduled or rescheduled meeting to fill the form.", "error");
       return;
@@ -395,23 +405,48 @@ export default function MeetingsView() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Type</p>
-                        <p className="font-bold text-[#162335] mt-0.5">{meeting.type}</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Company</p>
+                        <p className="font-semibold text-slate-700 mt-0.5 truncate">{meeting.leadId?.companyName || "N/A"}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-100 mt-2">
+                      <div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Company Turnover</p>
+                        <p className="font-semibold text-slate-700 mt-0.5 truncate">
+                          {meeting.leadId?.companyTurnover 
+                            ? `₹${meeting.leadId.companyTurnover.toLocaleString("en-IN")}` 
+                            : meeting.leadId?.yearlyIncome 
+                              ? `₹${meeting.leadId.yearlyIncome.toLocaleString("en-IN")}` 
+                              : "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Loan Amount Required</p>
+                        <p className="font-semibold text-emerald-600 mt-0.5 truncate">
+                          {meeting.leadId?.loanAmount 
+                            ? `₹${meeting.leadId.loanAmount.toLocaleString("en-IN")}` 
+                            : "N/A"}
+                        </p>
                       </div>
                     </div>
 
                     {meeting.leadId && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 mt-2 pt-2">
-                        <div>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Company</p>
-                          <p className="font-semibold text-slate-700 mt-0.5 truncate">{meeting.leadId.companyName || "N/A"}</p>
-                        </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-100 mt-2">
                         <div>
                           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Loan / CIBIL</p>
                           <p className="font-semibold text-slate-700 mt-0.5 truncate">
                             {meeting.leadId.loanType || "N/A"} / {meeting.leadId.cibilScore || "N/A"}
                           </p>
                         </div>
+                        {meeting.leadId.propertyLoanCategory && (
+                          <div>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Category</p>
+                            <p className="font-semibold text-slate-700 mt-0.5 truncate">
+                              {meeting.leadId.propertyLoanCategory}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -434,7 +469,7 @@ export default function MeetingsView() {
                   {/* Action Buttons */}
                   <div className="border-t border-slate-100 pt-3 mt-4 flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-3">
-                      {(meeting.status === "Scheduled" || meeting.status === "Rescheduled") ? (
+                      {isManager && (meeting.status === "Scheduled" || meeting.status === "Rescheduled") ? (
                         <button
                           onClick={() => handleFillFormForCard(meeting)}
                           className="px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-xs bg-[#162335] hover:bg-[#162335]/90 text-[#9ca3af]"
@@ -664,7 +699,7 @@ export default function MeetingsView() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {isFormOpen && (
+        {isManager && isFormOpen && (
           <FillFormModal 
             isOpen={isFormOpen} 
             onClose={(wasSubmitted) => {

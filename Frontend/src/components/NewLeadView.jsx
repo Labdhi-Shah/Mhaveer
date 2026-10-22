@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Briefcase, CheckCircle, AlertCircle } from "lucide-react";
+import { Clock, Briefcase, CheckCircle, AlertCircle, ChevronDown } from "lucide-react";
 import api from "../api";
 
 export default function NewLeadView() {
@@ -18,6 +18,7 @@ export default function NewLeadView() {
     watch, 
     reset,
     setValue, 
+    clearErrors,
     formState: { errors } 
   } = useForm({
     defaultValues: {
@@ -35,7 +36,15 @@ export default function NewLeadView() {
 
       state: "",
       companyTurnover: "",
+      turnoverAmount0: "",
+      turnoverAmount1: "",
+      turnoverAmount2: "",
+      turnoverUnit0: "Cr",
+      turnoverUnit1: "Cr",
+      turnoverUnit2: "Cr",
       loanAmount: "",
+      loanAmountInput: "",
+      loanAmountUnit: "Cr",
       loanType: "",
       propertyLoanCategory: "",
       propertyPurchaseCategory: "",
@@ -108,31 +117,112 @@ export default function NewLeadView() {
     setTimeout(() => setToast(null), 4000);
   };
 
+  useEffect(() => {
+    register("turnoverAmount0", { 
+      required: "Company Turnover is required",
+      validate: (val) => (val && parseFloat(val) > 0) || "Company Turnover is required"
+    });
+    register("turnoverAmount1", { 
+      required: false,
+      validate: (val) => !val || parseFloat(val) > 0 || "Turnover must be greater than 0"
+    });
+    register("turnoverAmount2", { 
+      required: false,
+      validate: (val) => !val || parseFloat(val) > 0 || "Turnover must be greater than 0"
+    });
+    register("loanAmountInput", {
+      required: "Loan Amount is required",
+      validate: (val) => (val && parseFloat(val) > 0) || "Loan Amount is required"
+    });
+
+    const preventWheel = (e) => {
+      if (document.activeElement && (document.activeElement.type === "number" || document.activeElement.getAttribute("inputmode") === "decimal")) {
+        document.activeElement.blur();
+      }
+    };
+    window.addEventListener("wheel", preventWheel, { passive: true });
+    return () => window.removeEventListener("wheel", preventWheel);
+  }, [register]);
+
+  const handleTurnoverChange = (e, idx) => {
+    let val = e.target.value.replace(/[^0-9.]/g, "");
+    const parts = val.split(".");
+    if (parts.length > 2) {
+      val = parts[0] + "." + parts.slice(1).join("");
+    }
+    setValue(`turnoverAmount${idx}`, val, { shouldValidate: true, shouldDirty: true });
+    if (val && parseFloat(val) > 0) {
+      clearErrors(`turnoverAmount${idx}`);
+      if (idx === 0) clearErrors("companyTurnover");
+    }
+  };
+
+  const handleTurnoverUnitChange = (e, idx) => {
+    const unit = e.target.value;
+    setValue(`turnoverUnit${idx}`, unit, { shouldValidate: true, shouldDirty: true });
+  };
+
+  const handleLoanAmountChange = (e) => {
+    let val = e.target.value.replace(/[^0-9.]/g, "");
+    const parts = val.split(".");
+    if (parts.length > 2) {
+      val = parts[0] + "." + parts.slice(1).join("");
+    }
+    setValue("loanAmountInput", val, { shouldValidate: true, shouldDirty: true });
+    if (val && parseFloat(val) > 0) {
+      clearErrors("loanAmountInput");
+      clearErrors("loanAmount");
+    }
+  };
+
+  const handleLoanAmountUnitChange = (e) => {
+    const unit = e.target.value;
+    setValue("loanAmountUnit", unit, { shouldValidate: true, shouldDirty: true });
+  };
+
+  const handleKeyDownNoSign = (e) => {
+    if (['-', '+', 'e', 'E'].includes(e.key)) {
+      e.preventDefault();
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.target.blur();
+    }
+  };
+
+  const getTurnoverInINR = (amount, unit = "Cr") => {
+    if (!amount || isNaN(parseFloat(amount))) return null;
+    const num = parseFloat(amount);
+    if (num <= 0) return null;
+    let inr = num;
+    if (unit === "Cr") inr = num * 10000000;
+    else if (unit === "Lakhs") inr = num * 100000;
+    return Math.round(inr);
+  };
+
   const onSubmitLead = async (data) => {
     setLoading(true);
     try {
-      if (data.meetingDate) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const meetD = new Date(data.meetingDate);
-        if (meetD < today) {
-          showToast("Meeting date cannot be in the past.", "error");
-          setLoading(false);
-          return;
-        }
-      }
+
 
       const companyNames = [data.companyName0, data.companyName1].filter(Boolean).map(s => s.trim()).filter(Boolean).join(", ");
       const contactPersons = [data.contactPerson0, data.contactPerson1, data.contactPerson2, data.contactPerson3].filter(Boolean).map(s => s.trim()).filter(Boolean).join(", ");
       const phoneNumbers = [data.phone0, data.phone1, data.phone2, data.phone3].filter(Boolean).map(s => s.trim()).filter(Boolean).join(", ");
+
+      const turnover0 = getTurnoverInINR(data.turnoverAmount0, data.turnoverUnit0 || "Cr");
+      const turnover1 = getTurnoverInINR(data.turnoverAmount1, data.turnoverUnit1 || "Cr");
+      const turnover2 = getTurnoverInINR(data.turnoverAmount2, data.turnoverUnit2 || "Cr");
+      const loanAmountConverted = getTurnoverInINR(data.loanAmountInput, data.loanAmountUnit || "Cr");
 
       const payload = {
         ...data,
         companyName: companyNames,
         contactPerson: contactPersons,
         phoneNumber: phoneNumbers,
-        companyTurnover: data.companyTurnover ? parseFloat(data.companyTurnover) : undefined,
-        loanAmount: data.loanAmount ? parseFloat(data.loanAmount) : undefined,
+        companyTurnover: turnover0 !== null ? turnover0 : (data.companyTurnover ? parseFloat(data.companyTurnover) : undefined),
+        companyTurnover1: turnover1 !== null ? turnover1 : undefined,
+        companyTurnover2: turnover2 !== null ? turnover2 : undefined,
+        loanAmount: loanAmountConverted !== null ? loanAmountConverted : (data.loanAmount ? parseFloat(data.loanAmount) : undefined),
         cibilScore: data.cibilScore ? parseInt(data.cibilScore) : undefined
       };
       
@@ -146,6 +236,14 @@ export default function NewLeadView() {
       delete payload.phone1;
       delete payload.phone2;
       delete payload.phone3;
+      delete payload.turnoverAmount0;
+      delete payload.turnoverAmount1;
+      delete payload.turnoverAmount2;
+      delete payload.turnoverUnit0;
+      delete payload.turnoverUnit1;
+      delete payload.turnoverUnit2;
+      delete payload.loanAmountInput;
+      delete payload.loanAmountUnit;
 
       if (payload.loanType !== "Property Purchase Loan") {
         delete payload.propertyPurchaseCategory;
@@ -231,6 +329,7 @@ export default function NewLeadView() {
         setActiveCompanyIndex(0);
         setActiveContactIndex(0);
         setActivePhoneIndex(0);
+        setActiveTurnoverIndex(0);
       }
     } catch (error) {
       console.error("Error saving lead:", error);
@@ -242,11 +341,14 @@ export default function NewLeadView() {
 
   const labelClass = "block text-[13px] font-semibold text-slate-700 mb-2";
   const getInputClass = (hasError) => 
-    `w-full px-4 py-3 rounded-xl border text-sm text-slate-800 placeholder:text-slate-400 bg-slate-50 outline-none transition-all duration-200 ${
+    `w-full px-4 py-3 rounded-xl border text-sm text-slate-800 placeholder:text-slate-400 bg-slate-50 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all duration-200 ${
       hasError 
         ? "border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/50" 
         : "border-slate-200 focus:border-[#162335] focus:ring-2 focus:ring-[#162335]/20 focus:bg-white"
     }`;
+
+  const loanUnitVal = watch("loanAmountUnit") || "Cr";
+  const loanInrVal = getTurnoverInINR(watch("loanAmountInput"), loanUnitVal);
 
   return (
     <div className="space-y-6">
@@ -385,35 +487,76 @@ export default function NewLeadView() {
             <div>
               <label className={labelClass}>Company Turnover (INR)</label>
               <div className="flex flex-wrap gap-2 mb-3">
-                {['T1', 'T2', 'T3'].map((t, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setActiveTurnoverIndex(idx)}
-                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border ${
-                      activeTurnoverIndex === idx 
-                        ? "bg-[#162335] text-white border-[#162335] shadow-md" 
-                        : errors[idx === 0 ? 'companyTurnover' : `companyTurnover${idx}`]
-                          ? "bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100"
-                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
+                {['T1', 'T2', 'T3'].map((t, idx) => {
+                  const hasErr = errors[`turnoverAmount${idx}`];
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setActiveTurnoverIndex(idx)}
+                      className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border ${
+                        activeTurnoverIndex === idx 
+                          ? "bg-[#162335] text-white border-[#162335] shadow-md" 
+                          : hasErr
+                            ? "bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100"
+                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
               </div>
-              {['T1', 'T2', 'T3'].map((t, idx) => (
-                <div key={idx} className={activeTurnoverIndex === idx ? "block" : "hidden"}>
-                  <input 
-                    type="number" 
-                    placeholder="e.g. 600000" 
-                    {...register(idx === 0 ? "companyTurnover" : `companyTurnover${idx}`, { required: idx === 0 ? "Company Turnover is required" : false, min: { value: 1, message: "Turnover must be greater than 0" } })} 
-                    className={getInputClass(idx === 0 ? errors.companyTurnover : errors[`companyTurnover${idx}`])} 
-                  />
-                  {idx === 0 && errors.companyTurnover && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.companyTurnover.message}</p>}
-                  {idx !== 0 && errors[`companyTurnover${idx}`] && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors[`companyTurnover${idx}`].message}</p>}
-                </div>
-              ))}
+              {['T1', 'T2', 'T3'].map((t, idx) => {
+                const amountVal = watch(`turnoverAmount${idx}`) || "";
+                const unitVal = watch(`turnoverUnit${idx}`) || "Cr";
+                const inrVal = getTurnoverInINR(amountVal, unitVal);
+                const hasErr = errors[`turnoverAmount${idx}`];
+
+                return (
+                  <div key={idx} className={activeTurnoverIndex === idx ? "block" : "hidden"}>
+                    <div className={`flex items-stretch rounded-xl border overflow-hidden transition-all duration-200 ${
+                      hasErr
+                        ? "border-rose-400 ring-2 ring-rose-500/20 bg-rose-50/50" 
+                        : "border-slate-200 focus-within:border-[#162335] focus-within:ring-2 focus-within:ring-[#162335]/20 focus-within:bg-white bg-slate-50"
+                    }`}>
+                      <input 
+                        type="text" 
+                        inputMode="decimal"
+                        value={amountVal}
+                        onChange={(e) => handleTurnoverChange(e, idx)}
+                        onKeyDown={handleKeyDownNoSign}
+                        onWheel={(e) => e.target.blur()}
+                        placeholder={unitVal === "Cr" ? "e.g. 5" : unitVal === "Lakhs" ? "e.g. 50" : "e.g. 600000"} 
+                        className="w-full px-4 py-3 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                      />
+                      <div className="relative border-l border-slate-200 flex items-center bg-slate-100/70">
+                        <select
+                          {...register(`turnoverUnit${idx}`)}
+                          onChange={(e) => handleTurnoverUnitChange(e, idx)}
+                          className="h-full pl-3 pr-8 py-3 bg-transparent text-xs font-bold text-slate-700 outline-none cursor-pointer appearance-none hover:text-[#162335] transition-colors"
+                        >
+                          <option value="Cr">Cr</option>
+                          <option value="Lakhs">Lakhs</option>
+                          <option value="Rupees">₹ (Rupees)</option>
+                        </select>
+                        <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      </div>
+                    </div>
+                    {inrVal ? (
+                      <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-700 font-semibold bg-emerald-50/70 px-3 py-1.5 rounded-lg border border-emerald-200/60 w-fit">
+                        <span>≈ ₹{inrVal.toLocaleString("en-IN")}</span>
+                        <span className="text-slate-500 font-normal">({amountVal} {unitVal})</span>
+                      </div>
+                    ) : null}
+                    {hasErr && (
+                      <p className="text-xs text-rose-500 mt-1.5 font-medium">
+                        {hasErr.message}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             <div>
@@ -427,9 +570,46 @@ export default function NewLeadView() {
             </div>
 
             <div>
-              <label className={labelClass}>Loan Amount Required</label>
-              <input type="number" placeholder="e.g. 1500000" {...register("loanAmount", { required: "Loan Amount is required", min: { value: 1, message: "Loan Amount must be greater than 0" } })} className={getInputClass(errors.loanAmount)} />
-              {errors.loanAmount && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.loanAmount.message}</p>}
+              <label className={labelClass}>Loan Amount Required *</label>
+              <div className={`flex items-stretch rounded-xl border overflow-hidden transition-all duration-200 ${
+                errors.loanAmountInput
+                  ? "border-rose-400 ring-2 ring-rose-500/20 bg-rose-50/50" 
+                  : "border-slate-200 focus-within:border-[#162335] focus-within:ring-2 focus-within:ring-[#162335]/20 focus-within:bg-white bg-slate-50"
+              }`}>
+                <input 
+                  type="text" 
+                  inputMode="decimal"
+                  value={watch("loanAmountInput") || ""}
+                  onChange={handleLoanAmountChange}
+                  onKeyDown={handleKeyDownNoSign}
+                  onWheel={(e) => e.target.blur()}
+                  placeholder={loanUnitVal === "Cr" ? "e.g. 1.5" : loanUnitVal === "Lakhs" ? "e.g. 50" : "e.g. 1500000"} 
+                  className="w-full px-4 py-3 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                />
+                <div className="relative border-l border-slate-200 flex items-center bg-slate-100/70">
+                  <select
+                    {...register("loanAmountUnit")}
+                    onChange={handleLoanAmountUnitChange}
+                    className="h-full pl-3 pr-8 py-3 bg-transparent text-xs font-bold text-slate-700 outline-none cursor-pointer appearance-none hover:text-[#162335] transition-colors"
+                  >
+                    <option value="Cr">Cr</option>
+                    <option value="Lakhs">Lakhs</option>
+                    <option value="Rupees">₹ (Rupees)</option>
+                  </select>
+                  <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+              {loanInrVal ? (
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-700 font-semibold bg-emerald-50/70 px-3 py-1.5 rounded-lg border border-emerald-200/60 w-fit">
+                  <span>≈ ₹{loanInrVal.toLocaleString("en-IN")}</span>
+                  <span className="text-slate-500 font-normal">({watch("loanAmountInput")} {loanUnitVal})</span>
+                </div>
+              ) : null}
+              {errors.loanAmountInput && (
+                <p className="text-xs text-rose-500 mt-1.5 font-medium">
+                  {errors.loanAmountInput.message}
+                </p>
+              )}
             </div>
 
             <div>

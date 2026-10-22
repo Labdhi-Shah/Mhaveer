@@ -54,14 +54,6 @@ const leadSchema = new mongoose.Schema(
     },
     meetingDate: {
       type: Date,
-      validate: {
-        validator: function (v) {
-          if (!v) return true; // not required
-          // Cannot be in the past
-          return v >= new Date().setHours(0, 0, 0, 0);
-        },
-        message: "Meeting Date cannot be in the past",
-      },
     },
     meetingTime: {
       type: String,

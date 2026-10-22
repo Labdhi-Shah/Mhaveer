@@ -65,7 +65,8 @@ exports.getMeetings = async (req, res) => {
 
     const meetings = await Meeting.find(query)
       .populate("leadId")
-      .populate("salesAssignedTo", "name officialEmail")
+      .populate("employeeId", "name fullName officialEmail employeeId department")
+      .populate("salesAssignedTo", "name fullName officialEmail employeeId department")
       .sort({ date: 1, time: 1 });
 
     res.status(200).json({ success: true, data: meetings });
@@ -80,7 +81,10 @@ exports.getMeetings = async (req, res) => {
 // ──────────────────────────────────────────────────────────────────────────────
 exports.getSingleMeeting = async (req, res) => {
   try {
-    const meeting = await Meeting.findById(req.params.id).populate("salesAssignedTo", "name officialEmail");
+    const meeting = await Meeting.findById(req.params.id)
+      .populate("leadId")
+      .populate("employeeId", "name fullName officialEmail employeeId department")
+      .populate("salesAssignedTo", "name fullName officialEmail employeeId department");
     if (!meeting) {
       return res.status(404).json({ success: false, message: "Meeting not found" });
     }

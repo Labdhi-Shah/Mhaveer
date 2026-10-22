@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Phone, Loader2, AlertCircle, CheckCircle, MapPin, Plus, X, Filter, ClipboardList, Pencil, Trash2 } from "lucide-react";
+import { Calendar, Phone, Loader2, AlertCircle, CheckCircle, MapPin, Plus, X, Filter, ClipboardList, Pencil, Trash2, User, FileSpreadsheet, Download } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import api from "../api";
 import socket from "../utils/socket";
 import FillFormModal from "./FillFormModal";
 import { useAuth } from "../context/AuthContext";
 import { getUserRole } from "../utils/hierarchy";
+import * as XLSX from "xlsx";
 
 export default function MeetingsView() {
   const location = useLocation();
@@ -312,6 +313,100 @@ export default function MeetingsView() {
     return matchStatus && matchDate;
   });
 
+  const getMeetingCreator = (meeting) => {
+    const name =
+      meeting.employeeId?.name ||
+      meeting.employeeId?.fullName ||
+      meeting.employeeName ||
+      meeting.leadId?.employeeName ||
+      "N/A";
+
+    const email =
+      meeting.employeeId?.officialEmail ||
+      meeting.leadId?.officialEmail ||
+      "";
+
+    const empId =
+      meeting.employeeId?.employeeId ||
+      meeting.leadId?.employeeId ||
+      "";
+
+    return { name, email, empId };
+  };
+
+  const handleExportExcel = (exportAll = false) => {
+    const targetList = exportAll ? meetings : (filteredMeetings.length > 0 ? filteredMeetings : meetings);
+
+    if (!targetList || targetList.length === 0) {
+      showToast("No meetings found to export.", "error");
+      return;
+    }
+
+    const dataToExport = targetList.map((m, index) => {
+      const creator = getMeetingCreator(m);
+      const meetingDateStr = m.date
+        ? new Date(m.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+        : "-";
+      const createdAtStr = m.createdAt
+        ? new Date(m.createdAt).toLocaleString("en-IN")
+        : "-";
+
+      return {
+        "Sr No.": index + 1,
+        "Meeting Title": m.title || "Consultation",
+        "Status": m.status || "Scheduled",
+        "Meeting Date": meetingDateStr,
+        "Meeting Time": m.time || "-",
+        "Client / Customer Name": m.customerName || m.leadId?.contactPerson || m.leadId?.companyName || "-",
+        "Customer Phone": m.customerPhone || m.leadId?.phoneNumber || "-",
+        "Company Name": m.leadId?.companyName || "-",
+        "Location / Address": m.location || (m.leadId?.city ? `${m.leadId.city}, ${m.leadId?.state || ""}` : "-"),
+        "Company Turnover": m.leadId?.companyTurnover 
+          ? `₹${Number(m.leadId.companyTurnover).toLocaleString("en-IN")}`
+          : (m.leadId?.yearlyIncome ? `₹${Number(m.leadId.yearlyIncome).toLocaleString("en-IN")}` : "-"),
+        "Loan Amount Required": m.leadId?.loanAmount 
+          ? `₹${Number(m.leadId.loanAmount).toLocaleString("en-IN")}` 
+          : "-",
+        "Loan Type": m.leadId?.loanType || "-",
+        "CIBIL Score": m.leadId?.cibilScore || "-",
+        "Property Loan Category": m.leadId?.propertyLoanCategory || "-",
+        "Created By (Employee)": creator.name,
+        "Creator Official Email": creator.email || "-",
+        "Creator Employee ID": creator.empId || "-",
+        "Sales Assigned To": m.salesAssignedTo?.name || m.salesAssignedToName || "Unassigned",
+        "Department": m.department || "Telecalling",
+        "Notes": m.notes || "-",
+        "Created At": createdAtStr
+      };
+    });
+
+    try {
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+
+      // Auto-fit column widths
+      const colWidths = Object.keys(dataToExport[0] || {}).map(key => {
+        const maxContentLength = Math.max(
+          key.length,
+          ...dataToExport.map(row => String(row[key] !== undefined && row[key] !== null ? row[key] : "").length).slice(0, 50)
+        );
+        return { wch: Math.min(Math.max(maxContentLength + 3, 12), 40) };
+      });
+      ws["!cols"] = colWidths;
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Meetings");
+
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const filename = `Meetings_Report_${dateStr}.xlsx`;
+      XLSX.writeFile(wb, filename);
+
+      showToast(`Exported ${dataToExport.length} meetings to Excel!`);
+    } catch (err) {
+      console.error("Failed to export Excel:", err);
+      showToast("Failed to export meetings to Excel.", "error");
+    }
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
       case "Scheduled": return "bg-blue-100 text-blue-800";
@@ -358,38 +453,69 @@ export default function MeetingsView() {
             Manage your schedule, consultations, and face-to-face loan reviews.
           </p>
         </div>
+
+        {/* Export to Excel Button */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => handleExportExcel(false)}
+            disabled={filteredMeetings.length === 0}
+            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-2xl text-xs font-bold transition flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            title="Export filtered/all meetings to Excel"
+          >
+            <FileSpreadsheet size={16} />
+            <span>Export to Excel</span>
+            <span className="bg-emerald-800/60 text-emerald-100 text-[10px] px-2 py-0.5 rounded-full font-black">
+              {filteredMeetings.length}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-600">
-          <Filter size={16} /> Filters:
-        </div>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-purple-500/20"
-        >
-          <option value="All">All Statuses</option>
-          <option value="Scheduled">Scheduled</option>
-          <option value="Completed">Completed</option>
-          <option value="Rescheduled">Rescheduled</option>
-          <option value="Cancelled">Cancelled</option>
-        </select>
-        <input
-          type="date"
-          value={filterDate}
-          onChange={(e) => setFilterDate(e.target.value)}
-          className="bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-purple-500/20"
-        />
-        {(filterStatus !== "All" || filterDate !== "") && (
-          <button
-            onClick={() => { setFilterStatus("All"); setFilterDate(""); }}
-            className="text-xs text-rose-500 font-bold hover:underline"
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-600">
+            <Filter size={16} /> Filters:
+          </div>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-purple-500/20"
           >
-            Clear Filters
-          </button>
-        )}
+            <option value="All">All Statuses</option>
+            <option value="Scheduled">Scheduled</option>
+            <option value="Completed">Completed</option>
+            <option value="Rescheduled">Rescheduled</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+          <input
+            type="date"
+            value={filterDate}
+            onChange={(e) => setFilterDate(e.target.value)}
+            className="bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-purple-500/20"
+          />
+          {(filterStatus !== "All" || filterDate !== "") && (
+            <button
+              onClick={() => { setFilterStatus("All"); setFilterDate(""); }}
+              className="text-xs text-rose-500 font-bold hover:underline"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+          <span>Showing <b>{filteredMeetings.length}</b> of <b>{meetings.length}</b> meetings</span>
+          {filteredMeetings.length !== meetings.length && meetings.length > 0 && (
+            <button
+              onClick={() => handleExportExcel(true)}
+              className="text-emerald-700 hover:text-emerald-800 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+              title="Export all meetings in database"
+            >
+              <Download size={13} /> Export All ({meetings.length})
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -494,6 +620,48 @@ export default function MeetingsView() {
                         "{meeting.notes}"
                       </div>
                     )}
+
+                    {/* Employee who created this meeting */}
+                    {(() => {
+                      const creator = getMeetingCreator(meeting);
+                      return (
+                        <div className="flex items-center justify-between text-xs pt-2.5 border-t border-slate-100 mt-2.5 bg-slate-50/90 p-2.5 rounded-2xl border border-slate-200/70">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-7 h-7 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                              <User size={13} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[10px] text-purple-700 font-extrabold uppercase tracking-wider">
+                                Created By
+                              </p>
+                              <p className="font-bold text-[#162335] text-xs truncate">
+                                {creator.name}
+                                {creator.email && (
+                                  <span className="text-[10px] font-normal text-slate-500 ml-1.5 hidden sm:inline">
+                                    ({creator.email})
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+
+                          {(meeting.salesAssignedToName || meeting.salesAssignedTo?.name) ? (
+                            <div className="text-right pl-2 shrink-0">
+                              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Assigned To</p>
+                              <p className="font-bold text-slate-700 text-xs truncate max-w-[120px]">
+                                {meeting.salesAssignedTo?.name || meeting.salesAssignedToName}
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="text-right pl-2 shrink-0">
+                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-200/70 text-slate-600">
+                                {meeting.department || "Telecalling"}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Action Buttons */}

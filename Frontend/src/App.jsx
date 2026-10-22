@@ -12,7 +12,6 @@ import AttendanceView from "./components/AttendanceView";
 import ProfileView from "./components/ProfileView";
 import EmployeeManagementView from "./components/EmployeeManagementView";
 import DepartmentRoleDashboard from "./components/DepartmentRoleDashboard";
-import DocumentsView from "./components/DocumentsView";
 import { getDepartmentRoute, getUserDepartment, getUserRole } from "./utils/hierarchy";
 
 const ProtectedRoute = ({ children }) => {
@@ -141,8 +140,6 @@ export default function App() {
                 </DepartmentRoleProtectedRoute>
               }
             />
-
-            <Route path="documents" element={<DocumentsView />} />
 
             <Route path="new-lead" element={<NewLeadView />} />
             <Route path="my-leads" element={<MyLeadsView />} />

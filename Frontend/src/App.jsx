@@ -142,14 +142,7 @@ export default function App() {
               }
             />
 
-            <Route
-              path="documents"
-              element={
-                <DepartmentRoleProtectedRoute allowedRoles={["Manager"]}>
-                  <DocumentsView />
-                </DepartmentRoleProtectedRoute>
-              }
-            />
+            <Route path="documents" element={<DocumentsView />} />
 
             <Route path="new-lead" element={<NewLeadView />} />
             <Route path="my-leads" element={<MyLeadsView />} />

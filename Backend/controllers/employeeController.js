@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const Employee = require("../models/Employee");
 const generateEmployeeId = require("../utils/generateId");
 const generatePassword = require("../utils/generatePassword");
+const { emitDataChange } = require("../services/websocket");
 
 // @desc    Create new employee
 // @route   POST /api/employees
@@ -63,15 +64,21 @@ exports.createEmployee = async (req, res) => {
       counter++;
     }
 
-    const officialEmail = generatedEmail;
+    const officialEmail = (req.body.officialEmail && String(req.body.officialEmail).trim()) 
+      ? String(req.body.officialEmail).trim().toLowerCase() 
+      : generatedEmail;
 
-    // Auto-generate employeeId and password
+    // Support entered password or fallback to auto-generated password
+    const passwordToUse = (req.body.password && String(req.body.password).trim().length >= 4)
+      ? String(req.body.password).trim()
+      : generatePassword();
+
+    // Auto-generate employeeId
     const employeeId = await generateEmployeeId();
-    const temporaryPassword = generatePassword();
 
     // Hash the password
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(temporaryPassword, salt);
+    const hashedPassword = await bcrypt.hash(passwordToUse, salt);
 
     // Create Employee
     const newEmployee = new Employee({
@@ -81,7 +88,7 @@ exports.createEmployee = async (req, res) => {
       officialEmail,
       phone,
       role,
-      department,
+      department: department ? department.trim() : (role === "Manager" ? "Telecalling" : ""),
       address,
       aadhaarNumber,
       panNumber,
@@ -104,6 +111,15 @@ exports.createEmployee = async (req, res) => {
 
     await newEmployee.save();
 
+    emitDataChange({
+      entity: "employee",
+      action: "create",
+      data: newEmployee,
+      id: newEmployee._id,
+      userId: req.user?.id,
+      role: req.user?.role,
+    });
+
     res.status(201).json({
       success: true,
       message: "Employee created successfully",
@@ -111,7 +127,7 @@ exports.createEmployee = async (req, res) => {
         employeeId: newEmployee.employeeId,
         email: newEmployee.officialEmail, // Return generated email to frontend as 'email'
         officialEmail: newEmployee.officialEmail,
-        temporaryPassword, // Required by instructions to show to admin once
+        temporaryPassword: passwordToUse, // Return created/generated password to frontend
       },
     });
   } catch (error) {
@@ -324,6 +340,15 @@ exports.updateEmployee = async (req, res) => {
 
     await employee.save();
 
+    emitDataChange({
+      entity: "employee",
+      action: "update",
+      data: employee,
+      id: employee._id,
+      userId: req.user?.id,
+      role: req.user?.role,
+    });
+
     res.json({
       success: true,
       message: "Employee updated successfully",
@@ -355,6 +380,14 @@ exports.deleteEmployee = async (req, res) => {
     }
 
     await employee.deleteOne();
+
+    emitDataChange({
+      entity: "employee",
+      action: "delete",
+      id: req.params.id,
+      userId: req.user?.id,
+      role: req.user?.role,
+    });
     res.json({ success: true, message: "Employee removed successfully" });
   } catch (error) {
     console.error("Error deleting employee:", error);

@@ -1,5 +1,6 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import api from "../api";
+import socket, { authenticateSocket } from "../utils/socket";
 
 const AuthContext = createContext();
 
@@ -18,6 +19,14 @@ export const AuthProvider = ({ children }) => {
     return null;
   });
 
+  // Keep socket authentication synchronized with current user
+  useEffect(() => {
+    if (user) {
+      const token = localStorage.getItem("token");
+      authenticateSocket(user, token);
+    }
+  }, [user]);
+
   const login = async (email, password) => {
     try {
       const res = await api.post("/auth/login", { email, password });
@@ -30,6 +39,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("token", token);
         setUser(userData);
+        authenticateSocket(userData, token);
         return { success: true };
       }
       return { success: false, message: res.data.message || "Invalid credentials." };
@@ -46,6 +56,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     setUser(null);
+    try {
+      socket.disconnect();
+    } catch (e) {
+      console.warn("Socket disconnect on logout:", e.message);
+    }
   };
 
   return (

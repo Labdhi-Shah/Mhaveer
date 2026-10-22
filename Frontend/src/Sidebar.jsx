@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, UserPlus,
   PlusCircle, FolderHeart, Clock, Calendar, ClipboardList,
-  BarChart2
+  BarChart2, FileText
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
@@ -153,6 +153,17 @@ export default function Sidebar({ isOpen, onClose }) {
             >
               <ClipboardList size={18} />
               Attendance
+            </button>
+
+            <button
+              onClick={() => handleNavigation("/documents")}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${location.pathname === "/documents"
+                  ? "bg-[#162335] text-white shadow-md font-black"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-[#162335]"
+                }`}
+            >
+              <FileText size={18} />
+              Documents
             </button>
           </div>
         </div>

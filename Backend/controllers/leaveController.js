@@ -1,5 +1,6 @@
 const Leave = require("../models/Leave");
 const Employee = require("../models/Employee");
+const { emitDataChange } = require("../services/websocket");
 
 // Apply for leave
 exports.applyLeave = async (req, res) => {
@@ -23,6 +24,15 @@ exports.applyLeave = async (req, res) => {
     });
 
     await newLeave.save();
+
+    emitDataChange({
+      entity: "leave",
+      action: "create",
+      data: newLeave,
+      id: newLeave._id,
+      userId: req.user.id,
+      role: req.user.role,
+    });
 
     return res.status(201).json({ success: true, message: "Leave applied successfully", data: newLeave });
   } catch (error) {
@@ -84,6 +94,15 @@ exports.updateLeaveStatus = async (req, res) => {
 
     leave.status = status;
     await leave.save();
+
+    emitDataChange({
+      entity: "leave",
+      action: "update",
+      data: leave,
+      id: leave._id,
+      userId: req.user.id,
+      role: req.user.role,
+    });
 
     return res.status(200).json({ success: true, message: `Leave ${status.toLowerCase()} successfully`, data: leave });
   } catch (error) {

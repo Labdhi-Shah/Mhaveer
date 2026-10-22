@@ -11,6 +11,7 @@ import {
 import * as XLSX from 'xlsx';
 import { getUserRoleCategory, filterAttendanceRecords } from "../utils/hierarchy";
 import LeaveManagement from "./LeaveManagement";
+import socket from "../utils/socket";
 
 export default function AttendanceView() {
   const { user } = useAuth();
@@ -53,8 +54,8 @@ export default function AttendanceView() {
     };
   };
 
-  const fetchAttendance = async () => {
-    setLoading(true);
+  const fetchAttendance = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const cat = getUserRoleCategory(user);
       if (cat === "Admin" || cat === "Employee") {
@@ -222,6 +223,52 @@ export default function AttendanceView() {
     fetchTodayAttendance();
     fetchLeaveCounts();
   }, [user, page, filterRange, searchTerm]);
+
+  useEffect(() => {
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    const handleAttendanceUpdate = () => {
+      fetchAttendance(false);
+      fetchTodayAttendance();
+    };
+
+    const handleLeaveUpdate = () => {
+      fetchLeaveCounts();
+    };
+
+    const handleDataUpdated = (payload) => {
+      if (!payload || payload.entity === "attendance") {
+        handleAttendanceUpdate();
+      }
+      if (!payload || payload.entity === "leave") {
+        handleLeaveUpdate();
+      }
+    };
+
+    socket.on("attendance:started", handleAttendanceUpdate);
+    socket.on("attendance:paused", handleAttendanceUpdate);
+    socket.on("attendance:resumed", handleAttendanceUpdate);
+    socket.on("attendance:stopped", handleAttendanceUpdate);
+    socket.on("attendance:updated", handleAttendanceUpdate);
+    socket.on("leaves-updated", handleLeaveUpdate);
+    socket.on("leave:applied", handleLeaveUpdate);
+    socket.on("leave:updated", handleLeaveUpdate);
+    socket.on("data-updated", handleDataUpdated);
+
+    return () => {
+      socket.off("attendance:started", handleAttendanceUpdate);
+      socket.off("attendance:paused", handleAttendanceUpdate);
+      socket.off("attendance:resumed", handleAttendanceUpdate);
+      socket.off("attendance:stopped", handleAttendanceUpdate);
+      socket.off("attendance:updated", handleAttendanceUpdate);
+      socket.off("leaves-updated", handleLeaveUpdate);
+      socket.off("leave:applied", handleLeaveUpdate);
+      socket.off("leave:updated", handleLeaveUpdate);
+      socket.off("data-updated", handleDataUpdated);
+    };
+  }, []);
 
   const handleAttendanceAction = async (action) => {
     if (actionLoading) return;

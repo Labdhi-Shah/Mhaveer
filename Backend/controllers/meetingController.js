@@ -8,7 +8,7 @@ const {
   getAssignedCount,
   MAX_MEETINGS_PER_EMPLOYEE,
 } = require("../services/salesAssignmentService");
-const { getIO } = require("../services/websocket");
+const { getIO, emitDataChange } = require("../services/websocket");
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Helper: normalise department string (mirrors authMiddleware)
@@ -139,9 +139,14 @@ exports.updateMeeting = async (req, res) => {
     // Trigger assignment asynchronously to fill any newly freed slots
     assignPendingMeetings().catch(err => console.error("Auto-assignment error after update:", err.message));
     
-    try {
-      getIO().emit("data-updated");
-    } catch (err) {}
+    emitDataChange({
+      entity: "meeting",
+      action: "update",
+      data: meeting,
+      id: meeting._id,
+      userId: req.user.id,
+      role: req.user.role,
+    });
 
     res.status(200).json({ success: true, message: "Meeting updated successfully", data: meeting });
   } catch (error) {
@@ -170,9 +175,13 @@ exports.deleteMeeting = async (req, res) => {
 
     await meeting.deleteOne();
     
-    try {
-      getIO().emit("data-updated");
-    } catch (err) {}
+    emitDataChange({
+      entity: "meeting",
+      action: "delete",
+      id: req.params.id,
+      userId: req.user.id,
+      role: req.user.role,
+    });
 
     res.status(200).json({ success: true, message: "Meeting deleted successfully" });
   } catch (error) {
@@ -268,6 +277,13 @@ exports.assignUnassignedMeetings = async (req, res) => {
     }
 
     const result = await assignPendingMeetings();
+    emitDataChange({
+      entity: "meeting",
+      action: "assign",
+      data: result,
+      userId: req.user.id,
+      role: req.user.role,
+    });
     res.status(200).json({
       success: true,
       message: `Assignment complete. ${result.newlyAssigned} meetings assigned, ${result.stillUnassigned} still unassigned.`,

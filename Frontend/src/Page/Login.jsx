@@ -163,11 +163,11 @@ function Login() {
                   marginBottom: "8px",
                 }}
               >
-                Official Login Email
+                Official Login Email / Employee ID
               </label>
               <input
-                type="email"
-                placeholder="Enter official login email"
+                type="text"
+                placeholder="Enter official email or employee ID"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={{

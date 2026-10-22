@@ -139,21 +139,58 @@ export default function MyLeadsView() {
 
   useEffect(() => {
     fetchLeads();
-    
+  }, [page, search, filterType, filterInterested]);
+
+  useEffect(() => {
     if (!socket.connected) {
       socket.connect();
     }
-    
-    const handleUpdate = () => {
+
+    const handleUpdate = (payload) => {
+      if (payload && payload.entity === "lead") {
+        if (payload.action === "delete" && payload.id) {
+          setLeads((prev) => prev.filter((l) => l._id !== payload.id));
+        } else if (payload.action === "update" && payload.data) {
+          const updated = payload.data;
+          setLeads((prev) => prev.map((l) => l._id === updated._id ? {
+            ...l,
+            ...updated,
+            phone: updated.phoneNumber || updated.phone || l.phone,
+            companyTurnover: updated.companyTurnover !== undefined ? updated.companyTurnover : l.companyTurnover,
+            address: updated.address !== undefined ? updated.address : l.address
+          } : l));
+        } else if (payload.action === "create" && payload.data) {
+          const lead = payload.data;
+          const formatted = {
+            ...lead,
+            phone: lead.phoneNumber || lead.phone,
+            companyTurnover: lead.companyTurnover !== undefined ? lead.companyTurnover : lead.yearlyIncome,
+            address: lead.address !== undefined ? lead.address : lead.remarks
+          };
+          setLeads((prev) => [formatted, ...prev.filter((l) => l._id !== formatted._id)]);
+        }
+      }
       fetchLeads(false);
     };
-    
+
+    const handleLeadCreated = (data) => handleUpdate({ entity: "lead", action: "create", data });
+    const handleLeadUpdated = (data) => handleUpdate({ entity: "lead", action: "update", data });
+    const handleLeadDeleted = (id) => handleUpdate({ entity: "lead", action: "delete", id });
+
     socket.on("data-updated", handleUpdate);
-    
+    socket.on("leads-updated", handleUpdate);
+    socket.on("lead:created", handleLeadCreated);
+    socket.on("lead:updated", handleLeadUpdated);
+    socket.on("lead:deleted", handleLeadDeleted);
+
     return () => {
       socket.off("data-updated", handleUpdate);
+      socket.off("leads-updated", handleUpdate);
+      socket.off("lead:created", handleLeadCreated);
+      socket.off("lead:updated", handleLeadUpdated);
+      socket.off("lead:deleted", handleLeadDeleted);
     };
-  }, [page, search, filterType, filterInterested]);
+  }, [user]);
 
   // Open edit modal and populate values
   const openEditModal = (lead) => {

@@ -5,7 +5,7 @@ import { useAuth } from "./context/AuthContext";
 import api from "./api";
 import logoSvg from "./assets/new_logo.png";
 import { getUserRoleCategory } from "./utils/hierarchy";
-import io from "socket.io-client";
+import socket from "./utils/socket";
 import { formatDistanceToNow } from "date-fns";
 
 export default function Header({ onToggleSidebar }) {
@@ -45,24 +45,30 @@ export default function Header({ onToggleSidebar }) {
     }
   }, [user]);
 
-  // Socket
+  // Socket: Real-time notification updates via singleton socket
   useEffect(() => {
     if (!user) return;
-    const socket = io(import.meta.env.VITE_API_URL?.replace("/api", "") || "https://mhaveer.onrender.com");
-    
-    socket.on("connect", () => {
-      console.log("Header socket connected");
-    });
-    
+
     const handleDataUpdated = () => {
       fetchNotifications();
     };
 
+    const handleNewNotification = (notif) => {
+      if (notif && notif._id) {
+        setNotifications((prev) => [notif, ...prev.filter((n) => n._id !== notif._id)]);
+      } else {
+        fetchNotifications();
+      }
+    };
+
     socket.on("data-updated", handleDataUpdated);
+    socket.on("notification:new", handleNewNotification);
+    socket.on("notification", handleNewNotification);
 
     return () => {
       socket.off("data-updated", handleDataUpdated);
-      socket.disconnect();
+      socket.off("notification:new", handleNewNotification);
+      socket.off("notification", handleNewNotification);
     };
   }, [user]);
 

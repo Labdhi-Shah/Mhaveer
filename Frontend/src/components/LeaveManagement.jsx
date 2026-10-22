@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
 import { Calendar, CheckCircle, XCircle, Clock, Loader2, AlertCircle } from "lucide-react";
+import socket from "../utils/socket";
 
 export default function LeaveManagement() {
   const { user } = useAuth();
@@ -48,6 +49,33 @@ export default function LeaveManagement() {
     if (isManagerOrAdmin) {
       fetchTeamLeaves();
     }
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    const handleUpdate = () => {
+      fetchMyLeaves();
+      if (isManagerOrAdmin) {
+        fetchTeamLeaves();
+      }
+    };
+
+    socket.on("leaves-updated", handleUpdate);
+    socket.on("leave:applied", handleUpdate);
+    socket.on("leave:updated", handleUpdate);
+    socket.on("data-updated", (payload) => {
+      if (!payload || payload.entity === "leave") {
+        handleUpdate();
+      }
+    });
+
+    return () => {
+      socket.off("leaves-updated", handleUpdate);
+      socket.off("leave:applied", handleUpdate);
+      socket.off("leave:updated", handleUpdate);
+      socket.off("data-updated");
+    };
   }, [isManagerOrAdmin]);
 
   const handleApplyLeave = async (e) => {

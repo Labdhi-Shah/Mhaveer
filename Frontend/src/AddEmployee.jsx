@@ -4,7 +4,7 @@ import api from "./api";
 import { Loader2, CheckCircle, Copy, X, Users, Building2, User, Phone, MapPin, Briefcase } from "lucide-react";
 
 const DEPARTMENTS = ["Telecalling"];
-const ROLES = ["Employee"];
+const ROLES = ["Employee", "Manager"];
 
 export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
   const navigate = useNavigate();
@@ -31,6 +31,7 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
     accountNumber: "",
     accountHolderName: "",
     salary: "",
+    password: "",
   });
 
   const [banks, setBanks] = useState([]);
@@ -167,7 +168,16 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
     setError("");
 
     try {
-      const payload = { ...form, dateOfBirth: form.dob };
+      const payload = { 
+        ...form, 
+        dateOfBirth: form.dob,
+        phone: form.phone.trim(),
+        aadhaarNumber: form.aadhaarNumber.trim(),
+        panNumber: form.panNumber.trim().toUpperCase(),
+        ifscCode: form.ifscCode.trim().toUpperCase(),
+        salary: form.salary ? parseFloat(form.salary) : undefined,
+        password: form.password ? form.password.trim() : undefined,
+      };
       
       if (editEmpId) {
         const response = await api.put(`/employees/${editEmpId}`, payload);
@@ -330,6 +340,19 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
           <input type="number" name="salary" value={form.salary} onChange={handleChange} placeholder="e.g. 25000" min="0" step="1" className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#162335] outline-none focus:border-[#9ca3af]" />
         </div>
 
+        <div>
+          <label className="block text-slate-700 font-extrabold uppercase tracking-wider mb-1">Login Password (Optional)</label>
+          <input 
+            type="text" 
+            name="password" 
+            value={form.password || ""} 
+            onChange={handleChange} 
+            placeholder="Auto-generated if left blank" 
+            className="w-full px-4 py-2.5 bg-slate-100/70 border border-slate-300 rounded-xl text-[#162335] outline-none focus:border-[#9ca3af]" 
+          />
+          <p className="text-[10px] text-slate-400 mt-1">Leave empty to auto-generate a secure password.</p>
+        </div>
+
         {/* --- BANK DETAILS --- */}
         <SectionHeader title="Bank Details" icon={Building2} />
 
@@ -439,7 +462,7 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
               </div>
 
               <div className="flex gap-2 mt-4">
-                <button type="button" onClick={() => { setCreatedData(null); setForm({ fullName: "", personalEmail: "", phone: "", dob: "", joiningDate: "", role: "", department: "", address: "", status: "Active", aadhaarNumber: "", panNumber: "", fatherPhone: "", motherPhone: "", guardianPhone: "", bankName: "", ifscCode: "", accountNumber: "", accountHolderName: "", salary: ""}); }} className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs uppercase cursor-pointer transition">
+                <button type="button" onClick={() => { setCreatedData(null); setForm({ fullName: "", personalEmail: "", phone: "", dob: "", joiningDate: "", role: "", department: "", address: "", status: "Active", aadhaarNumber: "", panNumber: "", fatherPhone: "", motherPhone: "", guardianPhone: "", bankName: "", ifscCode: "", accountNumber: "", accountHolderName: "", salary: "", password: ""}); }} className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs uppercase cursor-pointer transition">
                   Add Another
                 </button>
                 <button type="button" onClick={() => { setCreatedData(null); navigate("/telecalling/employees"); }} className="flex-1 py-2.5 bg-[#162335] hover:bg-[#12385c] text-[#9ca3af] font-bold rounded-xl text-xs uppercase cursor-pointer transition">

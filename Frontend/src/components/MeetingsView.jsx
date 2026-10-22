@@ -107,16 +107,46 @@ export default function MeetingsView() {
       socket.connect();
     }
     
-    const handleUpdate = () => {
+    const handleUpdate = (payload) => {
+      if (payload && payload.entity === "meeting") {
+        if (payload.action === "delete" && payload.id) {
+          setMeetings((prev) => prev.filter((m) => m._id !== payload.id));
+        } else if (payload.action === "update" && payload.data) {
+          const updated = payload.data;
+          setMeetings((prev) => prev.map((m) => m._id === updated._id ? { ...m, ...updated } : m));
+        } else if (payload.action === "create" && payload.data) {
+          const newMeeting = payload.data;
+          setMeetings((prev) => [newMeeting, ...prev.filter((m) => m._id !== newMeeting._id)]);
+        }
+      }
       fetchMeetings(false);
     };
+
+    const handleMeetingCreated = (data) => handleUpdate({ entity: "meeting", action: "create", data });
+    const handleMeetingUpdated = (data) => handleUpdate({ entity: "meeting", action: "update", data });
+    const handleMeetingDeleted = (id) => handleUpdate({ entity: "meeting", action: "delete", id });
+    const handleGeneralRefresh = () => fetchMeetings(false);
     
     socket.on("data-updated", handleUpdate);
+    socket.on("meetings-updated", handleUpdate);
+    socket.on("meeting:created", handleMeetingCreated);
+    socket.on("meeting:updated", handleMeetingUpdated);
+    socket.on("meeting:deleted", handleMeetingDeleted);
+    socket.on("customer:created", handleGeneralRefresh);
+    socket.on("customer:updated", handleGeneralRefresh);
+    socket.on("leads-updated", handleGeneralRefresh);
     
     return () => {
       socket.off("data-updated", handleUpdate);
+      socket.off("meetings-updated", handleUpdate);
+      socket.off("meeting:created", handleMeetingCreated);
+      socket.off("meeting:updated", handleMeetingUpdated);
+      socket.off("meeting:deleted", handleMeetingDeleted);
+      socket.off("customer:created", handleGeneralRefresh);
+      socket.off("customer:updated", handleGeneralRefresh);
+      socket.off("leads-updated", handleGeneralRefresh);
     };
-  }, []);
+  }, [user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

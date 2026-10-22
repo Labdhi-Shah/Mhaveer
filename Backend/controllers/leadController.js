@@ -2,7 +2,7 @@ const Lead = require("../models/Lead");
 const Employee = require("../models/Employee");
 const Meeting = require("../models/Meeting");
 const { assignMeetingToSalesEmployee } = require("../services/salesAssignmentService");
-const { getIO } = require("../services/websocket");
+const { getIO, emitDataChange } = require("../services/websocket");
 const { createNotification } = require("../utils/notificationHelper");
 
 // @desc    Create a new lead
@@ -73,9 +73,14 @@ exports.createLead = async (req, res) => {
       }
     }
 
-    try {
-      getIO().emit("data-updated");
-    } catch (err) {}
+    emitDataChange({
+      entity: "lead",
+      action: "create",
+      data: lead,
+      id: lead._id,
+      userId: req.user.id,
+      role: req.user.role,
+    });
 
     if (managerId) {
       await createNotification({
@@ -280,9 +285,14 @@ exports.updateLead = async (req, res) => {
       }
     }
 
-    try {
-      getIO().emit("data-updated");
-    } catch (err) {}
+    emitDataChange({
+      entity: "lead",
+      action: "update",
+      data: lead,
+      id: lead._id,
+      userId: req.user.id,
+      role: req.user.role,
+    });
 
     res.status(200).json({
       success: true,
@@ -327,9 +337,13 @@ exports.deleteLead = async (req, res) => {
 
     await lead.deleteOne();
 
-    try {
-      getIO().emit("data-updated");
-    } catch (err) {}
+    emitDataChange({
+      entity: "lead",
+      action: "delete",
+      id: req.params.id,
+      userId: req.user.id,
+      role: req.user.role,
+    });
 
     res.status(200).json({
       success: true,

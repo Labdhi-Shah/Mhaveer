@@ -1,5 +1,6 @@
 const Attendance = require("../models/Attendance");
 const Employee = require("../models/Employee"); // Assume Employee model exists
+const { emitDataChange } = require("../services/websocket");
 
 // Utility to get start of day
 const getStartOfDay = (date = new Date()) => {
@@ -53,6 +54,15 @@ exports.startAttendance = async (req, res) => {
 
     await newAttendance.save();
 
+    emitDataChange({
+      entity: "attendance",
+      action: "start",
+      data: newAttendance,
+      id: newAttendance._id,
+      userId: req.user.id,
+      role: req.user.role,
+    });
+
     return res.status(201).json({
       success: true,
       message: "Attendance started successfully.",
@@ -83,6 +93,15 @@ exports.pauseAttendance = async (req, res) => {
     record.breaks.push({ startTime: new Date() });
 
     await record.save();
+
+    emitDataChange({
+      entity: "attendance",
+      action: "pause",
+      data: record,
+      id: record._id,
+      userId: req.user.id,
+      role: req.user.role,
+    });
 
     return res.status(200).json({
       success: true,
@@ -120,6 +139,15 @@ exports.resumeAttendance = async (req, res) => {
     record.status = "Working";
 
     await record.save();
+
+    emitDataChange({
+      entity: "attendance",
+      action: "resume",
+      data: record,
+      id: record._id,
+      userId: req.user.id,
+      role: req.user.role,
+    });
 
     return res.status(200).json({
       success: true,
@@ -172,6 +200,15 @@ exports.stopAttendance = async (req, res) => {
     record.totalWorkingHours = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 
     await record.save();
+
+    emitDataChange({
+      entity: "attendance",
+      action: "stop",
+      data: record,
+      id: record._id,
+      userId: req.user.id,
+      role: req.user.role,
+    });
 
     return res.status(200).json({
       success: true,

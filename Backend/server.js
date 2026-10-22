@@ -102,6 +102,8 @@ const leaveRoutes = require("./routes/leaveRoutes");
 app.use("/api/admin", adminRoutes);
 app.use("/api/banks", bankRoutes);
 app.use("/api/leaves", leaveRoutes);
+const documentRoutes = require("./routes/documentRoutes");
+app.use("/api/documents", documentRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

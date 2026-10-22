@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "./api"; // જો તમારી api.js src/ માં હોય તો ./api રાખો
 import { Search, Edit, Trash2, Eye, Loader2, ChevronLeft, ChevronRight, X, UserPlus, CheckCircle, Building2 } from "lucide-react";
 import AddEmployee from "./AddEmployee";
+import socket from "./utils/socket";
 
 const DEPARTMENTS = ["Sales Department", "Telecalling", "Admin", "Account & Fianc", "Marketing", "Manegement", "Human Resorece(HR)", "Collection & Records", "KYC Compliation", "Operations Department", "Customer Support", "Credit"];
 const ROLES = ["Manager", "Employee"];
@@ -44,8 +45,8 @@ export default function EmployeeList() {
     fetchAllEmps();
   }, []);
 
-  const fetchEmployees = useCallback(async () => {
-    setLoading(true);
+  const fetchEmployees = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const res = await api.get(`/employees?page=${page}&limit=10&search=${search}`);
       if (res.data.success) {
@@ -55,13 +56,43 @@ export default function EmployeeList() {
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [page, search]);
 
   useEffect(() => {
     const timer = setTimeout(() => fetchEmployees(), 400); // Debouncing
     return () => clearTimeout(timer);
+  }, [fetchEmployees]);
+
+  useEffect(() => {
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    const handleUpdate = () => {
+      fetchEmployees(false);
+    };
+
+    const handleDataUpdated = (payload) => {
+      if (!payload || payload.entity === "employee") {
+        fetchEmployees(false);
+      }
+    };
+
+    socket.on("employees-updated", handleUpdate);
+    socket.on("employee:created", handleUpdate);
+    socket.on("employee:updated", handleUpdate);
+    socket.on("employee:deleted", handleUpdate);
+    socket.on("data-updated", handleDataUpdated);
+
+    return () => {
+      socket.off("employees-updated", handleUpdate);
+      socket.off("employee:created", handleUpdate);
+      socket.off("employee:updated", handleUpdate);
+      socket.off("employee:deleted", handleUpdate);
+      socket.off("data-updated", handleDataUpdated);
+    };
   }, [fetchEmployees]);
 
   // View Details API / Handler

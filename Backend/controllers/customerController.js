@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
 const Customer = require("../models/Customer");
+const { emitDataChange } = require("../services/websocket");
 
 // ── Multer Storage ────────────────────────────────────────────────────────────
 const storage = multer.diskStorage({
@@ -144,6 +145,15 @@ exports.updateCustomer = async (req, res) => {
     }
 
     customer = await Customer.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+    emitDataChange({
+      entity: "customer",
+      action: "update",
+      data: customer,
+      id: customer._id,
+      userId: req.user.id,
+      role: req.user.role,
+    });
 
     res.status(200).json({ success: true, message: "Customer updated successfully", data: customer });
   } catch (error) {
@@ -328,6 +338,14 @@ exports.deleteCustomer = async (req, res) => {
 
     await Customer.findByIdAndDelete(req.params.id);
 
+    emitDataChange({
+      entity: "customer",
+      action: "delete",
+      id: req.params.id,
+      userId: req.user.id,
+      role: req.user.role,
+    });
+
     res.status(200).json({ success: true, message: "Customer and associated documents deleted successfully" });
   } catch (error) {
     console.error("Delete Customer Error:", error);
@@ -468,7 +486,24 @@ exports.submitMeetingForm = (req, res) => {
         const Meeting = require("../models/Meeting");
         await Meeting.findByIdAndUpdate(meetingId, { status: "Completed" }, { new: true });
         console.log(`[FillForm] Meeting ${meetingId} marked as Completed`);
+        emitDataChange({
+          entity: "meeting",
+          action: "update",
+          id: meetingId,
+          data: { _id: meetingId, status: "Completed" },
+          userId: req.user.id,
+          role: req.user.role,
+        });
       }
+
+      emitDataChange({
+        entity: "customer",
+        action: "create",
+        data: customer,
+        id: customer._id,
+        userId: req.user.id,
+        role: req.user.role,
+      });
 
       // Auto-assign to Credit Department removed
 

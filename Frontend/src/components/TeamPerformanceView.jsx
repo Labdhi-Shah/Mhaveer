@@ -3,6 +3,7 @@ import { Search, ArrowUpDown, ChevronDown, ChevronUp, Download, Users, Loader2, 
 import api from "./../api";
 import { useAuth } from "../context/AuthContext";
 import { getUserRole } from "../utils/hierarchy";
+import socket from "../utils/socket";
 
 export default function TeamPerformanceView() {
   const { user } = useAuth();
@@ -20,12 +21,8 @@ export default function TeamPerformanceView() {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
 
-  useEffect(() => {
-    fetchPerformanceData();
-  }, []);
-
-  const fetchPerformanceData = async () => {
-    setLoading(true);
+  const fetchPerformanceData = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const url = "/team-performance";
       const res = await api.get(url);
@@ -35,9 +32,43 @@ export default function TeamPerformanceView() {
     } catch (error) {
       console.error("Failed to fetch team performance", error);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchPerformanceData();
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    const handleUpdate = () => {
+      fetchPerformanceData(false);
+    };
+
+    socket.on("data-updated", handleUpdate);
+    socket.on("leads-updated", handleUpdate);
+    socket.on("lead:created", handleUpdate);
+    socket.on("lead:updated", handleUpdate);
+    socket.on("lead:deleted", handleUpdate);
+    socket.on("meetings-updated", handleUpdate);
+    socket.on("meeting:created", handleUpdate);
+    socket.on("meeting:updated", handleUpdate);
+    socket.on("meeting:deleted", handleUpdate);
+
+    return () => {
+      socket.off("data-updated", handleUpdate);
+      socket.off("leads-updated", handleUpdate);
+      socket.off("lead:created", handleUpdate);
+      socket.off("lead:updated", handleUpdate);
+      socket.off("lead:deleted", handleUpdate);
+      socket.off("meetings-updated", handleUpdate);
+      socket.off("meeting:created", handleUpdate);
+      socket.off("meeting:updated", handleUpdate);
+      socket.off("meeting:deleted", handleUpdate);
+    };
+  }, []);
 
   const handleSort = (key) => {
     let direction = "asc";

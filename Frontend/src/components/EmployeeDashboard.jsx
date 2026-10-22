@@ -122,16 +122,65 @@ export default function EmployeeDashboard() {
       socket.connect();
     }
     
-    const handleUpdate = () => {
+    const handleUpdate = (payload) => {
+      if (payload && payload.entity === "lead") {
+        if (payload.action === "create" && payload.data) {
+          const lead = payload.data;
+          const formatted = {
+            ...lead,
+            phone: lead.phoneNumber || lead.phone,
+            companyTurnover: lead.companyTurnover !== undefined ? lead.companyTurnover : lead.yearlyIncome,
+            address: lead.address !== undefined ? lead.address : lead.remarks
+          };
+          setRecentLeads((prev) => [formatted, ...prev.filter((l) => l._id !== formatted._id)].slice(0, 10));
+          setStats((prev) => ({
+            ...prev,
+            todaysCalls: (prev.todaysCalls || 0) + 1,
+            interestedLeads: (lead.status === "Interested" || lead.interested) ? (prev.interestedLeads || 0) + 1 : prev.interestedLeads
+          }));
+        } else if (payload.action === "delete" && payload.id) {
+          setRecentLeads((prev) => prev.filter((l) => l._id !== payload.id));
+        } else if (payload.action === "update" && payload.data) {
+          const updated = payload.data;
+          setRecentLeads((prev) => prev.map((l) => l._id === updated._id ? {
+            ...l,
+            ...updated,
+            phone: updated.phoneNumber || updated.phone || l.phone,
+            companyTurnover: updated.companyTurnover !== undefined ? updated.companyTurnover : l.companyTurnover,
+            address: updated.address !== undefined ? updated.address : l.address
+          } : l));
+        }
+      }
       fetchData(false);
     };
+
+    const handleLeadCreated = (data) => handleUpdate({ entity: "lead", action: "create", data });
+    const handleLeadUpdated = (data) => handleUpdate({ entity: "lead", action: "update", data });
+    const handleLeadDeleted = (id) => handleUpdate({ entity: "lead", action: "delete", id });
+    const handleGeneralRefresh = () => fetchData(false);
     
     socket.on("data-updated", handleUpdate);
+    socket.on("leads-updated", handleUpdate);
+    socket.on("lead:created", handleLeadCreated);
+    socket.on("lead:updated", handleLeadUpdated);
+    socket.on("lead:deleted", handleLeadDeleted);
+    socket.on("meetings-updated", handleGeneralRefresh);
+    socket.on("meeting:created", handleGeneralRefresh);
+    socket.on("meeting:updated", handleGeneralRefresh);
+    socket.on("meeting:deleted", handleGeneralRefresh);
     
     return () => {
       socket.off("data-updated", handleUpdate);
+      socket.off("leads-updated", handleUpdate);
+      socket.off("lead:created", handleLeadCreated);
+      socket.off("lead:updated", handleLeadUpdated);
+      socket.off("lead:deleted", handleLeadDeleted);
+      socket.off("meetings-updated", handleGeneralRefresh);
+      socket.off("meeting:created", handleGeneralRefresh);
+      socket.off("meeting:updated", handleGeneralRefresh);
+      socket.off("meeting:deleted", handleGeneralRefresh);
     };
-  }, []);
+  }, [user]);
 
 
   // Handle Delete Lead

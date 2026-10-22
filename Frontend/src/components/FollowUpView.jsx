@@ -4,6 +4,7 @@ import { Clock, Phone, Loader2, Award, Calendar, AlertCircle, CheckCircle, HelpC
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import { getMergedLeadsAndStats } from "../utils/hierarchy";
+import socket from "../utils/socket";
 
 export default function FollowUpView() {
   const { user } = useAuth();
@@ -17,8 +18,8 @@ export default function FollowUpView() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  const fetchFollowups = async () => {
-    setLoading(true);
+  const fetchFollowups = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const res = await api.get("/leads?limit=100");
       if (res.data.success) {
@@ -38,13 +39,35 @@ export default function FollowUpView() {
       console.error(err);
       showToast("Failed to fetch follow-ups.", "error");
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchFollowups();
-  }, []);
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    const handleUpdate = () => {
+      fetchFollowups(false);
+    };
+
+    socket.on("data-updated", handleUpdate);
+    socket.on("leads-updated", handleUpdate);
+    socket.on("lead:created", handleUpdate);
+    socket.on("lead:updated", handleUpdate);
+    socket.on("lead:deleted", handleUpdate);
+
+    return () => {
+      socket.off("data-updated", handleUpdate);
+      socket.off("leads-updated", handleUpdate);
+      socket.off("lead:created", handleUpdate);
+      socket.off("lead:updated", handleUpdate);
+      socket.off("lead:deleted", handleUpdate);
+    };
+  }, [user]);
 
   const updateInterest = async (leadId, newStatus) => {
     setUpdatingId(leadId);

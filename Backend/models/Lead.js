@@ -1,5 +1,17 @@
 const mongoose = require("mongoose");
 
+function getFieldValue(ctx, field) {
+  if (ctx && ctx[field] !== undefined) return ctx[field];
+  if (ctx && typeof ctx.getUpdate === "function") {
+    const update = ctx.getUpdate();
+    if (update) {
+      if (update[field] !== undefined) return update[field];
+      if (update.$set && update.$set[field] !== undefined) return update.$set[field];
+    }
+  }
+  return undefined;
+}
+
 const leadSchema = new mongoose.Schema(
   {
     leadId: {
@@ -8,12 +20,18 @@ const leadSchema = new mongoose.Schema(
     },
     companyName: {
       type: String,
-      required: [true, "Company Name is required"],
+      required: function () {
+        const callStatus = getFieldValue(this, "callStatus");
+        return callStatus !== "Wrong Number";
+      },
       trim: true,
     },
     contactPerson: {
       type: String,
-      required: [true, "Contact Person is required"],
+      required: function () {
+        const callStatus = getFieldValue(this, "callStatus");
+        return callStatus !== "Wrong Number";
+      },
       trim: true,
     },
     phoneNumber: {
@@ -36,7 +54,11 @@ const leadSchema = new mongoose.Schema(
     },
     loanType: {
       type: String,
-      required: [true, "Loan Type is required"],
+      required: function () {
+        const interested = getFieldValue(this, "interested");
+        const callStatus = getFieldValue(this, "callStatus");
+        return interested === "Yes" && callStatus !== "Wrong Number";
+      },
     },
     propertyLoanCategory: {
       type: String,
@@ -61,13 +83,17 @@ const leadSchema = new mongoose.Schema(
     followUpDate: {
       type: Date,
       required: function () {
-        return this.interested === "Call Back Later";
+        const interested = getFieldValue(this, "interested");
+        const callStatus = getFieldValue(this, "callStatus");
+        return interested === "Call Back Later" || callStatus === "Busy";
       },
     },
     followUpTime: {
       type: String,
       required: function () {
-        return this.interested === "Call Back Later";
+        const interested = getFieldValue(this, "interested");
+        const callStatus = getFieldValue(this, "callStatus");
+        return interested === "Call Back Later" || callStatus === "Busy";
       },
     },
     address: {

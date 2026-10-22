@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Phone, Loader2, AlertCircle, CheckCircle, MapPin, Plus, X, Filter, ClipboardList, Pencil, Trash2, User, FileSpreadsheet, Download } from "lucide-react";
+import { Calendar, Phone, Loader2, AlertCircle, CheckCircle, MapPin, Plus, X, Filter, ClipboardList, Pencil, Trash2, User, FileSpreadsheet, Download, FileText } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import api from "../api";
 import socket from "../utils/socket";
 import FillFormModal from "./FillFormModal";
 import { useAuth } from "../context/AuthContext";
 import { getUserRole } from "../utils/hierarchy";
+import { generateMeetingPdf } from "../utils/meetingPdfGenerator";
 import * as XLSX from "xlsx";
 
 export default function MeetingsView() {
@@ -66,7 +67,9 @@ export default function MeetingsView() {
     location: "",
     type: "Consultation",
     status: "Scheduled",
-    notes: ""
+    notes: "",
+    meetingPersonName: "",
+    meetingPersonNotes: ""
   });
 
   // Filter states
@@ -169,7 +172,9 @@ export default function MeetingsView() {
         location: m.location || "",
         type: m.type || "Consultation",
         status: m.status || "Scheduled",
-        notes: m.notes || ""
+        notes: m.notes || "",
+        meetingPersonName: m.meetingPersonName || "",
+        meetingPersonNotes: m.meetingPersonNotes || ""
       });
       setIsModalOpen(true);
     } catch (err) {
@@ -199,7 +204,9 @@ export default function MeetingsView() {
         location: m.location || "",
         type: m.type || "Consultation",
         status: "Rescheduled",
-        notes: m.notes || ""
+        notes: m.notes || "",
+        meetingPersonName: m.meetingPersonName || "",
+        meetingPersonNotes: m.meetingPersonNotes || ""
       });
       setIsModalOpen(true);
     } catch (err) {
@@ -334,6 +341,35 @@ export default function MeetingsView() {
     return { name, email, empId };
   };
 
+  const handleDownloadPdf = async (meeting) => {
+    if (!isManager) {
+      showToast("Only managers are authorized to download meeting PDFs.", "error");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      let targetMeeting = meeting;
+      try {
+        const res = await api.get(`/meetings/${meeting._id}`);
+        if (res.data?.success && res.data?.data) {
+          targetMeeting = res.data.data;
+        } else if (res.data && res.data.title) {
+          targetMeeting = res.data;
+        }
+      } catch (err) {
+        console.warn("Could not fetch latest meeting record, using card data:", err);
+      }
+
+      generateMeetingPdf(targetMeeting, user);
+      showToast("Meeting PDF downloaded successfully!");
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      showToast("Failed to generate meeting PDF.", "error");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleExportExcel = (exportAll = false) => {
     const targetList = exportAll ? meetings : (filteredMeetings.length > 0 ? filteredMeetings : meetings);
 
@@ -374,6 +410,8 @@ export default function MeetingsView() {
         "Creator Official Email": creator.email || "-",
         "Creator Employee ID": creator.empId || "-",
         "Sales Assigned To": m.salesAssignedTo?.name || m.salesAssignedToName || "Unassigned",
+        "Client Met By": m.meetingPersonName || "-",
+        "Client Visit Notes": m.meetingPersonNotes || "-",
         "Department": m.department || "Telecalling",
         "Notes": m.notes || "-",
         "Created At": createdAtStr
@@ -662,6 +700,33 @@ export default function MeetingsView() {
                         </div>
                       );
                     })()}
+
+                    {/* Person Who Met The Client (From Fill Form Step 3) */}
+                    {meeting.meetingPersonName && (
+                      <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100 mt-2 bg-emerald-50/80 p-2.5 rounded-2xl border border-emerald-200/70">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                            <User size={13} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[10px] text-emerald-800 font-extrabold uppercase tracking-wider">
+                              Client Met By
+                            </p>
+                            <p className="font-black text-[#162335] text-xs truncate">
+                              {meeting.meetingPersonName}
+                            </p>
+                          </div>
+                        </div>
+                        {meeting.meetingPersonNotes && (
+                          <span
+                            className="text-[10px] font-medium text-emerald-700 bg-white px-2 py-0.5 rounded-lg border border-emerald-200 shrink-0 max-w-[120px] truncate"
+                            title={meeting.meetingPersonNotes}
+                          >
+                            {meeting.meetingPersonNotes}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Action Buttons */}
@@ -685,6 +750,16 @@ export default function MeetingsView() {
                       )}
 
                       <div className="flex gap-1.5">
+                        {isManager && (
+                          <button
+                            disabled={actionLoading}
+                            onClick={() => handleDownloadPdf(meeting)}
+                            className="p-1.5 text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition disabled:opacity-50 cursor-pointer"
+                            title="Download Meeting PDF (Manager Only)"
+                          >
+                            <FileText size={14} />
+                          </button>
+                        )}
                         {(meeting.status === "Scheduled" || meeting.status === "Rescheduled") && (
                            <>
                              <button
@@ -857,6 +932,31 @@ export default function MeetingsView() {
                       placeholder="Office, Coffee Shop, Client Address..."
                       className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-purple-500/20"
                     />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Person Name (Who Met Client)</label>
+                      <input
+                        type="text"
+                        name="meetingPersonName"
+                        value={formData.meetingPersonName || ""}
+                        onChange={handleInputChange}
+                        placeholder="Representative who met client"
+                        className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-purple-500/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Visit Remarks</label>
+                      <input
+                        type="text"
+                        name="meetingPersonNotes"
+                        value={formData.meetingPersonNotes || ""}
+                        onChange={handleInputChange}
+                        placeholder="Visit notes / feedback"
+                        className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-purple-500/20"
+                      />
+                    </div>
                   </div>
 
                   <div>

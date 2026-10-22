@@ -105,6 +105,7 @@ export default function NewLeadView() {
   });
 
   const interestedValue = watch("interested");
+  const callStatusValue = watch("callStatus");
   const loanTypeValue = watch("loanType");
   const lapPropertyTypeValue = watch("lapPropertyType");
   const propertyLoanCategoryValue = watch("propertyLoanCategory");
@@ -112,16 +113,65 @@ export default function NewLeadView() {
   const businessLoanTypeValue = watch("businessLoanType");
   const naPlotVacantValue = watch("naPlotVacant");
 
+  const isWrongNumber = callStatusValue === "Wrong Number";
+  const isFollowUp = !isWrongNumber && (interestedValue === "Call Back Later" || callStatusValue === "Busy");
+  const isAllMandatory = interestedValue === "Yes" && !isWrongNumber;
+
   const showToast = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   };
 
+  // Auto-set Interested to "Call Back Later" if Call Status is Busy
   useEffect(() => {
-    register("turnoverAmount0", { 
-      required: "Company Turnover is required",
-      validate: (val) => (val && parseFloat(val) > 0) || "Company Turnover is required"
-    });
+    if (callStatusValue === "Busy" && (!interestedValue || interestedValue === "")) {
+      setValue("interested", "Call Back Later");
+    }
+  }, [callStatusValue, interestedValue, setValue]);
+
+  // Dynamic registration of Turnover and Loan Amount based on mode
+  useEffect(() => {
+    if (isAllMandatory) {
+      register("turnoverAmount0", { 
+        required: "Company Turnover is required",
+        validate: (val) => (val && parseFloat(val) > 0) || "Company Turnover is required"
+      });
+      register("loanAmountInput", {
+        required: "Loan Amount is required",
+        validate: (val) => (val && parseFloat(val) > 0) || "Loan Amount is required"
+      });
+    } else {
+      register("turnoverAmount0", { 
+        required: false,
+        validate: (val) => !val || parseFloat(val) > 0 || "Turnover must be greater than 0"
+      });
+      register("loanAmountInput", {
+        required: false,
+        validate: (val) => !val || parseFloat(val) > 0 || "Loan Amount must be greater than 0"
+      });
+      clearErrors([
+        "turnoverAmount0", "companyTurnover", "loanAmountInput", "loanAmount", "loanType",
+        "propertyPurchaseCategory", "ppLocation", "ppMarketRate", "ppDastavejRate", "ppDastavejName",
+        "propertyLoanCategory", "propertyLocation", "durationOfRentProperty", "unsoldUnit", "unsoldMV",
+        "unsoldScheme", "unsoldLocation", "unsoldFloor", "unsoldDastavej", "unsoldPartnership",
+        "lrdRent", "lrdMarketValue", "lrdLocation", "lrdLoiYear", "lrdSchemeName", "lrdDastavej",
+        "naPlotLocation", "naPlotMV", "naPlotDastavej", "naPlotVAR", "naPlotScheme",
+        "lapPropertyType", "lapPropertyLocation", "lapPropertyMarketValue", "lapPropertyWork", "lapPropertyDocumentList",
+        "businessLoanType", "businessStartingYear", "businessTypeOfWork",
+        "btBankName", "btRateOfInterest", "btPropertyType", "btMarketValue", "btLocation", "btDuration", "btOutstanding", "btForeclosureCharge",
+        "address"
+      ]);
+    }
+  }, [isAllMandatory, register, clearErrors]);
+
+  // When Wrong Number is selected, clear contact and location errors
+  useEffect(() => {
+    if (isWrongNumber) {
+      clearErrors(["companyName0", "contactPerson0", "state", "city", "followUpDate", "followUpTime"]);
+    }
+  }, [isWrongNumber, clearErrors]);
+
+  useEffect(() => {
     register("turnoverAmount1", { 
       required: false,
       validate: (val) => !val || parseFloat(val) > 0 || "Turnover must be greater than 0"
@@ -129,10 +179,6 @@ export default function NewLeadView() {
     register("turnoverAmount2", { 
       required: false,
       validate: (val) => !val || parseFloat(val) > 0 || "Turnover must be greater than 0"
-    });
-    register("loanAmountInput", {
-      required: "Loan Amount is required",
-      validate: (val) => (val && parseFloat(val) > 0) || "Loan Amount is required"
     });
 
     const preventWheel = (e) => {
@@ -216,8 +262,8 @@ export default function NewLeadView() {
 
       const payload = {
         ...data,
-        companyName: companyNames,
-        contactPerson: contactPersons,
+        companyName: isWrongNumber ? (companyNames || "Wrong Number") : companyNames,
+        contactPerson: isWrongNumber ? (contactPersons || "Wrong Number") : contactPersons,
         phoneNumber: phoneNumbers,
         companyTurnover: turnover0 !== null ? turnover0 : (data.companyTurnover ? parseFloat(data.companyTurnover) : undefined),
         companyTurnover1: turnover1 !== null ? turnover1 : undefined,
@@ -245,86 +291,106 @@ export default function NewLeadView() {
       delete payload.loanAmountInput;
       delete payload.loanAmountUnit;
 
-      if (payload.loanType !== "Property Purchase Loan") {
-        delete payload.propertyPurchaseCategory;
-        delete payload.ppLocation;
-        delete payload.ppMarketRate;
-        delete payload.ppDastavejRate;
-        delete payload.ppDastavejName;
-      }
-      if (payload.loanType !== "Property Loan") {
+      if (isWrongNumber) {
+        payload.interested = "No";
+        payload.callStatus = "Wrong Number";
+        delete payload.loanType;
         delete payload.propertyLoanCategory;
-        delete payload.propertyLocation;
-        delete payload.durationOfRentProperty;
-      } else if (!["Working Capital"].includes(payload.propertyLoanCategory)) {
-        delete payload.propertyLocation;
-        delete payload.durationOfRentProperty;
-      }
-      if (payload.propertyLoanCategory !== "LAP") {
-        delete payload.lapPropertyType;
-        delete payload.lapPropertyLocation;
-        delete payload.lapPropertyMarketValue;
-          delete payload.lapPropertyWork;
-          delete payload.lapPropertyDocumentList;
-      }
-      if (payload.propertyLoanCategory !== "Unsold") {
-        delete payload.unsoldUnit;
-        delete payload.unsoldMV;
-        delete payload.unsoldBV;
-        delete payload.unsoldScheme;
-        delete payload.unsoldLocation;
-        delete payload.unsoldFloor;
-        delete payload.unsoldDastavej;
-        delete payload.unsoldPartnership;
-      }
-      if (payload.propertyLoanCategory !== "LRD") {
-        delete payload.lrdRent;
-        delete payload.lrdMarketValue;
-        delete payload.lrdLocation;
-        delete payload.lrdLoiYear;
-        delete payload.lrdSchemeName;
-        delete payload.lrdDastavej;
-      }
-      if (payload.propertyLoanCategory !== "NA Plot") {
-        delete payload.naPlotLocation;
-        delete payload.naPlotMV;
-        delete payload.naPlotYesNo;
-        delete payload.naPlotDastavej;
-        delete payload.naPlotVAR;
-        delete payload.naPlotScheme;
-        delete payload.naPlotLavani;
-        delete payload.naPlotVacant;
-      }
-      if (payload.loanType !== "Business Loan") {
-        delete payload.businessLoanType;
-          delete payload.businessStartingYear;
-          delete payload.businessTypeOfWork;
-      }
-      if (payload.loanType !== "Balance Transfer") {
-        delete payload.btBankName;
-        delete payload.btRateOfInterest;
-        delete payload.btPropertyType;
-        delete payload.btMarketValue;
-        delete payload.btLocation;
-        delete payload.btDuration;
-        delete payload.btOutstanding;
-        delete payload.btForeclosureCharge;
-      }
-
-      if (!payload.meetingDate) delete payload.meetingDate;
-      if (!payload.meetingTime) delete payload.meetingTime;
-      if (payload.interested !== "Call Back Later") {
+        delete payload.propertyPurchaseCategory;
+        delete payload.meetingDate;
+        delete payload.meetingTime;
         delete payload.followUpDate;
         delete payload.followUpTime;
       } else {
-        if (!payload.followUpDate) delete payload.followUpDate;
-        if (!payload.followUpTime) delete payload.followUpTime;
+        if (!payload.loanType) {
+          delete payload.loanType;
+        }
+        if (payload.loanType !== "Property Purchase Loan") {
+          delete payload.propertyPurchaseCategory;
+          delete payload.ppLocation;
+          delete payload.ppMarketRate;
+          delete payload.ppDastavejRate;
+          delete payload.ppDastavejName;
+        }
+        if (payload.loanType !== "Property Loan") {
+          delete payload.propertyLoanCategory;
+          delete payload.propertyLocation;
+          delete payload.durationOfRentProperty;
+        } else if (!["Working Capital"].includes(payload.propertyLoanCategory)) {
+          delete payload.propertyLocation;
+          delete payload.durationOfRentProperty;
+        }
+        if (payload.propertyLoanCategory !== "LAP") {
+          delete payload.lapPropertyType;
+          delete payload.lapPropertyLocation;
+          delete payload.lapPropertyMarketValue;
+          delete payload.lapPropertyWork;
+          delete payload.lapPropertyDocumentList;
+        }
+        if (payload.propertyLoanCategory !== "Unsold") {
+          delete payload.unsoldUnit;
+          delete payload.unsoldMV;
+          delete payload.unsoldBV;
+          delete payload.unsoldScheme;
+          delete payload.unsoldLocation;
+          delete payload.unsoldFloor;
+          delete payload.unsoldDastavej;
+          delete payload.unsoldPartnership;
+        }
+        if (payload.propertyLoanCategory !== "LRD") {
+          delete payload.lrdRent;
+          delete payload.lrdMarketValue;
+          delete payload.lrdLocation;
+          delete payload.lrdLoiYear;
+          delete payload.lrdSchemeName;
+          delete payload.lrdDastavej;
+        }
+        if (payload.propertyLoanCategory !== "NA Plot") {
+          delete payload.naPlotLocation;
+          delete payload.naPlotMV;
+          delete payload.naPlotYesNo;
+          delete payload.naPlotDastavej;
+          delete payload.naPlotVAR;
+          delete payload.naPlotScheme;
+          delete payload.naPlotLavani;
+          delete payload.naPlotVacant;
+        }
+        if (payload.loanType !== "Business Loan") {
+          delete payload.businessLoanType;
+          delete payload.businessStartingYear;
+          delete payload.businessTypeOfWork;
+        }
+        if (payload.loanType !== "Balance Transfer") {
+          delete payload.btBankName;
+          delete payload.btRateOfInterest;
+          delete payload.btPropertyType;
+          delete payload.btMarketValue;
+          delete payload.btLocation;
+          delete payload.btDuration;
+          delete payload.btOutstanding;
+          delete payload.btForeclosureCharge;
+        }
+
+        if (!payload.meetingDate) delete payload.meetingDate;
+        if (!payload.meetingTime) delete payload.meetingTime;
+        if (payload.interested !== "Call Back Later" && payload.callStatus !== "Busy") {
+          delete payload.followUpDate;
+          delete payload.followUpTime;
+        } else {
+          if (!payload.followUpDate) delete payload.followUpDate;
+          if (!payload.followUpTime) delete payload.followUpTime;
+        }
       }
 
       const res = await api.post("/leads", payload);
 
       if (res.data.success) {
-        showToast("Lead saved successfully!", "success");
+        const successMsg = isWrongNumber 
+          ? "Lead marked as Wrong Number." 
+          : isFollowUp 
+            ? "Follow-up lead saved successfully!" 
+            : "Lead saved successfully!";
+        showToast(successMsg, "success");
         reset();
         setActiveCompanyIndex(0);
         setActiveContactIndex(0);
@@ -375,15 +441,30 @@ export default function NewLeadView() {
       </AnimatePresence>
 
       <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-xl shadow-slate-200/40">
-        <h3 className="text-xl font-bold text-[#162335] border-b border-slate-100 pb-4 mb-8 flex items-center gap-3">
-          <Briefcase size={22} className="text-[#9ca3af]" />
-          New Loan Lead Entry
-        </h3>
+        <div className="border-b border-slate-100 pb-4 mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h3 className="text-xl font-bold text-[#162335] flex items-center gap-3">
+            <Briefcase size={22} className="text-[#9ca3af]" />
+            New Loan Lead Entry
+          </h3>
+          {isFollowUp ? (
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1.5 w-fit">
+              <Clock size={13} /> Follow-up Mode (5 Basic Info + Schedule Required)
+            </span>
+          ) : isWrongNumber ? (
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200 flex items-center gap-1.5 w-fit">
+              <AlertCircle size={13} /> Wrong Number Mode (Phone Required Only)
+            </span>
+          ) : (
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1.5 w-fit">
+              <CheckCircle size={13} /> Standard Lead Mode
+            </span>
+          )}
+        </div>
 
         <form onSubmit={handleSubmit(onSubmitLead)} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
             <div>
-              <label className={labelClass}>Company Name *</label>
+              <label className={labelClass}>Company Name {!isWrongNumber && "*"}</label>
               <div className="flex flex-wrap gap-2 mb-3">
                 {[0, 1].map((idx) => (
                   <button
@@ -407,7 +488,7 @@ export default function NewLeadView() {
                   <input 
                     type="text" 
                     placeholder="Enter company name" 
-                    {...register(`companyName${idx}`, { required: idx === 0 ? "Primary Company Name is required" : false })} 
+                    {...register(`companyName${idx}`, { required: isWrongNumber ? false : (idx === 0 ? "Primary Company Name is required" : false) })} 
                     className={getInputClass(errors[`companyName${idx}`])} 
                   />
                   {errors[`companyName${idx}`] && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors[`companyName${idx}`].message}</p>}
@@ -416,7 +497,7 @@ export default function NewLeadView() {
             </div>
 
             <div>
-              <label className={labelClass}>Contact Person Name *</label>
+              <label className={labelClass}>Contact Person Name {!isWrongNumber && "*"}</label>
               <div className="flex flex-wrap gap-2 mb-3">
                 {[0, 1, 2, 3].map((idx) => (
                   <button
@@ -440,7 +521,7 @@ export default function NewLeadView() {
                   <input 
                     type="text" 
                     placeholder="Enter full name" 
-                    {...register(`contactPerson${idx}`, { required: idx === 0 ? "Primary Contact Person is required" : false })} 
+                    {...register(`contactPerson${idx}`, { required: isWrongNumber ? false : (idx === 0 ? "Primary Contact Person is required" : false) })} 
                     className={getInputClass(errors[`contactPerson${idx}`])} 
                   />
                   {errors[`contactPerson${idx}`] && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors[`contactPerson${idx}`].message}</p>}
@@ -485,7 +566,9 @@ export default function NewLeadView() {
             </div>
 
             <div>
-              <label className={labelClass}>Company Turnover (INR)</label>
+              <label className={labelClass}>
+                Company Turnover (INR) {isAllMandatory ? "*" : <span className="text-slate-400 font-normal text-xs">(Optional for Follow-up)</span>}
+              </label>
               <div className="flex flex-wrap gap-2 mb-3">
                 {['T1', 'T2', 'T3'].map((t, idx) => {
                   const hasErr = errors[`turnoverAmount${idx}`];
@@ -560,17 +643,31 @@ export default function NewLeadView() {
             </div>
 
             <div>
-              <label className={labelClass}>State *</label>
-              <input type="text" placeholder="Enter state" {...register("state")} className={getInputClass(false)} />
+              <label className={labelClass}>State {!isWrongNumber && "*"}</label>
+              <input 
+                type="text" 
+                placeholder="Enter state" 
+                {...register("state", { required: isWrongNumber ? false : "State is required" })} 
+                className={getInputClass(errors.state)} 
+              />
+              {errors.state && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.state.message}</p>}
             </div>
 
             <div>
-              <label className={labelClass}>City *</label>
-              <input type="text" placeholder="Enter city" {...register("city")} className={getInputClass(false)} />
+              <label className={labelClass}>City {!isWrongNumber && "*"}</label>
+              <input 
+                type="text" 
+                placeholder="Enter city" 
+                {...register("city", { required: isWrongNumber ? false : "City is required" })} 
+                className={getInputClass(errors.city)} 
+              />
+              {errors.city && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.city.message}</p>}
             </div>
 
             <div>
-              <label className={labelClass}>Loan Amount Required *</label>
+              <label className={labelClass}>
+                Loan Amount Required {isAllMandatory ? "*" : <span className="text-slate-400 font-normal text-xs">(Optional for Follow-up)</span>}
+              </label>
               <div className={`flex items-stretch rounded-xl border overflow-hidden transition-all duration-200 ${
                 errors.loanAmountInput
                   ? "border-rose-400 ring-2 ring-rose-500/20 bg-rose-50/50" 
@@ -613,8 +710,10 @@ export default function NewLeadView() {
             </div>
 
             <div>
-              <label className={labelClass}>Type of Loan *</label>
-              <select {...register("loanType", { required: "Loan Type is required" })} className={getInputClass(errors.loanType)}>
+              <label className={labelClass}>
+                Type of Loan {isAllMandatory ? "*" : <span className="text-slate-400 font-normal text-xs">(Optional for Follow-up)</span>}
+              </label>
+              <select {...register("loanType", { required: isAllMandatory ? "Loan Type is required" : false })} className={getInputClass(errors.loanType)}>
                 <option value="">Select Loan Type</option>
                 <option value="Property Purchase Loan">Property Purchase Loan</option>
                 <option value="Business Loan">Business Loan</option>
@@ -1046,7 +1145,7 @@ export default function NewLeadView() {
           </div>
 
           <AnimatePresence>
-            {interestedValue === "Call Back Later" && (
+            {isFollowUp && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                 <div className="border border-amber-200 bg-amber-50/50 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6 mt-2">
                   <div className="col-span-full">
@@ -1055,13 +1154,13 @@ export default function NewLeadView() {
                     </p>
                   </div>
                   <div>
-                    <label className={labelClass}>Follow-up Date</label>
-                    <input type="date" {...register("followUpDate", { required: "Follow-up Date is required" })} className={getInputClass(errors.followUpDate)} />
+                    <label className={labelClass}>Follow-up Date *</label>
+                    <input type="date" {...register("followUpDate", { required: isFollowUp ? "Follow-up Date is required" : false })} className={getInputClass(errors.followUpDate)} />
                     {errors.followUpDate && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.followUpDate.message}</p>}
                   </div>
                   <div>
-                    <label className={labelClass}>Follow-up Time</label>
-                    <input type="time" {...register("followUpTime", { required: "Follow-up Time is required" })} className={getInputClass(errors.followUpTime)} />
+                    <label className={labelClass}>Follow-up Time *</label>
+                    <input type="time" {...register("followUpTime", { required: isFollowUp ? "Follow-up Time is required" : false })} className={getInputClass(errors.followUpTime)} />
                     {errors.followUpTime && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.followUpTime.message}</p>}
                   </div>
                 </div>
@@ -1082,10 +1181,11 @@ export default function NewLeadView() {
           </div>
 
           <div>
-            <label className={labelClass}>Address *</label>
+            <label className={labelClass}>Address {isAllMandatory && "*"}</label>
             <textarea 
               placeholder="Address" 
               {...register("address", {
+                required: isAllMandatory ? "Address is required" : false,
                 validate: value => !value || value.trim().split(/\s+/).length <= 200 || "Maximum 200 words allowed"
               })} 
               className={`${getInputClass(errors.address)} min-h-[100px] resize-y`} 
@@ -1094,7 +1194,7 @@ export default function NewLeadView() {
           </div>
 
           <button type="submit" disabled={loading} className="w-full bg-[#162335] hover:opacity-90 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 text-sm uppercase tracking-widest disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 mt-4">
-            {loading ? "Processing..." : "Submit New Lead"}
+            {loading ? "Processing..." : isWrongNumber ? "Mark as Wrong Number" : isFollowUp ? "Save Follow-up Lead" : "Submit New Lead"}
           </button>
         </form>
       </div>

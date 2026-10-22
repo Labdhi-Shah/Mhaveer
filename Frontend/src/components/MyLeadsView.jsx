@@ -77,10 +77,24 @@ export default function MyLeadsView() {
     watch,
     setValue,
     reset,
+    clearErrors,
     formState: { errors }
   } = useForm();
 
   const editInterestedValue = watch("interested");
+  const editCallStatusValue = watch("callStatus");
+  const isEditWrongNumber = editCallStatusValue === "Wrong Number";
+  const isEditFollowUp = !isEditWrongNumber && (editInterestedValue === "Call Back Later" || editCallStatusValue === "Busy");
+  const isEditAllMandatory = editInterestedValue === "Yes" && !isEditWrongNumber;
+
+  useEffect(() => {
+    if (!isEditAllMandatory) {
+      clearErrors(["companyTurnover", "loanAmount", "loanType", "propertyLoanCategory", "cibilScore"]);
+    }
+    if (isEditWrongNumber) {
+      clearErrors(["companyName", "contactPerson", "city", "state", "phone", "followUpDate", "followUpTime"]);
+    }
+  }, [isEditAllMandatory, isEditWrongNumber, clearErrors]);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -231,16 +245,31 @@ export default function MyLeadsView() {
         }
       }
 
+      const isWrongNum = data.callStatus === "Wrong Number";
       const payload = {
         ...data,
         phoneNumber: data.phone,
-        companyTurnover: parseFloat(data.companyTurnover),
-        loanAmount: parseFloat(data.loanAmount),
-        cibilScore: parseInt(data.cibilScore)
+        companyTurnover: data.companyTurnover && !isNaN(parseFloat(data.companyTurnover)) ? parseFloat(data.companyTurnover) : undefined,
+        loanAmount: data.loanAmount && !isNaN(parseFloat(data.loanAmount)) ? parseFloat(data.loanAmount) : undefined,
+        cibilScore: data.cibilScore && !isNaN(parseInt(data.cibilScore)) ? parseInt(data.cibilScore) : undefined
       };
 
-      if (payload.loanType !== "Property Loan") {
+      if (isWrongNum) {
+        payload.interested = "No";
+        payload.callStatus = "Wrong Number";
+        delete payload.loanType;
         delete payload.propertyLoanCategory;
+        delete payload.meetingDate;
+        delete payload.meetingTime;
+        delete payload.followUpDate;
+        delete payload.followUpTime;
+      } else {
+        if (!payload.loanType) {
+          delete payload.loanType;
+        }
+        if (payload.loanType !== "Property Loan") {
+          delete payload.propertyLoanCategory;
+        }
       }
 
       const res = await api.put(`/leads/${editLead._id}`, payload);
@@ -731,10 +760,10 @@ export default function MyLeadsView() {
                 
                 {/* Company Name */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Company Name *</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Company Name {!isEditWrongNumber && "*"}</label>
                   <input
                     type="text"
-                    {...register("companyName", { required: "Company Name is required" })}
+                    {...register("companyName", { required: !isEditWrongNumber ? "Company Name is required" : false })}
                     className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#162335] ${errors.companyName ? "border-rose-455" : "border-slate-200"}`}
                   />
                   {errors.companyName && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.companyName.message}</p>}
@@ -742,10 +771,10 @@ export default function MyLeadsView() {
 
                 {/* Contact Person Name */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Contact Person Name *</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Contact Person Name {!isEditWrongNumber && "*"}</label>
                   <input
                     type="text"
-                    {...register("contactPerson", { required: "Contact Person Name is required" })}
+                    {...register("contactPerson", { required: !isEditWrongNumber ? "Contact Person Name is required" : false })}
                     className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#162335] ${errors.contactPerson ? "border-rose-455" : "border-slate-200"}`}
                   />
                   {errors.contactPerson && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.contactPerson.message}</p>}
@@ -770,78 +799,106 @@ export default function MyLeadsView() {
 
                 {/* City */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">City *</label>
-                  <input type="text" {...register("city")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335]" />
+                  <label className="block text-xs font-bold text-slate-600 mb-1">City {!isEditWrongNumber && "*"}</label>
+                  <input 
+                    type="text" 
+                    {...register("city", { required: !isEditWrongNumber ? "City is required" : false })} 
+                    className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#162335] ${errors.city ? "border-rose-455" : "border-slate-200"}`} 
+                  />
+                  {errors.city && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.city.message}</p>}
                 </div>
 
                 {/* State */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">State *</label>
-                  <input type="text" {...register("state")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335]" />
+                  <label className="block text-xs font-bold text-slate-600 mb-1">State {!isEditWrongNumber && "*"}</label>
+                  <input 
+                    type="text" 
+                    {...register("state", { required: !isEditWrongNumber ? "State is required" : false })} 
+                    className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#162335] ${errors.state ? "border-rose-455" : "border-slate-200"}`} 
+                  />
+                  {errors.state && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.state.message}</p>}
                 </div>
 
                 {/* Company Turnover */}
                 <div>
-                  <label></label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Company Turnover (₹) {isEditAllMandatory && "*"}</label>
                   <input
                     type="number"
-                    {...register("companyTurnover", { required: "Company Turnover is required", min: 1 })}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335]"
+                    {...register("companyTurnover", { 
+                      required: isEditAllMandatory ? "Company Turnover is required" : false,
+                      validate: val => !isEditAllMandatory || (!val || parseFloat(val) > 0) || "Turnover must be > 0"
+                    })}
+                    className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#162335] ${errors.companyTurnover ? "border-rose-455" : "border-slate-200"}`}
                   />
+                  {errors.companyTurnover && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.companyTurnover.message}</p>}
                 </div>
 
                 {/* Loan Amount */}
                 <div>
-                  <label></label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Loan Amount (₹) {isEditAllMandatory && "*"}</label>
                   <input
                     type="number"
-                    {...register("loanAmount", { required: "Loan Amount required", min: 1 })}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335]"
+                    {...register("loanAmount", { 
+                      required: isEditAllMandatory ? "Loan Amount required" : false,
+                      validate: val => !isEditAllMandatory || (!val || parseFloat(val) > 0) || "Loan Amount must be > 0"
+                    })}
+                    className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#162335] ${errors.loanAmount ? "border-rose-455" : "border-slate-200"}`}
                   />
+                  {errors.loanAmount && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.loanAmount.message}</p>}
                 </div>
 
                 {/* Loan Type */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Type of Loan *</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Type of Loan {isEditAllMandatory && "*"}</label>
                   <select
-                    {...register("loanType", { required: "Loan Type is required" })}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335] bg-white"
+                    {...register("loanType", { required: isEditAllMandatory ? "Loan Type is required" : false })}
+                    className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#162335] bg-white ${errors.loanType ? "border-rose-455" : "border-slate-200"}`}
                   >
+                    <option value="">Select Loan Type</option>
                     <option value="Property Purchase Loan">Property Purchase Loan</option>
                     <option value="Business Loan">Business Loan</option>
                     <option value="Property Loan">Property Loan</option>
                   </select>
+                  {errors.loanType && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.loanType.message}</p>}
                 </div>
 
                 {/* Property Loan Category (if Loan Type is Property Loan) */}
                 {watch("loanType") === "Property Loan" && (
                   <div>
-                    <label></label>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Property Loan Category {isEditAllMandatory && "*"}</label>
                     <select
-                      {...register("propertyLoanCategory", { required: "Property Loan Category is required" })}
+                      {...register("propertyLoanCategory", { required: isEditAllMandatory ? "Property Loan Category is required" : false })}
                       className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335] bg-white"
                     >
                       <option value="">Select Category</option>
                       <option value="Commercial Loan">Commercial Loan</option>
                       <option value="Industrial Loan">Industrial Loan</option>
                       <option value="Residential Loan">Residential Loan</option>
-                      </select>
+                      <option value="Working Capital">Working Capital</option>
+                      <option value="LAP">LAP</option>
+                      <option value="Unsold">Unsold</option>
+                      <option value="LRD">LRD</option>
+                      <option value="NA Plot">NA Plot</option>
+                    </select>
+                    {errors.propertyLoanCategory && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.propertyLoanCategory.message}</p>}
                   </div>
                 )}
 
                 {/* CIBIL Score */}
                 <div>
-                  <label></label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">CIBIL Score</label>
                   <input
                     type="number"
-                    {...register("cibilScore", { required: "CIBIL score required", min: 700, max: 900 })}
+                    {...register("cibilScore", { min: 300, max: 900 })}
                     className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335]"
+                    placeholder="e.g. 750"
                   />
+                  {errors.cibilScore && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.cibilScore.message}</p>}
                 </div>
 
                 {/* Interested */}
                 <div>
-                  <label></label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Interested *</label>
                   <select
                     {...register("interested", { required: "Interested is required" })}
                     className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335] bg-white"
@@ -854,7 +911,7 @@ export default function MyLeadsView() {
 
                 {/* Call Status */}
                 <div>
-                  <label></label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Call Status *</label>
                   <select
                     {...register("callStatus", { required: "Call status is required" })}
                     className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335] bg-white"
@@ -880,24 +937,27 @@ export default function MyLeadsView() {
               </div>
 
               {/* Conditional Follow Up */}
-              {editInterestedValue === "Call Back Later" && (
+              {isEditFollowUp && (
                 <div className="border border-amber-200 bg-amber-50/50 p-4 rounded-2xl grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <p className="col-span-full text-xs font-bold text-[#9ca3af] flex items-center gap-1.5"><Clock size={14} /> Update Follow-up Schedule</p>
+                  <p className="col-span-full text-xs font-bold text-amber-700 flex items-center gap-1.5"><Clock size={14} /> Update Follow-up Schedule</p>
                   <div>
-                    <label></label>
-                    <input type="date" {...register("followUpDate", { required: true })} className="w-full px-4 py-2 border border-amber-300 rounded-xl text-xs bg-white outline-none focus:border-[#162335]" />
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Follow-up Date *</label>
+                    <input type="date" {...register("followUpDate", { required: isEditFollowUp ? "Follow-up Date is required" : false })} className={`w-full px-4 py-2 border rounded-xl text-xs bg-white outline-none focus:border-[#162335] ${errors.followUpDate ? "border-rose-455" : "border-amber-300"}`} />
+                    {errors.followUpDate && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.followUpDate.message}</p>}
                   </div>
                   <div>
-                    <label></label>
-                    <input type="time" {...register("followUpTime", { required: true })} className="w-full px-4 py-2 border border-amber-300 rounded-xl text-xs bg-white outline-none focus:border-[#162335]" />
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Follow-up Time *</label>
+                    <input type="time" {...register("followUpTime", { required: isEditFollowUp ? "Follow-up Time is required" : false })} className={`w-full px-4 py-2 border rounded-xl text-xs bg-white outline-none focus:border-[#162335] ${errors.followUpTime ? "border-rose-455" : "border-amber-300"}`} />
+                    {errors.followUpTime && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.followUpTime.message}</p>}
                   </div>
                 </div>
               )}
 
               {/* Address */}
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Address *</label>
-                <textarea rows="3" {...register("address")} className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335]"></textarea>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Address {isEditAllMandatory && "*"}</label>
+                <textarea rows="3" {...register("address", { required: isEditAllMandatory ? "Address is required" : false })} className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#162335] ${errors.address ? "border-rose-455" : "border-slate-200"}`}></textarea>
+                {errors.address && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.address.message}</p>}
               </div>
 
               <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">

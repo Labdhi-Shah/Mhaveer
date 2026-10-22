@@ -1,6 +1,6 @@
 const dotenv = require("dotenv");
 dotenv.config();
-// Trigger nodemon restart
+// Models restored and verified - backend active
 
 const express = require("express");
 const cors = require("cors");

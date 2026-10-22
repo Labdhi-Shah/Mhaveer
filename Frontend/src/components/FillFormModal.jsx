@@ -114,6 +114,31 @@ const [unsoldBV, setUnsoldBV] = useState(false);
   });
   const [cibilScore, setCibilScore] = useState("");
 
+  // Step 3 State: Person who met the client
+  const [meetingPersonName, setMeetingPersonName] = useState("");
+  const [meetingPersonNotes, setMeetingPersonNotes] = useState("");
+
+  // Sync meetingPersonName if already saved; do NOT auto-fill with creator/sales so manager enters manually
+  useEffect(() => {
+    if (selectedMeeting) {
+      setMeetingPersonName(selectedMeeting.meetingPersonName || "");
+      setMeetingPersonNotes(selectedMeeting.meetingPersonNotes || "");
+    }
+  }, [selectedMeeting]);
+
+  // Lead Creator (Employee Name) automatically fetched from the Lead
+  const leadCreatorEmployeeName =
+    selectedMeeting?.leadId?.employeeName ||
+    selectedMeeting?.employeeName ||
+    selectedMeeting?.employeeId?.name ||
+    selectedMeeting?.employeeId?.fullName ||
+    "N/A";
+
+  const leadCreatorEmpId =
+    selectedMeeting?.leadId?.employeeId ||
+    selectedMeeting?.employeeId?.employeeId ||
+    "";
+
   // Document State
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [uploadErrors, setUploadErrors] = useState({});
@@ -196,9 +221,9 @@ const [unsoldBV, setUnsoldBV] = useState(false);
     return LOAN_DOCUMENTS_MAPPING[loanType].map(docId => ALL_DOCUMENTS[docId]);
   };
 
-  // Step 3 Validation
+  // Step 3 Validation: Person Name who met the client is required
   const isStep3Valid = () => {
-    return true; // Document collection section removed
+    return meetingPersonName.trim().length > 0;
   };
 
   // Array Helpers
@@ -417,7 +442,12 @@ const [unsoldBV, setUnsoldBV] = useState(false);
       formData.append("eligibility_annualTurnover", eligibility.annualTurnover);
       formData.append("eligibility_gstNumber", eligibility.gstNumber);
 
-      // ── Step 3: Documents (append raw File objects) ───────────────────────
+      // ── Step 3: Meeting Representative & Lead Creator ────────────────────
+      formData.append("meetingPersonName", meetingPersonName.trim());
+      formData.append("meetingPersonNotes", meetingPersonNotes.trim());
+      formData.append("leadCreatedByName", leadCreatorEmployeeName);
+
+      // ── Documents (append raw File objects if any) ────────────────────────
       Object.entries(uploadedFiles).forEach(([docId, fileObj]) => {
         if (fileObj.rawFile) {
           formData.append(docId, fileObj.rawFile, fileObj.name);
@@ -443,6 +473,8 @@ const [unsoldBV, setUnsoldBV] = useState(false);
     setCurrentStep(1);
     setLoanType("");
     setPropertyLoanType("");
+    setMeetingPersonName("");
+    setMeetingPersonNotes("");
     setEligibility({
       age: "",
       income: "",
@@ -540,16 +572,30 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                     Loan Requirement
                   </span>
                 </div>
-                <div className="flex-1 max-w-[60px] h-[2px] bg-slate-200 mx-2" />
+                <div className="flex-1 max-w-[50px] h-[2px] bg-slate-200 mx-2" />
                 <div className={`flex items-center gap-2.5 ${currentStep >= 2 ? "text-[#162335]" : "text-slate-400"}`}>
                   <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${currentStep === 2
                     ? "bg-[#162335] text-white ring-4 ring-[#162335]/10"
-                    : "bg-slate-100 text-slate-400 border border-slate-200"
+                    : currentStep > 2
+                      ? "bg-emerald-500 text-white"
+                      : "bg-slate-100 text-slate-400 border border-slate-200"
                     }`}>
-                    02
+                    {currentStep > 2 ? "✓" : "02"}
                   </span>
                   <span className={`text-xs uppercase tracking-wider font-extrabold ${currentStep === 2 ? "text-[#162335]" : "text-slate-500"}`}>
                     Eligibility Check
+                  </span>
+                </div>
+                <div className="flex-1 max-w-[50px] h-[2px] bg-slate-200 mx-2" />
+                <div className={`flex items-center gap-2.5 ${currentStep >= 3 ? "text-[#162335]" : "text-slate-400"}`}>
+                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${currentStep === 3
+                    ? "bg-[#162335] text-white ring-4 ring-[#162335]/10"
+                    : "bg-slate-100 text-slate-400 border border-slate-200"
+                    }`}>
+                    03
+                  </span>
+                  <span className={`text-xs uppercase tracking-wider font-extrabold ${currentStep === 3 ? "text-[#162335]" : "text-slate-500"}`}>
+                    Client Visit / Representative
                   </span>
                 </div>
               </div>
@@ -557,18 +603,18 @@ const [unsoldBV, setUnsoldBV] = useState(false);
               {/* Mobile Stepper Indicator */}
               <div className="md:hidden flex items-center justify-between">
                 <span className="text-xs font-black text-[#162335] uppercase tracking-wider">
-                  Step {currentStep} of 2: {
-                    currentStep === 1 ? "Loan Requirement" : "Eligibility Check"
+                  Step {currentStep} of 3: {
+                    currentStep === 1 ? "Loan Requirement" : currentStep === 2 ? "Eligibility Check" : "Client Visit / Representative"
                   }
                 </span>
                 <span className="text-xs font-black text-[#162335] bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-                  {Math.round((currentStep / 2) * 100)}%
+                  {Math.round((currentStep / 3) * 100)}%
                 </span>
               </div>
               <div className="md:hidden mt-3 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                 <div
                   className="bg-[#162335] h-full transition-all duration-300"
-                  style={{ width: `${(currentStep / 2) * 100}%` }}
+                  style={{ width: `${(currentStep / 3) * 100}%` }}
                 />
               </div>
             </div>
@@ -600,10 +646,18 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                   <h4 className="text-xs font-black text-[#162335] uppercase tracking-wider mb-2 pb-1.5 border-b border-slate-200">
                     Application Summary
                   </h4>
-                  <div className="space-y-1 text-xs">
+                  <div className="space-y-1.5 text-xs">
                     <p className="flex justify-between"><span className="text-slate-400">Loan Type:</span> <strong className="text-[#162335]">{loanType}</strong></p>
+                    <p className="flex justify-between"><span className="text-slate-400">Lead Created By:</span> <strong className="text-[#162335] font-black">{leadCreatorEmployeeName}</strong></p>
+                    <p className="flex justify-between"><span className="text-slate-400">Pattern Name (Met Client):</span> <strong className="text-emerald-700 font-black">{meetingPersonName || "N/A"}</strong></p>
                     <p className="flex justify-between"><span className="text-slate-400">Age / CIBIL:</span> <strong className="text-[#162335]">{eligibility.age} yrs / {cibilScore}</strong></p>
                     <p className="flex justify-between"><span className="text-slate-400">Employment:</span> <strong className="text-[#162335]">{eligibility.employmentType}</strong></p>
+                    {meetingPersonNotes && (
+                      <p className="flex flex-col gap-0.5 pt-1 border-t border-slate-200">
+                        <span className="text-slate-400 text-[10px] uppercase font-bold">Visit Remarks:</span>
+                        <span className="text-slate-700 italic font-medium">{meetingPersonNotes}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -1415,6 +1469,151 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                   </AnimatePresence>
                 </div>
               </motion.div>
+            ) : currentStep === 3 ? (
+              /* Step 3: Client Meeting Visit & Representative Verification */
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                {/* Header Banner */}
+                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-8 border-l-[#162335]">
+                  <h2 className="text-base sm:text-lg font-black text-[#162335] flex items-center gap-2">
+                    <span className="bg-[#162335]/5 text-[#162335] w-6 h-6 rounded-md flex items-center justify-center text-xs">3</span>
+                    Client Visit & Meeting Representative
+                  </h2>
+                  <p className="text-xs text-slate-500 font-medium mt-1">
+                    Enter the representative or officer details who went to the client and conducted the meeting.
+                  </p>
+                </div>
+
+                {/* Meeting Context Card */}
+                {selectedMeeting && (
+                  <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <span className="text-xs font-black text-slate-500 uppercase tracking-wider">Client & Meeting Details</span>
+                      <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100 uppercase tracking-wider">
+                        {selectedMeeting.type || "Consultation"}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs pt-1">
+                      <div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Client Name</p>
+                        <p className="font-black text-[#162335] text-sm mt-0.5">{selectedMeeting.customerName || "N/A"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Contact Number</p>
+                        <p className="font-semibold text-slate-700 mt-0.5">{selectedMeeting.customerPhone || "N/A"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Schedule</p>
+                        <p className="font-semibold text-slate-700 mt-0.5">
+                          {selectedMeeting.date ? new Date(selectedMeeting.date).toLocaleDateString("en-IN") : "N/A"} at {selectedMeeting.time || "N/A"}
+                        </p>
+                      </div>
+                      {selectedMeeting.location && (
+                        <div className="sm:col-span-2 md:col-span-3">
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Location</p>
+                          <p className="font-medium text-slate-700 mt-0.5">{selectedMeeting.location}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Two Names Section: 1) Created By (Employee Name from Leads), 2) Person Name (Who Met The Client - Manual) */}
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+                  <div className="border-b border-slate-100 pb-3">
+                    <h3 className="text-sm font-black text-[#162335] flex items-center gap-2">
+                      <User size={18} className="text-[#162335]" />
+                      Meeting & Representative Details
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium mt-1">
+                      Lead creator is automatically fetched from the lead, while the person who went to meet the client is entered manually by the manager.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {/* 1. Lead Created By (Employee Name - Auto Fetched from Leads) */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                          Lead Created By (Employee Name)
+                        </label>
+                        <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200">
+                          Auto-Fetched
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-600">
+                          <User size={18} />
+                        </div>
+                        <input
+                          type="text"
+                          readOnly
+                          value={leadCreatorEmployeeName}
+                          className="w-full bg-slate-100/80 border border-slate-200 text-sm font-black text-[#162335] rounded-xl pl-11 pr-4 py-3 outline-none cursor-not-allowed select-none shadow-2xs"
+                        />
+                      </div>
+                      <p className="text-[11px] text-slate-400 font-medium mt-1.5 flex items-center gap-1">
+                        Fetched from Lead creator record {leadCreatorEmpId ? `[ID: ${leadCreatorEmpId}]` : ""}.
+                      </p>
+                    </div>
+
+                    {/* 2. Person Name (Who Met The Client - Entered Manually by Manager) */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                          Pattern Name (Who Met Client) <span className="text-rose-500">*</span>
+                        </label>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                          Enter Manually
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-emerald-600">
+                          <User size={18} />
+                        </div>
+                        <input
+                          type="text"
+                          value={meetingPersonName}
+                          onChange={(e) => setMeetingPersonName(e.target.value)}
+                          placeholder="Enter person name who met the client..."
+                          className="w-full bg-white border-2 border-emerald-500/40 focus:border-emerald-600 text-sm font-bold text-[#162335] rounded-xl pl-11 pr-4 py-3 outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-2xs"
+                          required
+                          autoFocus
+                        />
+                      </div>
+                      {!meetingPersonName.trim() ? (
+                        <p className="text-[11px] text-amber-600 font-semibold mt-1.5 flex items-center gap-1">
+                          <AlertCircle size={12} /> Person name is required before submitting the form.
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-emerald-600 font-medium mt-1.5 flex items-center gap-1">
+                          <CheckCircle size={12} /> Representative verified for visit.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Optional Visit Remarks / Notes */}
+                  <div className="pt-2 border-t border-slate-100">
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
+                      Visit Remarks / Discussion Notes (Optional)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={meetingPersonNotes}
+                      onChange={(e) => setMeetingPersonNotes(e.target.value)}
+                      placeholder="Add any key notes, client feedback, or loan requirement discussion points..."
+                      className="w-full bg-slate-50/70 border border-slate-200 text-sm font-medium text-slate-800 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all resize-none shadow-2xs"
+                    />
+                  </div>
+                </div>
+              </motion.div>
             ) : null}
           </AnimatePresence>
         </div>
@@ -1427,7 +1626,7 @@ const [unsoldBV, setUnsoldBV] = useState(false);
               <button
                 type="button"
                 onClick={() => setCurrentStep(prev => prev - 1)}
-                className="px-4 py-2.5 rounded-xl font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition text-sm flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition text-sm flex items-center gap-1.5 cursor-pointer"
               >
                 <ChevronLeft size={16} /> Back
               </button>
@@ -1436,12 +1635,12 @@ const [unsoldBV, setUnsoldBV] = useState(false);
             )}
 
             {/* Next / Submit Button */}
-            {currentStep < 2 ? (
+            {currentStep < 3 ? (
               <button
                 type="button"
                 disabled={currentStep === 1 ? !isStep1Valid() : !isStep2Valid()}
                 onClick={() => setCurrentStep(prev => prev + 1)}
-                className="bg-[#162335] hover:bg-[#162335]/90 text-[#9ca3af] px-5 py-2.5 rounded-xl font-black text-sm flex items-center gap-1.5 transition shadow-sm disabled:opacity-50"
+                className="bg-[#162335] hover:bg-[#162335]/90 text-[#9ca3af] px-5 py-2.5 rounded-xl font-black text-sm flex items-center gap-1.5 transition shadow-sm disabled:opacity-50 cursor-pointer"
               >
                 Next <ChevronRight size={16} />
               </button>
@@ -1455,8 +1654,8 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                 <button
                   type="button"
                   onClick={handleFormSubmit}
-                  disabled={!isStep2Valid() || isSubmitting}
-                  className="bg-[#162335] hover:bg-[#162335]/90 text-[#9ca3af] px-6 py-2.5 rounded-xl font-black text-sm flex items-center gap-2 transition shadow-sm disabled:opacity-50"
+                  disabled={!isStep3Valid() || isSubmitting}
+                  className="bg-[#162335] hover:bg-[#162335]/90 text-[#9ca3af] px-6 py-2.5 rounded-xl font-black text-sm flex items-center gap-2 transition shadow-sm disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>

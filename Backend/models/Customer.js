@@ -78,6 +78,20 @@ const customerSchema = new mongoose.Schema(
       required: true
     },
 
+    // ── Meeting & Representative Details ─────────────────────────────────────
+    meetingPersonName: {
+      type: String,
+      default: ""
+    },
+    meetingPersonNotes: {
+      type: String,
+      default: ""
+    },
+    leadCreatedByName: {
+      type: String,
+      default: ""
+    },
+
     // ── Status ───────────────────────────────────────────────────────────────
     status: {
       type: String,

@@ -372,6 +372,9 @@ exports.submitMeetingForm = (req, res) => {
         loanType,
         propertyLoanType,
         cibilScore,
+        meetingPersonName,
+        meetingPersonNotes,
+        leadCreatedByName,
         // Eligibility fields (sent as eligibility_xxx keys)
         eligibility_age,
         eligibility_income,
@@ -475,6 +478,9 @@ exports.submitMeetingForm = (req, res) => {
           gstNumber: eligibility_gstNumber || "",
         },
         documents,
+        meetingPersonName: meetingPersonName || "",
+        meetingPersonNotes: meetingPersonNotes || "",
+        leadCreatedByName: leadCreatedByName || "",
       });
 
       await customer.save();
@@ -484,13 +490,21 @@ exports.submitMeetingForm = (req, res) => {
       // Update the associated meeting status to "Completed"
       if (meetingId) {
         const Meeting = require("../models/Meeting");
-        await Meeting.findByIdAndUpdate(meetingId, { status: "Completed" }, { new: true });
-        console.log(`[FillForm] Meeting ${meetingId} marked as Completed`);
+        const updatedMeeting = await Meeting.findByIdAndUpdate(
+          meetingId,
+          {
+            status: "Completed",
+            meetingPersonName: meetingPersonName || "",
+            meetingPersonNotes: meetingPersonNotes || ""
+          },
+          { new: true }
+        );
+        console.log(`[FillForm] Meeting ${meetingId} marked as Completed by ${meetingPersonName || "N/A"}`);
         emitDataChange({
           entity: "meeting",
           action: "update",
           id: meetingId,
-          data: { _id: meetingId, status: "Completed" },
+          data: updatedMeeting || { _id: meetingId, status: "Completed", meetingPersonName: meetingPersonName || "", meetingPersonNotes: meetingPersonNotes || "" },
           userId: req.user.id,
           role: req.user.role,
         });
@@ -522,7 +536,7 @@ exports.submitMeetingForm = (req, res) => {
           }
         });
       }
-      res.status(500).json({ success: false, message: "Internal Server Error" });
+      res.status(500).json({ success: false, message: error.message || "Internal Server Error" });
     }
   });
 };

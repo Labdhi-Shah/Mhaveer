@@ -75,6 +75,15 @@ const meetingSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    // Person who actually went to meet the client (manually entered by manager)
+    meetingPersonName: {
+      type: String,
+      default: "",
+    },
+    meetingPersonNotes: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,

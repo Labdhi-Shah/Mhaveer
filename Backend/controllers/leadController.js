@@ -271,8 +271,8 @@ exports.updateLead = async (req, res) => {
           type: "Consultation",
           status: "Scheduled",
           notes: `Created from Lead Update. Interested: ${lead.interested}`,
-          employeeId: lead.employeeId,
-          employeeName: lead.employeeName,
+          employeeId: lead.employeeId || req.user.id,
+          employeeName: lead.employeeName || req.user.name || "Employee",
           department: req.user.department || "",
         });
         await newMeeting.save();

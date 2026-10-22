@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Phone, Loader2, AlertCircle, CheckCircle, MapPin, Plus, X, Filter, ClipboardList, Pencil, Trash2, User, FileSpreadsheet, Download, FileText } from "lucide-react";
+import { Calendar, Phone, Loader2, AlertCircle, CheckCircle, MapPin, Plus, X, Filter, ClipboardList, Pencil, Trash2, User, FileSpreadsheet, Download, FileText, Search, RotateCcw } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import api from "../api";
 import socket from "../utils/socket";
@@ -75,6 +75,7 @@ export default function MeetingsView() {
   // Filter states
   const [filterStatus, setFilterStatus] = useState(isNewView ? "Scheduled" : "All");
   const [filterDate, setFilterDate] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (searchParams.get("type") === "new") {
@@ -317,7 +318,35 @@ export default function MeetingsView() {
         matchDate = localFormatted === filterDate;
       }
     }
-    return matchStatus && matchDate;
+
+    let matchSearch = true;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const title = (m.title || "").toLowerCase();
+      const customer = (m.customerName || m.leadId?.contactPerson || "").toLowerCase();
+      const company = (m.leadId?.companyName || "").toLowerCase();
+      const phone = (m.customerPhone || m.leadId?.phoneNumber || "").toLowerCase();
+      const location = (m.location || m.leadId?.city || "").toLowerCase();
+      const loanType = (m.leadId?.loanType || m.type || "").toLowerCase();
+      const personMet = (m.meetingPersonName || "").toLowerCase();
+      const creator = (m.employeeName || m.employeeId?.name || m.leadId?.employeeName || "").toLowerCase();
+      const salesRep = (m.salesAssignedToName || m.salesAssignedTo?.name || "").toLowerCase();
+      const notes = (m.notes || m.meetingPersonNotes || "").toLowerCase();
+
+      matchSearch =
+        title.includes(q) ||
+        customer.includes(q) ||
+        company.includes(q) ||
+        phone.includes(q) ||
+        location.includes(q) ||
+        loanType.includes(q) ||
+        personMet.includes(q) ||
+        creator.includes(q) ||
+        salesRep.includes(q) ||
+        notes.includes(q);
+    }
+
+    return matchStatus && matchDate && matchSearch;
   });
 
   const getMeetingCreator = (meeting) => {
@@ -509,59 +538,154 @@ export default function MeetingsView() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-          <div className="flex items-center gap-2 text-sm font-bold text-slate-600">
-            <Filter size={16} /> Filters:
+      {/* Redesigned Search & Filters Card */}
+      <div className="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-sm space-y-4">
+        {/* Top Row: Search Input + Status & Date Controls */}
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5">
+          {/* Search Box */}
+          <div className="relative flex-1 min-w-[280px]">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <Search size={17} />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by client, phone, company, title, or representative..."
+              className="w-full pl-10 pr-9 py-2.5 bg-slate-50 border border-slate-200 hover:border-slate-300 focus:bg-white focus:border-[#162335] text-sm font-semibold text-[#162335] placeholder:text-slate-400 rounded-2xl outline-none focus:ring-4 focus:ring-[#162335]/10 transition-all shadow-2xs"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                title="Clear search"
+              >
+                <X size={15} />
+              </button>
+            )}
           </div>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-purple-500/20"
-          >
-            <option value="All">All Statuses</option>
-            <option value="Scheduled">Scheduled</option>
-            <option value="Completed">Completed</option>
-            <option value="Rescheduled">Rescheduled</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
-          <input
-            type="date"
-            value={filterDate}
-            onChange={(e) => setFilterDate(e.target.value)}
-            className="bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-purple-500/20"
-          />
-          {(filterStatus !== "All" || filterDate !== "") && (
-            <button
-              onClick={() => { setFilterStatus("All"); setFilterDate(""); }}
-              className="text-xs text-rose-500 font-bold hover:underline"
-            >
-              Clear Filters
-            </button>
-          )}
+
+          {/* Status & Date Filter Controls */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5">
+            {/* Status Dropdown */}
+            <div className="relative min-w-[150px]">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 hover:border-slate-300 text-xs sm:text-sm font-bold text-[#162335] rounded-2xl px-3.5 py-2.5 outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 cursor-pointer transition shadow-2xs"
+              >
+                <option value="All">All Statuses ({meetings.length})</option>
+                <option value="Scheduled">Scheduled</option>
+                <option value="Completed">Completed</option>
+                <option value="Rescheduled">Rescheduled</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+
+            {/* Date Picker */}
+            <div className="relative min-w-[150px]">
+              <input
+                type="date"
+                value={filterDate}
+                onChange={(e) => setFilterDate(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 hover:border-slate-300 text-xs sm:text-sm font-semibold text-[#162335] rounded-2xl px-3.5 py-2.5 outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 cursor-pointer transition shadow-2xs"
+              />
+            </div>
+
+            {/* Clear All Filters Button */}
+            {(searchQuery.trim() !== "" || filterStatus !== "All" || filterDate !== "") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setFilterStatus("All");
+                  setFilterDate("");
+                }}
+                className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/80 rounded-2xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shrink-0"
+                title="Reset all search queries and filters"
+              >
+                <RotateCcw size={13} />
+                <span>Reset</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
-          <span>Showing <b>{filteredMeetings.length}</b> of <b>{meetings.length}</b> meetings</span>
-          {filteredMeetings.length !== meetings.length && meetings.length > 0 && (
-            <button
-              onClick={() => handleExportExcel(true)}
-              className="text-emerald-700 hover:text-emerald-800 font-bold hover:underline flex items-center gap-1 cursor-pointer"
-              title="Export all meetings in database"
-            >
-              <Download size={13} /> Export All ({meetings.length})
-            </button>
-          )}
+        {/* Bottom Row: Quick Status Pills + Meeting Count Meta */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
+          {/* Quick Filter Status Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto scrollbar-none">
+            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mr-1 shrink-0 flex items-center gap-1">
+              <Filter size={12} /> Status:
+            </span>
+            {["All", "Scheduled", "Completed", "Rescheduled", "Cancelled"].map((st) => {
+              const isActive = filterStatus === st;
+              const count = st === "All" 
+                ? meetings.length 
+                : meetings.filter(m => (m.status || "").toLowerCase() === st.toLowerCase()).length;
+              return (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => setFilterStatus(st)}
+                  className={`px-3 py-1 rounded-xl font-bold text-xs transition cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                    isActive
+                      ? "bg-[#162335] text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200/80"
+                  }`}
+                >
+                  <span>{st}</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                    isActive ? "bg-white/20 text-white" : "bg-white text-slate-500 border border-slate-200"
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Results Summary & Export All */}
+          <div className="flex items-center gap-3 text-xs text-slate-500 font-medium shrink-0 self-end sm:self-auto">
+            <span>
+              Showing <strong className="text-[#162335] font-black">{filteredMeetings.length}</strong> of{" "}
+              <strong className="text-[#162335] font-black">{meetings.length}</strong> meetings
+            </span>
+            {filteredMeetings.length !== meetings.length && meetings.length > 0 && (
+              <button
+                type="button"
+                onClick={() => handleExportExcel(true)}
+                className="text-emerald-700 hover:text-emerald-800 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                title="Export all meetings in database"
+              >
+                <Download size={13} /> Export All ({meetings.length})
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#162335]" size={32} /></div>
       ) : filteredMeetings.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-slate-200 p-8 text-center text-slate-400 text-xs shadow-sm flex flex-col items-center gap-3">
-          <Calendar size={32} className="text-slate-300" />
-          No meetings found for the selected criteria.
+        <div className="bg-white rounded-3xl border border-slate-200 p-10 text-center text-slate-400 text-xs shadow-sm flex flex-col items-center gap-3">
+          <Calendar size={36} className="text-slate-300" />
+          <p className="font-bold text-slate-700 text-sm">No meetings found</p>
+          <p className="text-slate-400 max-w-md">
+            {searchQuery 
+              ? `No meetings matching "${searchQuery}" with the current filters.` 
+              : "No meetings found for the selected filter criteria."}
+          </p>
+          {(searchQuery || filterStatus !== "All" || filterDate) && (
+            <button
+              onClick={() => { setSearchQuery(""); setFilterStatus("All"); setFilterDate(""); }}
+              className="mt-2 px-4 py-2 bg-[#162335] hover:bg-[#162335]/90 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <RotateCcw size={13} />
+              <span>Clear Search & Filters</span>
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

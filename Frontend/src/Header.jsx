@@ -3,7 +3,6 @@ import { Bell, Menu, ChevronDown, Clock, Circle, User, Key, LogOut, PauseCircle,
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import api from "./api";
-import logoSvg from "./assets/new_logo.png";
 import { getUserRoleCategory } from "./utils/hierarchy";
 import socket from "./utils/socket";
 import { formatDistanceToNow } from "date-fns";
@@ -235,14 +234,6 @@ export default function Header({ onToggleSidebar }) {
         </button>
 
         <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden shrink-0">
-          <img
-            src={logoSvg}
-            alt="NOBAL FINANCE Logo"
-            className="w-full h-full object-contain"
-            onError={(e) => {
-              e.target.style.display = 'none';
-            }}
-          />
         </div>
         <div className="hidden sm:block">
           <span className="font-black text-sm sm:text-lg tracking-wide text-white whitespace-nowrap">

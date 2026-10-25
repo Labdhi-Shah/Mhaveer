@@ -37,17 +37,27 @@ exports.getDashboardStats = async (req, res) => {
       
       const todaysCalls = await Lead.countDocuments({
         ...filter,
-        updatedAt: { $gte: today }
+        $or: [
+          { updatedAt: { $gte: today } },
+          { createdAt: { $gte: today } }
+        ]
       });
 
       const interestedLeads = await Lead.countDocuments({
         ...filter,
-        interested: "Yes"
+        $or: [
+          { interested: "Yes" },
+          { status: "Interested" }
+        ]
       });
 
       const pendingFollowUps = await Lead.countDocuments({
         ...filter,
-        interested: "Call Back Later",
+        $or: [
+          { interested: "Call Back Later" },
+          { callStatus: "Busy" },
+          { followUpDate: { $exists: true, $ne: null } }
+        ]
       });
 
       const todaysMeetings = await Lead.countDocuments({

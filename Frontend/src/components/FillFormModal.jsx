@@ -102,27 +102,25 @@ const [unsoldBV, setUnsoldBV] = useState(false);
   const [proprietorDetails, setProprietorDetails] = useState({ name: "", pan: "", aadhaar: "" });
   const [partners, setPartners] = useState([{ name: "", pan: "", aadhaar: "", share: "" }]);
   const [directors, setDirectors] = useState([{ name: "", pan: "", aadhaar: "", din: "" }]);
-  const [eligibility, setEligibility] = useState({
-    age: "",
-    income: "",
-    employmentType: "",
-    companyName: "",
-    govDepartment: "",
-    businessName: "",
-    annualTurnover: "",
-    gstNumber: ""
-  });
-  const [cibilScore, setCibilScore] = useState("");
 
-  // Step 3 State: Person who met the client
+  // Step 2 State: Person who met the client
   const [meetingPersonName, setMeetingPersonName] = useState("");
   const [meetingPersonNotes, setMeetingPersonNotes] = useState("");
 
-  // Sync meetingPersonName if already saved; do NOT auto-fill with creator/sales so manager enters manually
+  // Sync meetingPersonName if already saved; pre-populate loanType and category from lead if available
   useEffect(() => {
     if (selectedMeeting) {
       setMeetingPersonName(selectedMeeting.meetingPersonName || "");
       setMeetingPersonNotes(selectedMeeting.meetingPersonNotes || "");
+      if (selectedMeeting.leadId?.loanType && !loanType) {
+        setLoanType(selectedMeeting.leadId.loanType);
+      }
+      if (selectedMeeting.leadId?.propertyLoanCategory && !propertyLoanCategory) {
+        setPropertyLoanCategory(selectedMeeting.leadId.propertyLoanCategory);
+      }
+      if (selectedMeeting.leadId?.propertyPurchaseCategory && !propertyPurchaseCategory) {
+        setPropertyPurchaseCategory(selectedMeeting.leadId.propertyPurchaseCategory);
+      }
     }
   }, [selectedMeeting]);
 
@@ -188,29 +186,9 @@ const [unsoldBV, setUnsoldBV] = useState(false);
     return true;
   };
 
-  // Step 2 Validation
+  // Step 2 Validation: Person Name who met the client is required
   const isStep2Valid = () => {
-    const ageNum = parseInt(eligibility.age, 10);
-    const incomeNum = parseFloat(eligibility.income);
-    const cibilNum = parseInt(cibilScore, 10);
-
-    const isAgeValid = !isNaN(ageNum) && ageNum >= 18 && ageNum <= 60;
-    const isIncomeValid = !isNaN(incomeNum) && incomeNum > 0;
-    const isCibilValid = !isNaN(cibilNum) && cibilNum >= 700 && cibilNum <= 900;
-
-    let isEmploymentValid = false;
-    if (eligibility.employmentType === "Private") {
-      isEmploymentValid = eligibility.companyName.trim().length > 0;
-    } else if (eligibility.employmentType === "Government") {
-      isEmploymentValid = eligibility.govDepartment.trim().length > 0;
-    } else if (eligibility.employmentType === "Business") {
-      const turnoverNum = parseFloat(eligibility.annualTurnover);
-      const isTurnoverValid = !isNaN(turnoverNum) && turnoverNum > 0;
-      const isGstValid = eligibility.gstNumber.trim().length > 0;
-      isEmploymentValid = eligibility.businessName.trim().length > 0 && isTurnoverValid && isGstValid;
-    }
-
-    return isAgeValid && isIncomeValid && isCibilValid && isEmploymentValid;
+    return meetingPersonName.trim().length > 0;
   };
 
   // Get active documents list (based on loanType)
@@ -219,11 +197,6 @@ const [unsoldBV, setUnsoldBV] = useState(false);
       return [];
     }
     return LOAN_DOCUMENTS_MAPPING[loanType].map(docId => ALL_DOCUMENTS[docId]);
-  };
-
-  // Step 3 Validation: Person Name who met the client is required
-  const isStep3Valid = () => {
-    return meetingPersonName.trim().length > 0;
   };
 
   // Array Helpers
@@ -253,10 +226,7 @@ const [unsoldBV, setUnsoldBV] = useState(false);
     if (typeId !== "Business Loan") setBusinessLoanType("");
   };
 
-  const handleEligibilityChange = (e) => {
-    const { name, value } = e.target;
-    setEligibility(prev => ({ ...prev, [name]: value }));
-  };
+
 
   // Upload Logic
   const triggerUpload = (docId) => {
@@ -367,7 +337,7 @@ const [unsoldBV, setUnsoldBV] = useState(false);
   // Submit Handler — POSTs to /api/customers/from-meeting as multipart/form-data
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    if (!isStep1Valid() || !isStep2Valid() || !isStep3Valid()) return;
+    if (!isStep1Valid() || !isStep2Valid()) return;
 
     setIsSubmitting(true);
     setSubmitError("");
@@ -376,9 +346,11 @@ const [unsoldBV, setUnsoldBV] = useState(false);
       const formData = new FormData();
 
       // ── Meeting reference ────────────────────────────────────────────────
+      const finalCustomerName = selectedMeeting?.customerName || selectedMeeting?.leadId?.contactPerson || selectedMeeting?.leadId?.companyName || "Client";
+      const finalCustomerPhone = selectedMeeting?.customerPhone || selectedMeeting?.leadId?.phoneNumber || selectedMeeting?.leadId?.phone || "";
       if (selectedMeeting?._id) formData.append("meetingId", selectedMeeting._id);
-      if (selectedMeeting?.customerName) formData.append("customerName", selectedMeeting.customerName);
-      if (selectedMeeting?.customerPhone) formData.append("customerPhone", selectedMeeting.customerPhone);
+      formData.append("customerName", finalCustomerName);
+      if (finalCustomerPhone) formData.append("customerPhone", finalCustomerPhone);
 
       // ── Step 1: Loan type ─────────────────────────────────────────────────
       formData.append("loanType", loanType);
@@ -431,18 +403,7 @@ const [unsoldBV, setUnsoldBV] = useState(false);
       if (btForeclosureCharge) formData.append("btForeclosureCharge", btForeclosureCharge);
       if (propertyLoanType) formData.append("propertyLoanType", propertyLoanType);
 
-      // ── Step 2: Eligibility ───────────────────────────────────────────────
-      formData.append("cibilScore", cibilScore);
-      formData.append("eligibility_age", eligibility.age);
-      formData.append("eligibility_income", eligibility.income);
-      formData.append("eligibility_employmentType", eligibility.employmentType);
-      formData.append("eligibility_companyName", eligibility.companyName);
-      formData.append("eligibility_govDepartment", eligibility.govDepartment);
-      formData.append("eligibility_businessName", eligibility.businessName);
-      formData.append("eligibility_annualTurnover", eligibility.annualTurnover);
-      formData.append("eligibility_gstNumber", eligibility.gstNumber);
-
-      // ── Step 3: Meeting Representative & Lead Creator ────────────────────
+      // ── Step 2: Meeting Representative & Lead Creator ────────────────────
       formData.append("meetingPersonName", meetingPersonName.trim());
       formData.append("meetingPersonNotes", meetingPersonNotes.trim());
       formData.append("leadCreatedByName", leadCreatorEmployeeName);
@@ -475,17 +436,6 @@ const [unsoldBV, setUnsoldBV] = useState(false);
     setPropertyLoanType("");
     setMeetingPersonName("");
     setMeetingPersonNotes("");
-    setEligibility({
-      age: "",
-      income: "",
-      employmentType: "",
-      companyName: "",
-      govDepartment: "",
-      businessName: "",
-      annualTurnover: "",
-      gstNumber: ""
-    });
-    setCibilScore("");
     // Revoke all preview URLs
     Object.values(uploadedFiles).forEach(file => {
       if (file.previewUrl) URL.revokeObjectURL(file.previewUrl);
@@ -572,29 +522,15 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                     Loan Requirement
                   </span>
                 </div>
-                <div className="flex-1 max-w-[50px] h-[2px] bg-slate-200 mx-2" />
+                <div className="flex-1 max-w-[80px] h-[2px] bg-slate-200 mx-4" />
                 <div className={`flex items-center gap-2.5 ${currentStep >= 2 ? "text-[#162335]" : "text-slate-400"}`}>
                   <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${currentStep === 2
                     ? "bg-[#162335] text-white ring-4 ring-[#162335]/10"
-                    : currentStep > 2
-                      ? "bg-emerald-500 text-white"
-                      : "bg-slate-100 text-slate-400 border border-slate-200"
-                    }`}>
-                    {currentStep > 2 ? "✓" : "02"}
-                  </span>
-                  <span className={`text-xs uppercase tracking-wider font-extrabold ${currentStep === 2 ? "text-[#162335]" : "text-slate-500"}`}>
-                    Eligibility Check
-                  </span>
-                </div>
-                <div className="flex-1 max-w-[50px] h-[2px] bg-slate-200 mx-2" />
-                <div className={`flex items-center gap-2.5 ${currentStep >= 3 ? "text-[#162335]" : "text-slate-400"}`}>
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${currentStep === 3
-                    ? "bg-[#162335] text-white ring-4 ring-[#162335]/10"
                     : "bg-slate-100 text-slate-400 border border-slate-200"
                     }`}>
-                    03
+                    02
                   </span>
-                  <span className={`text-xs uppercase tracking-wider font-extrabold ${currentStep === 3 ? "text-[#162335]" : "text-slate-500"}`}>
+                  <span className={`text-xs uppercase tracking-wider font-extrabold ${currentStep === 2 ? "text-[#162335]" : "text-slate-500"}`}>
                     Client Visit / Representative
                   </span>
                 </div>
@@ -603,18 +539,18 @@ const [unsoldBV, setUnsoldBV] = useState(false);
               {/* Mobile Stepper Indicator */}
               <div className="md:hidden flex items-center justify-between">
                 <span className="text-xs font-black text-[#162335] uppercase tracking-wider">
-                  Step {currentStep} of 3: {
-                    currentStep === 1 ? "Loan Requirement" : currentStep === 2 ? "Eligibility Check" : "Client Visit / Representative"
+                  Step {currentStep} of 2: {
+                    currentStep === 1 ? "Loan Requirement" : "Client Visit / Representative"
                   }
                 </span>
                 <span className="text-xs font-black text-[#162335] bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-                  {Math.round((currentStep / 3) * 100)}%
+                  {Math.round((currentStep / 2) * 100)}%
                 </span>
               </div>
               <div className="md:hidden mt-3 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                 <div
                   className="bg-[#162335] h-full transition-all duration-300"
-                  style={{ width: `${(currentStep / 3) * 100}%` }}
+                  style={{ width: `${(currentStep / 2) * 100}%` }}
                 />
               </div>
             </div>
@@ -650,8 +586,6 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                     <p className="flex justify-between"><span className="text-slate-400">Loan Type:</span> <strong className="text-[#162335]">{loanType}</strong></p>
                     <p className="flex justify-between"><span className="text-slate-400">Lead Created By:</span> <strong className="text-[#162335] font-black">{leadCreatorEmployeeName}</strong></p>
                     <p className="flex justify-between"><span className="text-slate-400">Pattern Name (Met Client):</span> <strong className="text-emerald-700 font-black">{meetingPersonName || "N/A"}</strong></p>
-                    <p className="flex justify-between"><span className="text-slate-400">Age / CIBIL:</span> <strong className="text-[#162335]">{eligibility.age} yrs / {cibilScore}</strong></p>
-                    <p className="flex justify-between"><span className="text-slate-400">Employment:</span> <strong className="text-[#162335]">{eligibility.employmentType}</strong></p>
                     {meetingPersonNotes && (
                       <p className="flex flex-col gap-0.5 pt-1 border-t border-slate-200">
                         <span className="text-slate-400 text-[10px] uppercase font-bold">Visit Remarks:</span>
@@ -1238,241 +1172,9 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                 </div>
               </motion.div>
             ) : currentStep === 2 ? (
-              /* Step 2: Eligibility Check */
+              /* Step 2: Client Meeting Visit & Representative Verification */
               <motion.div
                 key="step2"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
-              >
-                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-8 border-l-[#162335]">
-                  <h2 className="text-base sm:text-lg font-black text-[#162335] flex items-center gap-2">
-                    <span className="bg-[#162335]/5 text-[#162335] w-6 h-6 rounded-md flex items-center justify-center text-xs">2</span>
-                    Eligibility Check
-                  </h2>
-                  <p className="text-xs text-slate-500 font-medium mt-1">
-                    Provide accurate income, age, CIBIL, and occupation criteria to evaluate pre-qualification.
-                  </p>
-                </div>
-
-                <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
-                    {/* Age Input */}
-                    <div>
-                      <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Age</label>
-                      <input
-                        type="number"
-                        name="age"
-                        required
-                        min="18"
-                        max="60"
-                        value={eligibility.age}
-                        onChange={handleEligibilityChange}
-                        onKeyDown={(e) => {
-                          if (['-', '+', 'e', 'E'].includes(e.key)) {
-                            e.preventDefault();
-                          }
-                        }}
-                        placeholder="e.g. 30"
-                        className="w-full hide-spinners bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#162335]/20"
-                      />
-                      {eligibility.age && (parseInt(eligibility.age, 10) < 18 || parseInt(eligibility.age, 10) > 60) && (
-                        <p className="text-[11px] text-rose-500 font-bold mt-1">Age must be between 18 and 60 years.</p>
-                      )}
-                    </div>
-
-                    {/* Income Input */}
-                    <div>
-                      <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Income (Annual in INR)</label>
-                      <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
-                          ₹
-                        </span>
-                        <input
-                          type="number"
-                          name="income"
-                          required
-                          min="0"
-                          value={eligibility.income}
-                          onChange={handleEligibilityChange}
-                          onKeyDown={(e) => {
-                            if (['-', '+', 'e', 'E'].includes(e.key)) {
-                              e.preventDefault();
-                            }
-                          }}
-                          placeholder="e.g. 600000"
-                          className="w-full hide-spinners bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl pl-8 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-[#162335]/20"
-                        />
-                      </div>
-                      {eligibility.income && parseFloat(eligibility.income) <= 0 && (
-                        <p className="text-[11px] text-rose-500 font-bold mt-1">Income must be a positive amount.</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
-                    {/* Employment Type */}
-                    <div>
-                      <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Employment Type</label>
-                      <select
-                        name="employmentType"
-                        required
-                        value={eligibility.employmentType}
-                        onChange={handleEligibilityChange}
-                        className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all"
-                      >
-                        <option value="">Select Employment Type</option>
-                        <option value="Private">Private Sector</option>
-                        <option value="Government">Government Sector</option>
-                        <option value="Business">Self Employed / Business</option>
-                      </select>
-                    </div>
-
-                    {/* CIBIL Score */}
-                    <div>
-                      <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                        CIBIL Score
-                      </label>
-                      <input
-                        type="number"
-                        name="cibilScore"
-                        required
-                        min="700"
-                        max="900"
-                        value={cibilScore}
-                        onChange={(e) => setCibilScore(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (['-', '+', 'e', 'E'].includes(e.key)) {
-                            e.preventDefault();
-                          }
-                        }}
-                        placeholder="e.g. 750 (700 - 900)"
-                        className="w-full hide-spinners bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#162335]/20"
-                      />
-                      {cibilScore && (parseInt(cibilScore, 10) < 700 || parseInt(cibilScore, 10) > 900) && (
-                        <p className="text-[11px] text-rose-500 font-bold mt-1 flex items-center gap-1">
-                          <AlertCircle size={10} /> CIBIL Score must be between 700 and 900.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Conditional Fields based on Employment Type */}
-                  <AnimatePresence mode="wait">
-                    {eligibility.employmentType === "Private" && (
-                      <motion.div
-                        key="private-fields"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="border-t border-slate-100 pt-4 mt-2"
-                      >
-                        <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Company Name</label>
-                        <input
-                          type="text"
-                          name="companyName"
-                          required
-                          value={eligibility.companyName}
-                          onChange={handleEligibilityChange}
-                          placeholder="e.g. Acme Corp Pvt Ltd"
-                          className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all"
-                        />
-                      </motion.div>
-                    )}
-
-                    {eligibility.employmentType === "Government" && (
-                      <motion.div
-                        key="gov-fields"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="border-t border-slate-100 pt-4 mt-2"
-                      >
-                        <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Government Department / Agency</label>
-                        <input
-                          type="text"
-                          name="govDepartment"
-                          required
-                          value={eligibility.govDepartment}
-                          onChange={handleEligibilityChange}
-                          placeholder="e.g. Ministry of Railways"
-                          className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all"
-                        />
-                      </motion.div>
-                    )}
-
-                    {eligibility.employmentType === "Business" && (
-                      <motion.div
-                        key="business-fields"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="border-t border-slate-100 pt-4 mt-2 space-y-6"
-                      >
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
-                          <div>
-                            <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Business Name</label>
-                            <input
-                              type="text"
-                              name="businessName"
-                              required
-                              value={eligibility.businessName}
-                              onChange={handleEligibilityChange}
-                              placeholder="e.g. Apex Enterprises"
-                              className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Annual Turnover (INR)</label>
-                            <div className="relative">
-                              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
-                                ₹
-                              </span>
-                              <input
-                                type="number"
-                                name="annualTurnover"
-                                required
-                                min="0"
-                                value={eligibility.annualTurnover}
-                                onChange={handleEligibilityChange}
-                                onKeyDown={(e) => {
-                                  if (['-', '+', 'e', 'E'].includes(e.key)) {
-                                    e.preventDefault();
-                                  }
-                                }}
-                                placeholder="e.g. 1500000"
-                                className="w-full hide-spinners bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl pl-8 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-[#162335]/20"
-                              />
-                            </div>
-                            {eligibility.annualTurnover && parseFloat(eligibility.annualTurnover) <= 0 && (
-                              <p className="text-[11px] text-rose-500 font-bold mt-1">Turnover must be positive.</p>
-                            )}
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">GST Number</label>
-                          <input
-                            type="text"
-                            name="gstNumber"
-                            required
-                            value={eligibility.gstNumber}
-                            onChange={handleEligibilityChange}
-                            placeholder="e.g. 22AAAAA0000A1Z5"
-                            className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all uppercase"
-                          />
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </motion.div>
-            ) : currentStep === 3 ? (
-              /* Step 3: Client Meeting Visit & Representative Verification */
-              <motion.div
-                key="step3"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
@@ -1481,7 +1183,7 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                 {/* Header Banner */}
                 <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-8 border-l-[#162335]">
                   <h2 className="text-base sm:text-lg font-black text-[#162335] flex items-center gap-2">
-                    <span className="bg-[#162335]/5 text-[#162335] w-6 h-6 rounded-md flex items-center justify-center text-xs">3</span>
+                    <span className="bg-[#162335]/5 text-[#162335] w-6 h-6 rounded-md flex items-center justify-center text-xs">2</span>
                     Client Visit & Meeting Representative
                   </h2>
                   <p className="text-xs text-slate-500 font-medium mt-1">
@@ -1635,11 +1337,11 @@ const [unsoldBV, setUnsoldBV] = useState(false);
             )}
 
             {/* Next / Submit Button */}
-            {currentStep < 3 ? (
+            {currentStep === 1 ? (
               <button
                 type="button"
-                disabled={currentStep === 1 ? !isStep1Valid() : !isStep2Valid()}
-                onClick={() => setCurrentStep(prev => prev + 1)}
+                disabled={!isStep1Valid()}
+                onClick={() => setCurrentStep(2)}
                 className="bg-[#162335] hover:bg-[#162335]/90 text-[#9ca3af] px-5 py-2.5 rounded-xl font-black text-sm flex items-center gap-1.5 transition shadow-sm disabled:opacity-50 cursor-pointer"
               >
                 Next <ChevronRight size={16} />
@@ -1654,7 +1356,7 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                 <button
                   type="button"
                   onClick={handleFormSubmit}
-                  disabled={!isStep3Valid() || isSubmitting}
+                  disabled={!isStep2Valid() || isSubmitting}
                   className="bg-[#162335] hover:bg-[#162335]/90 text-[#9ca3af] px-6 py-2.5 rounded-xl font-black text-sm flex items-center gap-2 transition shadow-sm disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? (

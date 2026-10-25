@@ -49,6 +49,12 @@ const leadSchema = new mongoose.Schema(
     companyTurnover: {
       type: Number,
     },
+    companyTurnover1: {
+      type: Number,
+    },
+    companyTurnover2: {
+      type: Number,
+    },
     loanAmount: {
       type: Number,
     },
@@ -60,7 +66,152 @@ const leadSchema = new mongoose.Schema(
         return interested === "Yes" && callStatus !== "Wrong Number";
       },
     },
+    // Property Purchase Loan fields
+    propertyPurchaseCategory: {
+      type: String,
+    },
+    ppLocation: {
+      type: String,
+    },
+    ppMarketRate: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    ppDastavejRate: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    ppDastavejName: {
+      type: String,
+    },
+    // Property Loan fields
     propertyLoanCategory: {
+      type: String,
+    },
+    propertyLocation: {
+      type: String,
+    },
+    durationOfRentProperty: {
+      type: String,
+    },
+    lapPropertyType: {
+      type: String,
+    },
+    lapPropertyLocation: {
+      type: String,
+    },
+    lapPropertyMarketValue: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    lapPropertyWork: {
+      type: String,
+    },
+    lapPropertyDocumentList: {
+      type: String,
+    },
+    unsoldUnit: {
+      type: String,
+    },
+    unsoldMV: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    unsoldBV: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    unsoldScheme: {
+      type: String,
+    },
+    unsoldLocation: {
+      type: String,
+    },
+    unsoldFloor: {
+      type: String,
+    },
+    unsoldDastavej: {
+      type: String,
+    },
+    unsoldPartnership: {
+      type: String,
+    },
+    lrdRent: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    lrdMarketValue: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    lrdLocation: {
+      type: String,
+    },
+    lrdLoiYear: {
+      type: String,
+    },
+    lrdSchemeName: {
+      type: String,
+    },
+    lrdDastavej: {
+      type: String,
+    },
+    naPlotLocation: {
+      type: String,
+    },
+    naPlotMV: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    naPlotYesNo: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    naPlotDastavej: {
+      type: String,
+    },
+    naPlotVAR: {
+      type: String,
+    },
+    naPlotScheme: {
+      type: String,
+    },
+    naPlotLavani: {
+      type: String,
+    },
+    naPlotVacant: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    // Business Loan fields
+    businessLoanType: {
+      type: String,
+    },
+    businessStartingYear: {
+      type: String,
+    },
+    businessTypeOfWork: {
+      type: String,
+    },
+    // Balance Transfer fields
+    btBankName: {
+      type: String,
+    },
+    btRateOfInterest: {
+      type: String,
+    },
+    btPropertyType: {
+      type: String,
+    },
+    btMarketValue: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    btLocation: {
+      type: String,
+    },
+    btDuration: {
+      type: String,
+    },
+    btOutstanding: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    btForeclosureCharge: {
+      type: String,
+    },
+    remarks: {
+      type: String,
+    },
+    employeeCode: {
       type: String,
     },
     cibilScore: {

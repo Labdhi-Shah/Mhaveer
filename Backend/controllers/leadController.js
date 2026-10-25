@@ -17,6 +17,7 @@ exports.createLead = async (req, res) => {
     let managerName = "";
     let teamLeaderId = "";
     let teamLeaderName = "";
+    let employeeCode = "";
     
     if (req.user.id) {
       const employee = await Employee.findById(req.user.id);
@@ -27,12 +28,14 @@ exports.createLead = async (req, res) => {
         managerName = employee.managerName || "";
         teamLeaderId = employee.teamLeaderId || "";
         teamLeaderName = employee.teamLeaderName || "";
+        employeeCode = employee.employeeId || "";
       }
     }
 
     const leadData = {
       ...req.body,
       employeeId: req.user.id || null,
+      employeeCode,
       employeeName,
       officialEmail,
       managerId,
@@ -166,7 +169,45 @@ exports.getLeads = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const leads = await Lead.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit);
+    let leads = await Lead.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
+
+    // Enrich any lead that might be missing employeeName or officialEmail
+    const missingEmpIds = [...new Set(leads.filter(l => l.employeeId && (!l.employeeName || !l.officialEmail)).map(l => l.employeeId.toString()))];
+    if (missingEmpIds.length > 0) {
+      const mongoose = require("mongoose");
+      const validObjectIds = missingEmpIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+      const emps = await Employee.find({
+        $or: [
+          ...(validObjectIds.length > 0 ? [{ _id: { $in: validObjectIds } }] : []),
+          { employeeId: { $in: missingEmpIds } }
+        ]
+      }).select("name officialEmail role department employeeId managerName teamLeaderName").lean();
+
+      const empMap = new Map();
+      emps.forEach(e => {
+        empMap.set(e._id.toString(), e);
+        if (e.employeeId) empMap.set(e.employeeId, e);
+      });
+
+      leads = leads.map(l => {
+        if (l.employeeId) {
+          const emp = empMap.get(l.employeeId.toString()) || empMap.get(l.employeeId);
+          if (emp) {
+            return {
+              ...l,
+              employeeName: l.employeeName || emp.name,
+              officialEmail: l.officialEmail || emp.officialEmail,
+              role: l.role || emp.role,
+              managerName: l.managerName || emp.managerName,
+              teamLeaderName: l.teamLeaderName || emp.teamLeaderName,
+              employeeCode: l.employeeCode || emp.employeeId || ""
+            };
+          }
+        }
+        return l;
+      });
+    }
+
     const total = await Lead.countDocuments(query);
     const pages = Math.ceil(total / limit);
     
@@ -208,10 +249,31 @@ exports.getLeadById = async (req, res) => {
     if (!isAuthorized) {
       return res.status(403).json({ success: false, message: "Not authorized to access this lead" });
     }
+
+    let leadData = lead.toObject ? lead.toObject() : lead;
+    if (leadData.employeeId) {
+      const mongoose = require("mongoose");
+      const isValidId = mongoose.Types.ObjectId.isValid(leadData.employeeId);
+      const emp = await Employee.findOne({
+        $or: [
+          ...(isValidId ? [{ _id: leadData.employeeId }] : []),
+          { employeeId: leadData.employeeId }
+        ]
+      }).select("name officialEmail role department employeeId managerName teamLeaderName").lean();
+      if (emp) {
+        leadData.employeeName = leadData.employeeName || emp.name;
+        leadData.officialEmail = leadData.officialEmail || emp.officialEmail;
+        leadData.role = leadData.role || emp.role;
+        leadData.managerName = leadData.managerName || emp.managerName;
+        leadData.teamLeaderName = leadData.teamLeaderName || emp.teamLeaderName;
+        leadData.employeeCode = leadData.employeeCode || emp.employeeId || "";
+      }
+    }
+
     res.status(200).json({
       success: true,
       message: "Lead fetched successfully",
-      data: lead,
+      data: leadData,
     });
   } catch (error) {
     console.error("Get Lead Error:", error);

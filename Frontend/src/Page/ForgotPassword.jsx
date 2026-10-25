@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import logoSvg from "../assets/new_login_logo.png";
-
 const rawAPI = import.meta.env.VITE_API_URL;
 const API = rawAPI && rawAPI.endsWith("/") ? rawAPI.slice(0, -1) : (rawAPI || "");
 
@@ -68,9 +66,6 @@ function ForgotPassword() {
         <div style={{ padding: "40px 30px" }}>
           
           <div style={{ textAlign: "center", marginBottom: "35px" }}>
-            <div style={{ marginBottom: "15px", display: "flex", justifyContent: "center" }}>
-              <img src={logoSvg} alt="NOBAL FINANCE Logo" style={{ width: "80px", height: "80px", objectFit: "contain" }} />
-            </div>
             <h1 style={{ fontSize: "24px", fontWeight: "900", color: "#162335", margin: "0 0 10px 0", letterSpacing: "1px" }}>RESET PASSWORD</h1>
             <div style={{ fontSize: "11px", fontWeight: "700", color: "#9ca3af", letterSpacing: "1px", textTransform: "uppercase" }}>Employee account recovery</div>
           </div>

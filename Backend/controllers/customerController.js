@@ -400,21 +400,10 @@ exports.submitMeetingForm = (req, res) => {
         });
       }
 
-      // Check if a form has already been submitted for this meeting
+      // Check if customer already exists for this meeting, update if exists, otherwise create new
+      let customer = null;
       if (meetingId) {
-        const existingCustomer = await Customer.findOne({ meetingId });
-        if (existingCustomer) {
-          // Cleanup uploaded files
-          if (req.files) {
-            Object.values(req.files).flat().forEach((f) => {
-              if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
-            });
-          }
-          return res.status(400).json({
-            success: false,
-            message: "A form has already been submitted for this meeting."
-          });
-        }
+        customer = await Customer.findOne({ meetingId });
       }
 
       // Build document map from uploaded files
@@ -454,36 +443,50 @@ exports.submitMeetingForm = (req, res) => {
         }
       }
 
-      // Create customer record
-      const customer = new Customer({
-        fullName: customerName,
-        phone: customerPhone || "",
-        email: "",
-        loanType,
-        loanAmount: finalLoanAmount,
-        propertyLoanType: propertyLoanType || "",
-        cibilScore: finalCibilScore,
-        meetingId: meetingId || null,
-        salesRepresentativeId: req.user.id,
-        salesRepresentativeName: req.user.name || req.user.fullName || "Sales Officer",
-        status: "Pending Verification",
-        eligibility: {
-          age: eligibility_age || "",
-          income: eligibility_income || "",
-          employmentType: eligibility_employmentType || "",
-          companyName: eligibility_companyName || "",
-          govDepartment: eligibility_govDepartment || "",
-          businessName: eligibility_businessName || "",
-          annualTurnover: eligibility_annualTurnover || "",
-          gstNumber: eligibility_gstNumber || "",
-        },
-        documents,
-        meetingPersonName: meetingPersonName || "",
-        meetingPersonNotes: meetingPersonNotes || "",
-        leadCreatedByName: leadCreatedByName || "",
-      });
-
-      await customer.save();
+      if (customer) {
+        customer.fullName = customerName;
+        if (customerPhone) customer.phone = customerPhone;
+        customer.loanType = loanType;
+        if (finalLoanAmount) customer.loanAmount = finalLoanAmount;
+        if (propertyLoanType) customer.propertyLoanType = propertyLoanType;
+        if (finalCibilScore) customer.cibilScore = finalCibilScore;
+        customer.salesRepresentativeId = req.user.id;
+        customer.salesRepresentativeName = req.user.name || req.user.fullName || "Sales Officer";
+        customer.meetingPersonName = meetingPersonName || customer.meetingPersonName || "";
+        customer.meetingPersonNotes = meetingPersonNotes || customer.meetingPersonNotes || "";
+        customer.leadCreatedByName = leadCreatedByName || customer.leadCreatedByName || "";
+        customer.documents = { ...customer.documents, ...documents };
+        await customer.save();
+      } else {
+        customer = new Customer({
+          fullName: customerName,
+          phone: customerPhone || "",
+          email: "",
+          loanType,
+          loanAmount: finalLoanAmount,
+          propertyLoanType: propertyLoanType || "",
+          cibilScore: finalCibilScore,
+          meetingId: meetingId || null,
+          salesRepresentativeId: req.user.id,
+          salesRepresentativeName: req.user.name || req.user.fullName || "Sales Officer",
+          status: "Pending Verification",
+          eligibility: {
+            age: eligibility_age || "",
+            income: eligibility_income || "",
+            employmentType: eligibility_employmentType || "",
+            companyName: eligibility_companyName || "",
+            govDepartment: eligibility_govDepartment || "",
+            businessName: eligibility_businessName || "",
+            annualTurnover: eligibility_annualTurnover || "",
+            gstNumber: eligibility_gstNumber || "",
+          },
+          documents,
+          meetingPersonName: meetingPersonName || "",
+          meetingPersonNotes: meetingPersonNotes || "",
+          leadCreatedByName: leadCreatedByName || "",
+        });
+        await customer.save();
+      }
 
       console.log(`[FillForm] Customer application saved: ${customer._id} by ${req.user.name} for meeting ${meetingId || "N/A"}`);
 

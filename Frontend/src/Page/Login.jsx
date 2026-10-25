@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import logoSvg from '../assets/new_login_logo.png';
 import { useAuth } from "../context/AuthContext";
 const rawAPI = import.meta.env.VITE_API_URL;
 const API = rawAPI && rawAPI.endsWith("/") ? rawAPI.slice(0, -1) : (rawAPI || "");
@@ -107,19 +106,6 @@ function Login() {
           {/* Logo Area */}
           <div style={{ textAlign: "center", marginBottom: "35px" }}>
             <div style={{ marginBottom: "15px", display: "flex", justifyContent: "center" }}>
-              <img
-                src={logoSvg}
-                alt="NOBAL FINANCE Logo"
-                style={{
-                  width: "80px",
-                  height: "80px",
-                  objectFit: "contain",
-                }}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'block';
-                }}
-              />
               <svg width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'none' }}>
                 <path d="M20 75 V 30 L 45 50 L 60 30 V 75" stroke="#162335" strokeWidth="8" fill="none" strokeLinejoin="round" />
                 <path d="M45 75 V 50 L 80 25 V 75" fill="none" stroke="#9ca3af" strokeWidth="8" strokeLinejoin="round" />

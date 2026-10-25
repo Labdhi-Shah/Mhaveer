@@ -231,7 +231,6 @@ export default function FollowUpView() {
       btDuration: lead.btDuration || "",
       btOutstanding: lead.btOutstanding || "",
       btForeclosureCharge: lead.btForeclosureCharge || "",
-      cibilScore: lead.cibilScore || "",
       meetingDate: "",
       meetingTime: "11:00",
       address: lead.address || "",
@@ -265,7 +264,6 @@ export default function FollowUpView() {
         callStatus: "Connected",
         companyTurnover: turnoverINR !== null ? turnoverINR : (convertingLead.companyTurnover ? parseFloat(convertingLead.companyTurnover) : undefined),
         loanAmount: loanAmountINR !== null ? loanAmountINR : (convertingLead.loanAmount ? parseFloat(convertingLead.loanAmount) : undefined),
-        cibilScore: data.cibilScore ? parseInt(data.cibilScore) : undefined,
         meetingDate: data.meetingDate,
         meetingTime: data.meetingTime,
         address: data.address,
@@ -651,7 +649,7 @@ export default function FollowUpView() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Company Turnover */}
                     <div>
-                      <label className={labelClass}>Company Turnover *</label>
+                      <label className={labelClass}>Company Turnover <span className="text-slate-400 font-normal text-[10px]">(Optional)</span></label>
                       <div className={`flex items-stretch rounded-xl border overflow-hidden ${
                         errorsConvert.turnoverAmount ? "border-rose-400 bg-rose-50/40" : "border-slate-200 bg-slate-50"
                       }`}>
@@ -660,8 +658,8 @@ export default function FollowUpView() {
                           inputMode="decimal"
                           placeholder="e.g. 5"
                           {...registerConvert("turnoverAmount", {
-                            required: "Company Turnover is required",
-                            validate: (val) => (val && parseFloat(val) > 0) || "Turnover must be > 0"
+                            required: false,
+                            validate: (val) => !val || parseFloat(val) > 0 || "Turnover must be > 0"
                           })}
                           className="w-full px-4 py-2.5 bg-transparent text-xs font-bold text-slate-800 outline-none"
                         />
@@ -737,16 +735,7 @@ export default function FollowUpView() {
                       )}
                     </div>
 
-                    {/* CIBIL Score */}
-                    <div>
-                      <label className={labelClass}>CIBIL Score</label>
-                      <input
-                        type="number"
-                        placeholder="e.g. 750"
-                        {...registerConvert("cibilScore", { min: 300, max: 900 })}
-                        className={inputClass}
-                      />
-                    </div>
+
                   </div>
                 </div>
 

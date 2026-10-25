@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import api from "./api"; // જો તમારી api.js src/ માં હોય તો ./api રાખો
 import { Search, Edit, Trash2, Eye, Loader2, ChevronLeft, ChevronRight, X, UserPlus, CheckCircle, Building2 } from "lucide-react";
 import AddEmployee from "./AddEmployee";
@@ -10,9 +10,10 @@ const ROLES = ["Manager", "Employee"];
 
 export default function EmployeeList() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(location.state?.searchEmployee || "");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 

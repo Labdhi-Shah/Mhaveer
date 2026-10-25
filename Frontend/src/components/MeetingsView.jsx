@@ -33,27 +33,16 @@ export default function MeetingsView() {
   const [selectedMeeting, setSelectedMeeting] = useState(null);
 
   const handleFillFormForCard = async (meeting) => {
-    if (!isManager) {
-      showToast("Only managers are authorized to fill the form.", "error");
-      return;
-    }
-    if (meeting.status !== "Scheduled" && meeting.status !== "Rescheduled") {
-      showToast("Please select a scheduled or rescheduled meeting to fill the form.", "error");
-      return;
-    }
     setActionLoading(true);
     try {
       const res = await api.get(`/meetings/${meeting._id}`);
       const m = res.data?.data || res.data;
-      setSelectedMeeting(m);
+      setSelectedMeeting(m || meeting);
       setIsFormOpen(true);
     } catch (err) {
-      console.error(err);
-      if (err.response?.status === 403) {
-        showToast("You do not have permission to view this meeting.", "error");
-      } else {
-        showToast("Failed to fetch meeting details.", "error");
-      }
+      console.error("Failed to fetch full meeting details, using card data:", err);
+      setSelectedMeeting(meeting);
+      setIsFormOpen(true);
     } finally {
       setActionLoading(false);
     }
@@ -433,7 +422,6 @@ export default function MeetingsView() {
           ? `₹${Number(m.leadId.loanAmount).toLocaleString("en-IN")}` 
           : "-",
         "Loan Type": m.leadId?.loanType || "-",
-        "CIBIL Score": m.leadId?.cibilScore || "-",
         "Property Loan Category": m.leadId?.propertyLoanCategory || "-",
         "Created By (Employee)": creator.name,
         "Creator Official Email": creator.email || "-",
@@ -752,9 +740,9 @@ export default function MeetingsView() {
                     {meeting.leadId && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-100 mt-2">
                         <div>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Loan / CIBIL</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Loan Type</p>
                           <p className="font-semibold text-slate-700 mt-0.5 truncate">
-                            {meeting.leadId.loanType || "N/A"} / {meeting.leadId.cibilScore || "N/A"}
+                            {meeting.leadId.loanType || "N/A"}
                           </p>
                         </div>
                         {meeting.leadId.propertyLoanCategory && (
@@ -856,21 +844,13 @@ export default function MeetingsView() {
                   {/* Action Buttons */}
                   <div className="border-t border-slate-100 pt-3 mt-4 flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-3">
-                      {isManager && (meeting.status === "Scheduled" || meeting.status === "Rescheduled") ? (
+                      {isManager && (
                         <button
                           onClick={() => handleFillFormForCard(meeting)}
-                          className="px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-xs bg-[#162335] hover:bg-[#162335]/90 text-[#9ca3af]"
+                          className="px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-xs bg-[#162335] hover:bg-[#162335]/90 text-[#9ca3af] cursor-pointer"
                         >
                           <ClipboardList size={13} /> Fill Form
                         </button>
-                      ) : meeting.status === "Completed" ? (
-                        <div className="px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs bg-emerald-50 text-emerald-600 border border-emerald-200">
-                          <CheckCircle size={13} /> Form Submitted
-                        </div>
-                      ) : (
-                        <div className="px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs bg-slate-100 text-slate-400 border border-slate-200">
-                          {meeting.status}
-                        </div>
                       )}
 
                       <div className="flex gap-1.5">
@@ -884,42 +864,42 @@ export default function MeetingsView() {
                             <FileText size={14} />
                           </button>
                         )}
-                        {(meeting.status === "Scheduled" || meeting.status === "Rescheduled") && (
-                           <>
-                             <button
-                               disabled={actionLoading}
-                               onClick={() => openModal(meeting)}
-                               className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition disabled:opacity-50"
-                               title="Edit Meeting"
-                             >
-                               <Pencil size={14} />
-                             </button>
-                             <button
-                               disabled={actionLoading}
-                               onClick={() => handleReschedule(meeting)}
-                               className="p-1.5 text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-lg transition disabled:opacity-50"
-                               title="Reschedule Meeting"
-                             >
-                               <Calendar size={14} />
-                             </button>
-                             <button
-                               disabled={actionLoading}
-                               onClick={() => updateStatus(meeting._id, "Cancelled")}
-                               className="p-1.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition disabled:opacity-50"
-                               title="Cancel Meeting"
-                             >
-                               <X size={14} />
-                             </button>
-                           </>
-                        )}
                         <button
                           disabled={actionLoading}
-                          onClick={() => deleteMeeting(meeting._id)}
-                          className="p-1.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition disabled:opacity-50"
-                          title="Delete Meeting"
+                          onClick={() => openModal(meeting)}
+                          className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition disabled:opacity-50"
+                          title="Edit Meeting"
                         >
-                          <Trash2 size={14} />
+                          <Pencil size={14} />
                         </button>
+                        <button
+                          disabled={actionLoading}
+                          onClick={() => handleReschedule(meeting)}
+                          className="p-1.5 text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-lg transition disabled:opacity-50"
+                          title="Reschedule Meeting"
+                        >
+                          <Calendar size={14} />
+                        </button>
+                        {isManager && (meeting.status === "Scheduled" || meeting.status === "Rescheduled") && (
+                          <button
+                            disabled={actionLoading}
+                            onClick={() => updateStatus(meeting._id, "Cancelled")}
+                            className="p-1.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition disabled:opacity-50"
+                            title="Cancel Meeting"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                        {isManager && (
+                          <button
+                            disabled={actionLoading}
+                            onClick={() => deleteMeeting(meeting._id)}
+                            className="p-1.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition disabled:opacity-50"
+                            title="Delete Meeting"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1041,7 +1021,9 @@ export default function MeetingsView() {
                         <option value="Scheduled">Scheduled</option>
                         <option value="Completed">Completed</option>
                         <option value="Rescheduled">Rescheduled</option>
-                        <option value="Cancelled">Cancelled</option>
+                        {(isManager || formData.status === "Cancelled") && (
+                          <option value="Cancelled">Cancelled</option>
+                        )}
                       </select>
                     </div>
                   </div>
@@ -1121,7 +1103,7 @@ export default function MeetingsView() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {isManager && isFormOpen && (
+        {isFormOpen && (
           <FillFormModal 
             isOpen={isFormOpen} 
             onClose={(wasSubmitted) => {

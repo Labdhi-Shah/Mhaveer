@@ -1,14 +1,42 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Search, Eye, Edit2, Trash2, Loader2, ArrowLeft, Filter, RefreshCw, AlertCircle, CheckCircle, Clock,
-  Briefcase, User, DollarSign, Calendar, Phone, X
+  Briefcase, User, DollarSign, Calendar, Phone, X,
+  Building2, Landmark, FileText, FileSpreadsheet
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
-import { getMergedLeadsAndStats } from "../utils/hierarchy";
+import { getMergedLeadsAndStats, getUserRole } from "../utils/hierarchy";
 import socket from "../utils/socket";
+
+const formatINR = (val) => {
+  if (val === undefined || val === null || val === "") return null;
+  const num = Number(val);
+  if (isNaN(num)) return String(val);
+  return `₹${num.toLocaleString("en-IN")}`;
+};
+
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return null;
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch (e) {
+    return dateStr;
+  }
+};
 
 const formatFriendlyDate = (dateStr) => {
   if (!dateStr) return null;
@@ -54,7 +82,10 @@ const formatFriendlyTime = (timeStr) => {
 };
 
 export default function MyLeadsView() {
+  const navigate = useNavigate();
   const { user } = useAuth();
+  const role = getUserRole(user);
+  const isManager = role === "Manager";
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -69,6 +100,98 @@ export default function MyLeadsView() {
   const [editLead, setEditLead] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [submittingEdit, setSubmittingEdit] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportExcel = () => {
+    if (!leads || leads.length === 0) {
+      setToast({ message: "No leads available to export.", type: "error" });
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+
+    try {
+      setExporting(true);
+      const formatCurrency = (val) => {
+        if (val === undefined || val === null || val === "" || isNaN(Number(val))) return "-";
+        return `₹${Number(val).toLocaleString("en-IN")}`;
+      };
+
+      const formatDate = (val) => {
+        if (!val) return "-";
+        try {
+          const d = new Date(val);
+          return isNaN(d.getTime()) ? String(val) : d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+        } catch {
+          return String(val);
+        }
+      };
+
+      const dataToExport = leads.map((lead, idx) => ({
+        "Sr No": idx + 1,
+        "Lead ID": lead.leadId || `LD-${idx + 1}`,
+        "Company Name": lead.companyName || "-",
+        "Contact Person": lead.contactPerson || "-",
+        "Phone Number": lead.phone || lead.phoneNumber || "-",
+        "City": lead.city || "-",
+        "State": lead.state || "-",
+        "Complete Address": lead.address || "-",
+        "Loan Amount Required": formatCurrency(lead.loanAmount),
+        "Loan Type": lead.loanType || "-",
+        "Loan Category / Sub-Type": lead.propertyPurchaseCategory || lead.propertyLoanCategory || lead.businessLoanType || "-",
+        "Turnover 1 (T1)": formatCurrency(lead.companyTurnover || lead.yearlyIncome),
+        "Turnover 2 (T2)": formatCurrency(lead.companyTurnover1),
+        "Turnover 3 (T3)": formatCurrency(lead.companyTurnover2),
+        "Interested": lead.interested || "-",
+        "Call Status": lead.callStatus || "-",
+        "Meeting Date": formatDate(lead.meetingDate),
+        "Meeting Time": lead.meetingTime || "-",
+        "Follow-Up Date": formatDate(lead.followUpDate),
+        "Follow-Up Time": lead.followUpTime || "-",
+        "Remarks / Notes": lead.remarks || "-",
+        "Employee Name": lead.employeeName || "-",
+        "Employee Code": lead.employeeCode || lead.employeeId || "-",
+        "Created Date": formatDate(lead.createdAt)
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+
+      const colWidths = Object.keys(dataToExport[0] || {}).map(key => {
+        const maxContentLength = Math.max(
+          key.length,
+          ...dataToExport.map(row => String(row[key] !== undefined && row[key] !== null ? row[key] : "").length).slice(0, 50)
+        );
+        return { wch: Math.min(Math.max(maxContentLength + 3, 12), 40) };
+      });
+      ws["!cols"] = colWidths;
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "My Leads");
+
+      const dateStr = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `Leads_Export_${dateStr}.xlsx`);
+
+      setToast({ message: `Exported ${dataToExport.length} leads to Excel successfully!`, type: "success" });
+      setTimeout(() => setToast(null), 3500);
+    } catch (err) {
+      console.error("Export leads error:", err);
+      setToast({ message: "Failed to export leads to Excel.", type: "error" });
+      setTimeout(() => setToast(null), 3500);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleOpenViewLead = async (lead) => {
+    setViewLead(lead);
+    try {
+      const res = await api.get(`/leads/${lead._id}`);
+      if (res.data?.success && res.data?.data) {
+        setViewLead((prev) => (prev && prev._id === lead._id ? { ...prev, ...res.data.data } : prev));
+      }
+    } catch (err) {
+      console.error("Failed to fetch fresh lead details:", err);
+    }
+  };
 
   // Edit Lead Form Hook
   const {
@@ -89,7 +212,7 @@ export default function MyLeadsView() {
 
   useEffect(() => {
     if (!isEditAllMandatory) {
-      clearErrors(["companyTurnover", "loanAmount", "loanType", "propertyLoanCategory", "cibilScore"]);
+      clearErrors(["companyTurnover", "loanAmount", "loanType", "propertyLoanCategory"]);
     }
     if (isEditWrongNumber) {
       clearErrors(["companyName", "contactPerson", "city", "state", "phone", "followUpDate", "followUpTime"]);
@@ -110,7 +233,8 @@ export default function MyLeadsView() {
           ...lead,
           phone: lead.phoneNumber || lead.phone,
           companyTurnover: lead.companyTurnover !== undefined ? lead.companyTurnover : lead.yearlyIncome,
-          address: lead.address !== undefined ? lead.address : lead.remarks
+          address: lead.address || "",
+          remarks: lead.remarks || ""
         }));
         const ownStats = { todaysCalls: 0, interestedLeads: 0, pendingFollowUps: 0, todaysMeetings: 0 };
         const { leads: mergedLeads } = await getMergedLeadsAndStats(user, ownLeads, ownStats);
@@ -219,7 +343,6 @@ export default function MyLeadsView() {
       loanAmount: lead.loanAmount,
       loanType: lead.loanType,
       propertyLoanCategory: lead.propertyLoanCategory || "",
-      cibilScore: lead.cibilScore,
       interested: lead.interested,
       callStatus: lead.callStatus,
       meetingDate: lead.meetingDate || "",
@@ -250,8 +373,7 @@ export default function MyLeadsView() {
         ...data,
         phoneNumber: data.phone,
         companyTurnover: data.companyTurnover && !isNaN(parseFloat(data.companyTurnover)) ? parseFloat(data.companyTurnover) : undefined,
-        loanAmount: data.loanAmount && !isNaN(parseFloat(data.loanAmount)) ? parseFloat(data.loanAmount) : undefined,
-        cibilScore: data.cibilScore && !isNaN(parseInt(data.cibilScore)) ? parseInt(data.cibilScore) : undefined
+        loanAmount: data.loanAmount && !isNaN(parseFloat(data.loanAmount)) ? parseFloat(data.loanAmount) : undefined
       };
 
       if (isWrongNum) {
@@ -331,12 +453,23 @@ export default function MyLeadsView() {
           <h1 className="text-xl sm:text-2xl font-black text-[#162335]">My Assigned Leads</h1>
           <p className="text-xs font-bold uppercase tracking-widest text-[#9ca3af] mt-1">Loan Management CRM</p>
         </div>
-        <button 
-          onClick={fetchLeads}
-          className="flex items-center gap-2 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl transition"
-        >
-          <RefreshCw size={14} /> Refresh Leads
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button 
+            onClick={fetchLeads}
+            className="flex items-center gap-2 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl transition cursor-pointer"
+          >
+            <RefreshCw size={14} /> Refresh Leads
+          </button>
+          <button
+            onClick={handleExportExcel}
+            disabled={loading || leads.length === 0 || exporting}
+            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-xs cursor-pointer"
+            title="Export Leads to Excel"
+          >
+            {exporting ? <Loader2 size={14} className="animate-spin" /> : <FileSpreadsheet size={14} />}
+            <span>Export in Excel</span>
+          </button>
+        </div>
       </div>
 
       {/* Filters & Search */}
@@ -413,7 +546,6 @@ export default function MyLeadsView() {
                     <th className="py-3.5 px-4">CONTACT PERSON</th>
                     <th className="py-3.5 px-4">PHONE NUMBER</th>
                     <th className="py-3.5 px-4">LOAN TYPE</th>
-                    <th className="py-3.5 px-4 text-center">CIBIL</th>
                     <th className="py-3.5 px-4 text-center">INTERESTED</th>
                     <th className="py-3.5 px-4 text-center">CALL STATUS</th>
                     <th className="py-3.5 px-4 text-center">MEETING</th>
@@ -429,15 +561,6 @@ export default function MyLeadsView() {
                       <td className="py-3.5 px-4 font-medium text-slate-800">{lead.contactPerson}</td>
                       <td className="py-3.5 px-4 text-slate-600">{lead.phone}</td>
                       <td className="py-3.5 px-4 font-extrabold text-slate-500">{lead.loanType}</td>
-                      <td className="py-3.5 px-4 text-center">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                          lead.cibilScore >= 750 ? "bg-emerald-50 text-emerald-700" :
-                          lead.cibilScore >= 650 ? "bg-amber-50 text-amber-700" :
-                          "bg-rose-50 text-rose-700"
-                        }`}>
-                          {lead.cibilScore}
-                        </span>
-                      </td>
                       <td className="py-3.5 px-4 text-center">
                         <span className={`px-2 py-1 rounded-full text-[10px] font-black ${
                           lead.interested === "Yes" ? "bg-emerald-100 text-emerald-800" :
@@ -457,7 +580,7 @@ export default function MyLeadsView() {
                       <td className="py-3.5 px-4 text-center">
                         <div className="flex justify-center gap-1.5">
                           <button 
-                            onClick={() => setViewLead(lead)}
+                            onClick={() => handleOpenViewLead(lead)}
                             className="p-1.5 text-slate-400 hover:text-[#162335] hover:bg-slate-100 rounded-lg transition"
                             title="View Profile"
                           >
@@ -470,13 +593,15 @@ export default function MyLeadsView() {
                           >
                             <Edit2 size={14} />
                           </button>
-                          <button 
-                            onClick={() => setDeleteConfirm(lead._id)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition"
-                            title="Delete Lead"
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          {isManager && (
+                            <button 
+                              onClick={() => setDeleteConfirm(lead._id)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition"
+                              title="Delete Lead"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -517,7 +642,7 @@ export default function MyLeadsView() {
       
       {/* 1. View Lead Details Modal */}
       {viewLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 print:hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 print:hidden">
           {/* Backdrop overlay */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -533,33 +658,45 @@ export default function MyLeadsView() {
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.95, y: 20, opacity: 0 }}
             transition={{ type: "spring", duration: 0.4, bounce: 0.15 }}
-            className="bg-white rounded-[18px] shadow-2xl max-w-[900px] w-full max-h-[80vh] flex flex-col border border-slate-200 overflow-hidden z-50 text-left"
+            className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col border border-slate-200 overflow-hidden z-50 text-left"
           >
             {/* Sticky Header */}
             <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#162335]/5 rounded-xl flex items-center justify-center text-[#162335]">
+                <div className="w-10 h-10 bg-[#162335] text-white rounded-2xl flex items-center justify-center shadow-sm">
                   <Briefcase size={20} />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black text-[#162335]">Lead Profile</h3>
-                    <span className="font-mono text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">{viewLead.leadId}</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-black text-[#162335]">Lead Details Overview</h3>
+                    <span className="font-mono text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
+                      {viewLead.leadId || "LEAD-N/A"}
+                    </span>
                   </div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">NOBAL FINANCE CRM</p>
+                  <p className="text-[11px] font-semibold text-slate-400 mt-0.5">
+                    Created on {formatDateTime(viewLead.createdAt) || "N/A"}
+                  </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                  viewLead.interested === "Yes" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
-                  viewLead.interested === "No" ? "bg-rose-50 text-rose-700 border border-rose-200" :
-                  "bg-amber-50 text-amber-700 border border-amber-200"
+                  viewLead.interested === "Yes"
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    : viewLead.interested === "No"
+                    ? "bg-rose-50 text-rose-700 border border-rose-200"
+                    : "bg-amber-50 text-amber-700 border border-amber-200"
                 }`}>
-                  {viewLead.interested}
+                  Interest: {viewLead.interested || "N/A"}
                 </span>
+                {viewLead.callStatus && (
+                  <span className="hidden sm:inline-block px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                    {viewLead.callStatus}
+                  </span>
+                )}
                 <button
                   onClick={() => setViewLead(null)}
-                  className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 transition cursor-pointer"
+                  className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 transition cursor-pointer"
+                  title="Close Modal"
                 >
                   <X size={16} />
                 </button>
@@ -567,180 +704,548 @@ export default function MyLeadsView() {
             </div>
 
             {/* Scrollable Body */}
-            <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-slate-50/50">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                
-                {/* Left Side (3 cols): Company Information & Remarks */}
-                <div className="md:col-span-3 space-y-6">
-                  {/* Company Info Card */}
-                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-4">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
-                      <User size={14} className="text-[#162335]" /> Company & Contact Information
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="sm:col-span-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Company Name</span>
-                        <p className="font-extrabold text-[#162335] text-sm mt-0.5">{viewLead.companyName || "N/A"}</p>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Contact Person</span>
-                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.contactPerson || "N/A"}</p>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Phone Number</span>
-                        <p className="font-bold text-slate-700 text-xs mt-0.5 flex items-center gap-1.5">
-                          <Phone size={12} className="text-slate-400" /> {viewLead.phone || "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">City</span>
-                        <p className="font-bold text-slate-700 text-xs mt-0.5">{viewLead.city || "N/A"}</p>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">State</span>
-                        <p className="font-bold text-slate-700 text-xs mt-0.5">{viewLead.state || "N/A"}</p>
-                      </div>
-                    </div>
-                  </div>
+            <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 bg-slate-50/60">
 
-                  {/* Address Card */}
-                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-3">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
-                      Address
-                    </h4>
-                    <div className="bg-slate-50/50 border border-slate-100/80 rounded-xl p-3.5 min-h-[90px] text-xs leading-relaxed text-slate-600 whitespace-pre-wrap font-medium">
-                      {viewLead.address ? viewLead.address : <span className="text-slate-400 italic">No Address Specified</span>}
+              {/* 1. CREATED BY EMPLOYEE BANNER CARD */}
+              <div className="bg-gradient-to-r from-[#162335] via-[#1c2c42] to-[#243954] text-white rounded-2xl p-4 sm:p-5 shadow-md border border-slate-700/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white shrink-0 shadow-inner">
+                    <User size={24} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                        Lead Creator
+                      </span>
+                      <span className="text-xs text-slate-300 font-mono">
+                        ID: {viewLead.employeeCode || viewLead.employeeId || "N/A"}
+                      </span>
                     </div>
+                    <h4 className="text-base font-black text-white mt-1">
+                      {viewLead.employeeName || "Unknown Employee"}
+                    </h4>
                   </div>
                 </div>
-
-                {/* Right Side (2 cols): Loan, Status, Meeting & Follow-up */}
-                <div className="md:col-span-2 space-y-6">
-                  {/* Loan & Financial Details Card */}
-                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-4">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
-                      <DollarSign size={14} className="text-emerald-500" /> Loan & Financials
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Loan Type</span>
-                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.loanType || "N/A"}</p>
-                      </div>
-                      {viewLead.loanType === "Property Loan" && (
-                        <div>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Property Loan Category</span>
-                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.propertyLoanCategory || "N/A"}</p>
-                        </div>
-                      )}
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CIBIL Score</span>
-                        <p className={`font-black text-xs mt-0.5 ${
-                          viewLead.cibilScore >= 750 ? "text-emerald-600" :
-                          viewLead.cibilScore >= 650 ? "text-amber-500" :
-                          "text-rose-500"
-                        }`}>
-                          {viewLead.cibilScore || "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Loan Required</span>
-                        <p className="font-black text-emerald-600 text-xs mt-0.5">
-                          {viewLead.loanAmount ? `₹${viewLead.loanAmount.toLocaleString("en-IN")}` : "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Company Turnover</span>
-                        <p className="font-black text-slate-700 text-xs mt-0.5">
-                          {viewLead.companyTurnover ? `₹${viewLead.companyTurnover.toLocaleString("en-IN")}` : 
-                           viewLead.yearlyIncome ? `₹${viewLead.yearlyIncome.toLocaleString("en-IN")}` : "N/A"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Call & Lead Status Card */}
-                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-4">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
-                      Status Overview
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Interested</span>
-                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.interested || "N/A"}</p>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Call Status</span>
-                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.callStatus || "N/A"}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Meeting Information Card */}
-                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-3">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-2">
-                      <Calendar size={14} className="text-[#162335]" /> Meeting Details
-                    </h4>
-                    {viewLead.meetingDate ? (
-                      <div className="flex gap-4 items-center">
-                        <div className="w-9 h-9 bg-slate-50 rounded-lg flex items-center justify-center text-slate-500 shrink-0">
-                          <Calendar size={16} />
-                        </div>
-                        <div>
-                          <p className="font-extrabold text-slate-700 text-xs">{formatFriendlyDate(viewLead.meetingDate)}</p>
-                          <p className="text-[10px] font-bold text-slate-400 mt-0.5 flex items-center gap-1">
-                            <Clock size={10} /> {formatFriendlyTime(viewLead.meetingTime) || "Time Not Specified"}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-slate-400 text-xs italic py-1">No Meeting Scheduled</p>
-                    )}
-                  </div>
-
-                  {/* Follow-up Information highlighted card */}
-                  <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${
-                    viewLead.followUpDate 
-                      ? "bg-amber-50/60 border-amber-200/50 text-[#162335]" 
-                      : "bg-white border-slate-100 text-slate-700"
-                  }`}>
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100/50 pb-2">
-                      <Clock size={14} className="text-amber-500" /> Follow-up Schedule
-                    </h4>
-                    {viewLead.followUpDate ? (
-                      <div className="flex gap-4 items-center">
-                        <div className="w-9 h-9 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-600 shrink-0">
-                          <Clock size={16} />
-                        </div>
-                        <div>
-                          <p className="font-extrabold text-slate-700 text-xs">{formatFriendlyDate(viewLead.followUpDate)}</p>
-                          <p className="text-[10px] font-bold text-slate-500 mt-0.5 flex items-center gap-1">
-                            <Clock size={10} /> {formatFriendlyTime(viewLead.followUpTime) || "Time Not Specified"}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-slate-400 text-xs italic py-1">No Follow-up Scheduled</p>
-                    )}
-                  </div>
-                </div>
-
               </div>
+
+              {/* 2. MAIN DETAILS GRID */}
+              {(() => {
+                const companyList = (viewLead.companyName || "").split(",").map(s => s.trim()).filter(Boolean);
+                const contactList = (viewLead.contactPerson || "").split(",").map(s => s.trim()).filter(Boolean);
+                const phoneList = (viewLead.phone || viewLead.phoneNumber || "").split(",").map(s => s.trim()).filter(Boolean);
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    {/* Company & Contact Information Card */}
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
+                      <h4 className="text-xs font-black text-[#162335] uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2.5">
+                        <Building2 size={15} className="text-[#162335]" /> Company & Contact Information
+                      </h4>
+                      <div className="space-y-3.5">
+                        {/* Company Names */}
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Company Name(s)</span>
+                          {companyList.length > 1 ? (
+                            <div className="flex flex-col gap-1.5">
+                              {companyList.map((comp, idx) => (
+                                <div key={idx} className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-xl">
+                                  <span className="text-[9px] font-black text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                                    Company {idx + 1}
+                                  </span>
+                                  <span className="text-xs font-black text-[#162335]">{comp}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="font-black text-[#162335] text-sm mt-0.5">{viewLead.companyName || "N/A"}</p>
+                          )}
+                        </div>
+
+                        {/* Contact Person(s) */}
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Contact Person(s)</span>
+                          {contactList.length > 1 ? (
+                            <div className="flex flex-wrap gap-1.5">
+                              {contactList.map((cp, idx) => (
+                                <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-bold text-slate-700">
+                                  <span className="text-[9px] font-black text-slate-400">Person {idx + 1}:</span> {cp}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.contactPerson || "N/A"}</p>
+                          )}
+                        </div>
+
+                        {/* Phone Number(s) */}
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Phone Number(s)</span>
+                          {phoneList.length > 1 ? (
+                            <div className="flex flex-wrap gap-1.5">
+                              {phoneList.map((ph, idx) => (
+                                <a key={idx} href={`tel:${ph}`} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-lg text-xs font-bold text-slate-700 transition">
+                                  <Phone size={10} className="text-slate-400" />
+                                  <span className="text-[9px] font-black text-slate-400">Phone {idx + 1}:</span> {ph}
+                                </a>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="font-extrabold text-slate-700 text-xs mt-0.5 flex items-center gap-1.5">
+                              <Phone size={12} className="text-slate-400" /> {viewLead.phone || viewLead.phoneNumber || "N/A"}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Location: State & City */}
+                        <div className="grid grid-cols-2 gap-3 pt-1 border-t border-slate-100">
+                          <div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">City</span>
+                            <p className="font-bold text-slate-700 text-xs mt-0.5">{viewLead.city || "N/A"}</p>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">State</span>
+                            <p className="font-bold text-slate-700 text-xs mt-0.5">{viewLead.state || "N/A"}</p>
+                          </div>
+                        </div>
+
+                        {/* Address */}
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Complete Address</span>
+                          <div className="mt-1 p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-wrap">
+                            {viewLead.address || <span className="text-slate-400 italic">No Address Specified</span>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Financials & Turnovers Card (T1, T2, T3) */}
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
+                      <h4 className="text-xs font-black text-[#162335] uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2.5">
+                        <DollarSign size={15} className="text-emerald-600" /> Financial Requirements & Turnovers
+                      </h4>
+                      <div className="space-y-4">
+                        {/* Loan Amount */}
+                        <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl">
+                          <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Loan Amount Required</span>
+                          <p className="text-xl font-black text-emerald-700 mt-0.5">
+                            {formatINR(viewLead.loanAmount) || "N/A"}
+                          </p>
+                        </div>
+
+                        {/* Turnovers T1, T2, T3 Grid */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                              Company Turnovers (T1, T2, T3)
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-400">All 3 Years</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            {/* T1 */}
+                            <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-[10px] font-extrabold uppercase text-slate-500">T1</span>
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-[#162335] text-white">Year 1</span>
+                              </div>
+                              <p className="text-xs font-black text-[#162335]">
+                                {formatINR(viewLead.companyTurnover || viewLead.yearlyIncome) || <span className="text-slate-400 font-normal">Not Entered</span>}
+                              </p>
+                            </div>
+                            {/* T2 */}
+                            <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-[10px] font-extrabold uppercase text-slate-500">T2</span>
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-[#162335] text-white">Year 2</span>
+                              </div>
+                              <p className="text-xs font-black text-[#162335]">
+                                {formatINR(viewLead.companyTurnover1) || <span className="text-slate-400 font-normal">Not Entered</span>}
+                              </p>
+                            </div>
+                            {/* T3 */}
+                            <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-[10px] font-extrabold uppercase text-slate-500">T3</span>
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-[#162335] text-white">Year 3</span>
+                              </div>
+                              <p className="text-xs font-black text-[#162335]">
+                                {formatINR(viewLead.companyTurnover2) || <span className="text-slate-400 font-normal">Not Entered</span>}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Statuses */}
+                        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                          <div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Interested Status</span>
+                            <p className="font-extrabold text-slate-800 text-xs mt-0.5">{viewLead.interested || "N/A"}</p>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Call Status</span>
+                            <p className="font-extrabold text-slate-800 text-xs mt-0.5">{viewLead.callStatus || "N/A"}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                );
+              })()}
+
+              {/* 3. DETAILED LOAN SPECIFICATIONS CARD (Dynamic) */}
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 flex-wrap gap-2">
+                  <h4 className="text-xs font-black text-[#162335] uppercase tracking-wider flex items-center gap-2">
+                    <Landmark size={15} className="text-[#162335]" /> Loan Category & Detailed Specifications
+                  </h4>
+                  <span className="text-xs font-extrabold px-3 py-1 bg-[#162335] text-white rounded-lg shadow-xs">
+                    Type: {viewLead.loanType || "Not Specified"}
+                  </span>
+                </div>
+
+                {/* If Property Purchase Loan */}
+                {viewLead.loanType === "Property Purchase Loan" && (
+                  <div className="space-y-4 pt-1">
+                    <div className="flex items-center gap-2 flex-wrap p-3 bg-slate-50 border border-slate-150 rounded-xl">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Category Selected:</span>
+                      <span className="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-xs font-black">
+                        {viewLead.propertyPurchaseCategory || "Standard Property Purchase"}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Property Location</span>
+                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.ppLocation || "N/A"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Market Rate</span>
+                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{formatINR(viewLead.ppMarketRate) || viewLead.ppMarketRate || "N/A"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dastavej Rate</span>
+                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{formatINR(viewLead.ppDastavejRate) || viewLead.ppDastavejRate || "N/A"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dastavej Name</span>
+                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.ppDastavejName || "N/A"}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* If Property Loan */}
+                {viewLead.loanType === "Property Loan" && (
+                  <div className="space-y-4 pt-1">
+                    <div className="flex items-center gap-2 flex-wrap p-3 bg-slate-50 border border-slate-150 rounded-xl">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Property Loan Sub-Category:</span>
+                      <span className="px-2.5 py-1 bg-[#162335] text-white rounded-lg text-xs font-black">
+                        {viewLead.propertyLoanCategory || "Not Specified"}
+                      </span>
+                    </div>
+
+                    {/* Working Capital */}
+                    {viewLead.propertyLoanCategory === "Working Capital" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Property Location</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.propertyLocation || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Duration of Rent Property</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.durationOfRentProperty || "N/A"}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* LAP */}
+                    {viewLead.propertyLoanCategory === "LAP" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">LAP Property Type</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.lapPropertyType || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Location</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.lapPropertyLocation || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Market Value</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{formatINR(viewLead.lapPropertyMarketValue) || viewLead.lapPropertyMarketValue || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Type of Work</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.lapPropertyWork || "N/A"}</p>
+                        </div>
+                        <div className="sm:col-span-2">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Document List</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.lapPropertyDocumentList || "N/A"}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Unsold */}
+                    {viewLead.propertyLoanCategory === "Unsold" && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unsold Unit</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.unsoldUnit || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Market Value (MV)</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{formatINR(viewLead.unsoldMV) || viewLead.unsoldMV || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Book Value (BV)</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.unsoldBV ? "Yes" : "No"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Floor</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.unsoldFloor || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Scheme Name</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.unsoldScheme || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Location</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.unsoldLocation || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dastavej</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.unsoldDastavej || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Partnership</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.unsoldPartnership || "N/A"}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* LRD */}
+                    {viewLead.propertyLoanCategory === "LRD" && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Monthly Rent</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{formatINR(viewLead.lrdRent) || viewLead.lrdRent || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Market Value</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{formatINR(viewLead.lrdMarketValue) || viewLead.lrdMarketValue || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">LOI Year</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.lrdLoiYear || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Location</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.lrdLocation || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Scheme Name</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.lrdSchemeName || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dastavej</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.lrdDastavej || "N/A"}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* NA Plot */}
+                    {viewLead.propertyLoanCategory === "NA Plot" && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Location</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.naPlotLocation || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Market Value (MV)</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{formatINR(viewLead.naPlotMV) || viewLead.naPlotMV || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">NA Plot</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.naPlotYesNo ? "Yes" : "No"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Vacant</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.naPlotVacant ? "Yes" : "No"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Scheme</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.naPlotScheme || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dastavej</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.naPlotDastavej || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">VAR</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.naPlotVAR || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Lavani</span>
+                          <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.naPlotLavani || "N/A"}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* If Business Loan */}
+                {viewLead.loanType === "Business Loan" && (
+                  <div className="space-y-4 pt-1">
+                    <div className="flex items-center gap-2 flex-wrap p-3 bg-slate-50 border border-slate-150 rounded-xl">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Business Loan Type:</span>
+                      <span className="px-2.5 py-1 bg-blue-600 text-white rounded-lg text-xs font-black">
+                        {viewLead.businessLoanType || "Standard Business Loan"}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Business Starting Year</span>
+                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.businessStartingYear || "N/A"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nature / Type of Work</span>
+                        <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.businessTypeOfWork || "N/A"}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* If Balance Transfer */}
+                {viewLead.loanType === "Balance Transfer" && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bank Name</span>
+                      <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.btBankName || "N/A"}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rate of Interest</span>
+                      <p className="font-extrabold text-slate-700 text-xs mt-0.5">
+                        {viewLead.btRateOfInterest ? `${viewLead.btRateOfInterest}%` : "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Property Type</span>
+                      <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.btPropertyType || "N/A"}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Market Value</span>
+                      <p className="font-extrabold text-slate-700 text-xs mt-0.5">{formatINR(viewLead.btMarketValue) || viewLead.btMarketValue || "N/A"}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Location</span>
+                      <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.btLocation || "N/A"}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Duration</span>
+                      <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.btDuration || "N/A"}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Outstanding Amount</span>
+                      <p className="font-extrabold text-slate-700 text-xs mt-0.5">{formatINR(viewLead.btOutstanding) || viewLead.btOutstanding || "N/A"}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Foreclosure Charge</span>
+                      <p className="font-extrabold text-slate-700 text-xs mt-0.5">
+                        {viewLead.btForeclosureCharge ? `${viewLead.btForeclosureCharge}%` : "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* If No loan specific fields */}
+                {!["Property Purchase Loan", "Property Loan", "Business Loan", "Balance Transfer"].includes(viewLead.loanType) && (
+                  <p className="text-slate-400 text-xs italic py-1">
+                    Standard Loan or No Additional Category Specifications.
+                  </p>
+                )}
+              </div>
+
+              {/* 4. SCHEDULES & STATUS SECTION */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* Meeting Card */}
+                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+                  <h4 className="text-xs font-black text-[#162335] uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
+                    <Calendar size={14} className="text-[#162335]" /> Meeting Schedule
+                  </h4>
+                  {viewLead.meetingDate ? (
+                    <div className="flex gap-3.5 items-center p-3 bg-emerald-50/40 border border-emerald-100 rounded-xl">
+                      <div className="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center shrink-0">
+                        <Calendar size={18} />
+                      </div>
+                      <div>
+                        <p className="font-extrabold text-slate-800 text-xs">{formatFriendlyDate(viewLead.meetingDate)}</p>
+                        <p className="text-[11px] font-bold text-slate-500 mt-0.5 flex items-center gap-1">
+                          <Clock size={11} className="text-slate-400" /> {formatFriendlyTime(viewLead.meetingTime) || "Time Not Specified"}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-slate-400 text-xs italic py-2">No Meeting Scheduled</p>
+                  )}
+                </div>
+
+                {/* Follow-up Card */}
+                <div className={`bg-white rounded-2xl p-5 border shadow-xs space-y-3 ${
+                  viewLead.followUpDate ? "border-amber-200/70" : "border-slate-200/80"
+                }`}>
+                  <h4 className="text-xs font-black text-[#162335] uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
+                    <Clock size={14} className="text-amber-500" /> Follow-Up Schedule
+                  </h4>
+                  {viewLead.followUpDate ? (
+                    <div className="flex gap-3.5 items-center p-3 bg-amber-50/50 border border-amber-200/60 rounded-xl">
+                      <div className="w-10 h-10 bg-amber-500 text-white rounded-xl flex items-center justify-center shrink-0">
+                        <Clock size={18} />
+                      </div>
+                      <div>
+                        <p className="font-extrabold text-slate-800 text-xs">{formatFriendlyDate(viewLead.followUpDate)}</p>
+                        <p className="text-[11px] font-bold text-amber-700 mt-0.5 flex items-center gap-1">
+                          <Clock size={11} className="text-amber-500" /> {formatFriendlyTime(viewLead.followUpTime) || "Time Not Specified"}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-slate-400 text-xs italic py-2">No Follow-up Scheduled</p>
+                  )}
+                </div>
+              </div>
+
+              {/* 5. REMARKS / NOTES CARD */}
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+                <h4 className="text-xs font-black text-[#162335] uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
+                  <FileText size={14} className="text-[#162335]" /> Employee Remarks & Call Notes
+                </h4>
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 min-h-[70px] text-xs leading-relaxed text-slate-700 whitespace-pre-wrap font-medium">
+                  {viewLead.remarks || <span className="text-slate-400 italic">No remarks recorded by employee.</span>}
+                </div>
+              </div>
+
             </div>
 
             {/* Sticky Footer */}
-            <div className="sticky bottom-0 bg-slate-50 border-t border-slate-100 px-6 py-4 flex items-center justify-end gap-3 z-10 shrink-0">
-              <button 
-                onClick={() => { setViewLead(null); openEditModal(viewLead); }}
-                className="px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl text-slate-700 font-bold transition text-xs shadow-xs cursor-pointer"
-              >
-                Edit Lead
-              </button>
-              <button 
-                onClick={() => setViewLead(null)}
-                className="px-6 py-2.5 bg-[#162335] hover:bg-[#162335]/90 text-white rounded-xl font-bold transition text-xs shadow-sm cursor-pointer"
-              >
-                Close
-              </button>
+            <div className="sticky bottom-0 bg-white border-t border-slate-100 px-6 py-4 flex items-center justify-between gap-3 z-10 shrink-0">
+              <div className="text-[11px] text-slate-400 font-medium hidden sm:block">
+                Showing all recorded details submitted by {viewLead.employeeName || "employee"}
+              </div>
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                <button 
+                  onClick={() => { setViewLead(null); openEditModal(viewLead); }}
+                  className="px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl text-slate-700 font-bold transition text-xs shadow-xs cursor-pointer"
+                >
+                  Edit Lead
+                </button>
+                <button
+                  onClick={() => setViewLead(null)}
+                  className="px-6 py-2.5 bg-[#162335] hover:bg-[#162335]/90 text-white rounded-xl font-bold transition text-xs shadow-sm cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -821,12 +1326,12 @@ export default function MyLeadsView() {
 
                 {/* Company Turnover */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Company Turnover (₹) {isEditAllMandatory && "*"}</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Company Turnover (₹) <span className="text-slate-400 font-normal text-[11px]">(Optional)</span></label>
                   <input
                     type="number"
                     {...register("companyTurnover", { 
-                      required: isEditAllMandatory ? "Company Turnover is required" : false,
-                      validate: val => !isEditAllMandatory || (!val || parseFloat(val) > 0) || "Turnover must be > 0"
+                      required: false,
+                      validate: val => !val || parseFloat(val) > 0 || "Turnover must be > 0"
                     })}
                     className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#162335] ${errors.companyTurnover ? "border-rose-455" : "border-slate-200"}`}
                   />
@@ -884,17 +1389,7 @@ export default function MyLeadsView() {
                   </div>
                 )}
 
-                {/* CIBIL Score */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">CIBIL Score</label>
-                  <input
-                    type="number"
-                    {...register("cibilScore", { min: 300, max: 900 })}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#162335]"
-                    placeholder="e.g. 750"
-                  />
-                  {errors.cibilScore && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.cibilScore.message}</p>}
-                </div>
+
 
                 {/* Interested */}
                 <div>
@@ -974,7 +1469,7 @@ export default function MyLeadsView() {
       )}
 
       {/* 3. Delete Confirmation Modal */}
-      {deleteConfirm && (
+      {isManager && deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
           <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full border border-slate-200 overflow-hidden">
             <div className="p-6 text-center space-y-4">

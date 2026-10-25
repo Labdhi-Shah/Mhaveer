@@ -92,7 +92,6 @@ export default function NewLeadView() {
       btDuration: "",
       btOutstanding: "",
       btForeclosureCharge: "",
-      cibilScore: "",
       interested: "",
       callStatus: "",
       meetingDate: "",
@@ -131,20 +130,19 @@ export default function NewLeadView() {
 
   // Dynamic registration of Turnover and Loan Amount based on mode
   useEffect(() => {
+    // Company Turnover is NOT mandatory for any loan type or mode
+    register("turnoverAmount0", { 
+      required: false,
+      validate: (val) => !val || parseFloat(val) > 0 || "Turnover must be greater than 0"
+    });
+    clearErrors(["turnoverAmount0", "companyTurnover"]);
+
     if (isAllMandatory) {
-      register("turnoverAmount0", { 
-        required: "Company Turnover is required",
-        validate: (val) => (val && parseFloat(val) > 0) || "Company Turnover is required"
-      });
       register("loanAmountInput", {
         required: "Loan Amount is required",
         validate: (val) => (val && parseFloat(val) > 0) || "Loan Amount is required"
       });
     } else {
-      register("turnoverAmount0", { 
-        required: false,
-        validate: (val) => !val || parseFloat(val) > 0 || "Turnover must be greater than 0"
-      });
       register("loanAmountInput", {
         required: false,
         validate: (val) => !val || parseFloat(val) > 0 || "Loan Amount must be greater than 0"
@@ -197,7 +195,7 @@ export default function NewLeadView() {
       val = parts[0] + "." + parts.slice(1).join("");
     }
     setValue(`turnoverAmount${idx}`, val, { shouldValidate: true, shouldDirty: true });
-    if (val && parseFloat(val) > 0) {
+    if (!val || parseFloat(val) > 0) {
       clearErrors(`turnoverAmount${idx}`);
       if (idx === 0) clearErrors("companyTurnover");
     }
@@ -268,8 +266,7 @@ export default function NewLeadView() {
         companyTurnover: turnover0 !== null ? turnover0 : (data.companyTurnover ? parseFloat(data.companyTurnover) : undefined),
         companyTurnover1: turnover1 !== null ? turnover1 : undefined,
         companyTurnover2: turnover2 !== null ? turnover2 : undefined,
-        loanAmount: loanAmountConverted !== null ? loanAmountConverted : (data.loanAmount ? parseFloat(data.loanAmount) : undefined),
-        cibilScore: data.cibilScore ? parseInt(data.cibilScore) : undefined
+        loanAmount: loanAmountConverted !== null ? loanAmountConverted : (data.loanAmount ? parseFloat(data.loanAmount) : undefined)
       };
       
       delete payload.companyName0;
@@ -567,7 +564,7 @@ export default function NewLeadView() {
 
             <div>
               <label className={labelClass}>
-                Company Turnover (INR) {isAllMandatory ? "*" : <span className="text-slate-400 font-normal text-xs">(Optional for Follow-up)</span>}
+                Company Turnover (INR) <span className="text-slate-400 font-normal text-xs">(Optional)</span>
               </label>
               <div className="flex flex-wrap gap-2 mb-3">
                 {['T1', 'T2', 'T3'].map((t, idx) => {
@@ -1104,11 +1101,7 @@ export default function NewLeadView() {
               </>
             )}
 
-            <div>
-              <label className={labelClass}>CIBIL Score</label>
-              <input type="number" placeholder="700 - 900" {...register("cibilScore", { min: { value: 700, message: "Min score is 700" }, max: { value: 900, message: "Max score is 900" } })} className={getInputClass(errors.cibilScore)} />
-              {errors.cibilScore && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.cibilScore.message}</p>}
-            </div>
+
 
             <div>
               <label className={labelClass}>Interested</label>

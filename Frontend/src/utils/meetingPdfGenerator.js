@@ -250,7 +250,6 @@ export function generateMeetingPdf(meeting, currentUser) {
 
   const loanType = lead.loanType || "N/A";
   const propertyCategory = lead.propertyLoanCategory || "N/A";
-  const cibil = lead.cibilScore ? String(lead.cibilScore) : "N/A";
   const callStatus = lead.callStatus || "N/A";
   const interested = lead.interested || "N/A";
 
@@ -290,10 +289,8 @@ export function generateMeetingPdf(meeting, currentUser) {
         { content: propertyCategory },
       ],
       [
-        { content: "CIBIL Score:", styles: { fontStyle: "bold", textColor: textMuted } },
-        { content: cibil, styles: { fontStyle: "bold" } },
         { content: "Interest Status:", styles: { fontStyle: "bold", textColor: textMuted } },
-        { content: `${interested} (${callStatus})` },
+        { content: `${interested} (${callStatus})`, colSpan: 3 },
       ],
     ],
   });

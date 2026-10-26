@@ -9,6 +9,7 @@ import { useAuth } from "../context/AuthContext";
 import { getUserRole } from "../utils/hierarchy";
 import { generateMeetingPdf } from "../utils/meetingPdfGenerator";
 import * as XLSX from "xlsx";
+import { downloadXLSX } from "../utils/fileDownloader";
 
 export default function MeetingsView() {
   const location = useLocation();
@@ -453,7 +454,7 @@ export default function MeetingsView() {
 
       const dateStr = new Date().toISOString().slice(0, 10);
       const filename = `Meetings_Report_${dateStr}.xlsx`;
-      XLSX.writeFile(wb, filename);
+      downloadXLSX(wb, filename);
 
       showToast(`Exported ${dataToExport.length} meetings to Excel!`);
     } catch (err) {

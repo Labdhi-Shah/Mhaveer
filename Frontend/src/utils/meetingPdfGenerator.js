@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { downloadBlob } from "./fileDownloader";
 
 /**
  * Formats a currency amount into Indian Rupee format (e.g. "Rs. 25,00,000")
@@ -447,5 +448,6 @@ export function generateMeetingPdf(meeting, currentUser) {
   const dateStr = meeting.date ? meeting.date.split("T")[0] : "Record";
   const fileName = `Meeting_${safeName}_${dateStr}.pdf`;
 
-  doc.save(fileName);
+  const blob = doc.output("blob");
+  downloadBlob(blob, fileName);
 }

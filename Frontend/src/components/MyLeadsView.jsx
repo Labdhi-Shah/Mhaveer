@@ -8,6 +8,7 @@ import {
   Building2, Landmark, FileText, FileSpreadsheet
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import { downloadXLSX } from "../utils/fileDownloader";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import { getMergedLeadsAndStats, getUserRole } from "../utils/hierarchy";
@@ -168,7 +169,7 @@ export default function MyLeadsView() {
       XLSX.utils.book_append_sheet(wb, ws, "My Leads");
 
       const dateStr = new Date().toISOString().slice(0, 10);
-      XLSX.writeFile(wb, `Leads_Export_${dateStr}.xlsx`);
+      downloadXLSX(wb, `Leads_Export_${dateStr}.xlsx`);
 
       setToast({ message: `Exported ${dataToExport.length} leads to Excel successfully!`, type: "success" });
       setTimeout(() => setToast(null), 3500);

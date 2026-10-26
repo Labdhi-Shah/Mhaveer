@@ -8,6 +8,7 @@ import {
   Search, ChevronLeft, ChevronRight
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import { downloadXLSX } from "../utils/fileDownloader";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import { getMergedLeadsAndStats } from "../utils/hierarchy";
@@ -386,7 +387,7 @@ export default function EmployeeDashboard() {
       XLSX.utils.book_append_sheet(wb, ws, filterInfo.badge.slice(0, 31));
 
       const dateStr = new Date().toISOString().slice(0, 10);
-      XLSX.writeFile(wb, `${filterInfo.filename}_${dateStr}.xlsx`);
+      downloadXLSX(wb, `${filterInfo.filename}_${dateStr}.xlsx`);
 
       showToast(`Exported ${dataToExport.length} leads to Excel successfully!`);
     } catch (err) {
@@ -486,7 +487,7 @@ export default function EmployeeDashboard() {
       XLSX.utils.book_append_sheet(wb, ws, (config?.title || "Leads").slice(0, 31));
 
       const dateStr = new Date().toISOString().slice(0, 10);
-      XLSX.writeFile(wb, `${config?.filename || "Leads"}_${dateStr}.xlsx`);
+      downloadXLSX(wb, `${config?.filename || "Leads"}_${dateStr}.xlsx`);
 
       showToast(`Exported ${dataToExport.length} leads to Excel successfully!`);
     } catch (err) {

@@ -4,6 +4,7 @@ import api from "./../api";
 import { useAuth } from "../context/AuthContext";
 import { getUserRole } from "../utils/hierarchy";
 import socket from "../utils/socket";
+import { downloadBlob } from "../utils/fileDownloader";
 
 export default function TeamPerformanceView() {
   const { user } = useAuth();
@@ -105,10 +106,7 @@ export default function TeamPerformanceView() {
     
     const csvContent = [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `TeamPerformance_${new Date().toLocaleDateString()}.csv`;
-    link.click();
+    downloadBlob(blob, `TeamPerformance_${new Date().toLocaleDateString().replace(/\//g, "-")}.csv`);
   };
 
   const handleEmployeeClick = async (employee) => {

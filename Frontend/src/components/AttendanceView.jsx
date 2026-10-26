@@ -9,6 +9,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import * as XLSX from 'xlsx';
+import { downloadXLSX } from "../utils/fileDownloader";
 import { getUserRoleCategory, filterAttendanceRecords } from "../utils/hierarchy";
 import LeaveManagement from "./LeaveManagement";
 import socket from "../utils/socket";
@@ -348,7 +349,7 @@ export default function AttendanceView() {
     const ws = XLSX.utils.json_to_sheet(dataToExport);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Attendance Logs");
-    XLSX.writeFile(wb, `Attendance_Logs_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    downloadXLSX(wb, `Attendance_Logs_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   const getStatusBadge = (status) => {

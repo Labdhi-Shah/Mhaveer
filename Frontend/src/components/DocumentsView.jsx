@@ -3,12 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   FileText, Plus, Search, Filter, Trash2, Eye, Download, 
   ZoomIn, ZoomOut, RotateCw, X, Upload, CheckCircle2, 
-  AlertCircle, Image as ImageIcon, Calendar, User, Maximize2
+  AlertCircle, Image as ImageIcon, Calendar, User, Maximize2, Loader2
 } from "lucide-react";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import { getUserRole } from "../utils/hierarchy";
 import socket from "../utils/socket";
+import { downloadBlob } from "../utils/fileDownloader";
 
 const CATEGORIES = [
   "All",
@@ -56,6 +57,7 @@ export default function DocumentsView() {
   const [previewDoc, setPreviewDoc] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const [downloadingDocId, setDownloadingDocId] = useState(null);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -284,15 +286,62 @@ export default function DocumentsView() {
     setRotation(0);
   };
 
-  const handleDownload = (doc) => {
-    const link = document.createElement("a");
-    link.href = resolveImageUrl(doc.imageUrl);
-    link.download = `${doc.title.replace(/\s+/g, "_")}.jpg`;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async (doc) => {
+    if (!doc || !doc.imageUrl) {
+      showToast("No document file available to download.", "error");
+      return;
+    }
+    const fullUrl = resolveImageUrl(doc.imageUrl);
+    const safeTitle = (doc.title || "Document").trim().replace(/[/\\?%*:|"<>]/g, "_") || "Document";
+    
+    // Extract file extension from imageUrl if present
+    const urlWithoutQuery = doc.imageUrl.split("?")[0].split("#")[0];
+    const extMatch = urlWithoutQuery.match(/\.([a-zA-Z0-9]{2,5})$/);
+    const ext = extMatch ? extMatch[1].toLowerCase() : "jpg";
+    const filename = `${safeTitle}.${ext}`;
+
+    const docKey = doc._id || doc.title;
+    setDownloadingDocId(docKey);
+
+    try {
+      // Primary mechanism: fetch as blob to enable native cross-browser download without navigation
+      const response = await fetch(fullUrl, { mode: "cors" });
+      if (!response.ok) {
+        throw new Error(`Server returned HTTP ${response.status}`);
+      }
+      const blob = await response.blob();
+      downloadBlob(blob, filename);
+      showToast("Document downloaded successfully!", "success");
+    } catch (fetchErr) {
+      if (import.meta.env?.DEV) {
+        console.warn("[DocumentsView] Blob fetch failed, falling back to direct anchor download:", fetchErr.message);
+      }
+      // Fallback: If CORS or network prevents direct fetch, download via anchor without target="_blank"
+      try {
+        const link = document.createElement("a");
+        link.style.position = "fixed";
+        link.style.top = "-9999px";
+        link.style.left = "-9999px";
+        link.style.opacity = "0";
+        link.style.pointerEvents = "none";
+        link.href = fullUrl;
+        link.download = filename;
+        // Do NOT use target="_blank" or rel="noopener noreferrer" to avoid triggering Safari's "Can't Open This Page"
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          if (document.body.contains(link)) {
+            document.body.removeChild(link);
+          }
+        }, 1000);
+        showToast("Download initiated!", "success");
+      } catch (fallbackErr) {
+        console.error("[DocumentsView] Download fallback failed:", fallbackErr);
+        showToast("Failed to download document.", "error");
+      }
+    } finally {
+      setDownloadingDocId(null);
+    }
   };
 
   // Filter and Search logic
@@ -516,10 +565,15 @@ export default function DocumentsView() {
                     {/* Download Button */}
                     <button
                       onClick={() => handleDownload(doc)}
-                      className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                      disabled={downloadingDocId === (doc._id || doc.title)}
+                      className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition disabled:opacity-50"
                       title="Download Image"
                     >
-                      <Download size={15} />
+                      {downloadingDocId === (doc._id || doc.title) ? (
+                        <Loader2 size={15} className="animate-spin text-blue-600" />
+                      ) : (
+                        <Download size={15} />
+                      )}
                     </button>
 
                     {/* Manager-Only Delete Button */}
@@ -786,10 +840,15 @@ export default function DocumentsView() {
                   </button>
                   <button
                     onClick={() => handleDownload(previewDoc)}
-                    className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition"
+                    disabled={downloadingDocId === (previewDoc?._id || previewDoc?.title)}
+                    className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition disabled:opacity-50"
                     title="Download Image"
                   >
-                    <Download size={16} />
+                    {downloadingDocId === (previewDoc?._id || previewDoc?.title) ? (
+                      <Loader2 size={16} className="animate-spin text-white" />
+                    ) : (
+                      <Download size={16} />
+                    )}
                   </button>
                   <div className="h-5 w-px bg-slate-800 mx-1" />
                   <button

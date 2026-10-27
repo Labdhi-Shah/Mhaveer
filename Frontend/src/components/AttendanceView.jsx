@@ -21,6 +21,7 @@ export default function AttendanceView() {
   const [todayRecord, setTodayRecord] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [exporting, setExporting] = useState(false);
   const [mainTab, setMainTab] = useState("logs"); // "logs" or "leave"
   const [stats, setStats] = useState({
     today: "00:00",
@@ -337,19 +338,47 @@ export default function AttendanceView() {
   };
 
   const handleExportExcel = () => {
-    const dataToExport = records.map(r => ({
-      Date: formatDate(r.date),
-      Employee: r.employeeName || "-",
-      "Start Time": formatTime(r.loginTime),
-      "End Time": formatTime(r.logoutTime),
-      "Total Leave": `${leaveCounts[r.employeeId] || 0} Day(s)`,
-      Status: r.status || "Absent",
-    }));
+    if (!records || records.length === 0) {
+      setToast({ message: "No attendance records available to export.", type: "error" });
+      setTimeout(() => setToast(null), 3500);
+      return;
+    }
 
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Attendance Logs");
-    downloadXLSX(wb, `Attendance_Logs_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    try {
+      setExporting(true);
+      const dataToExport = records.map(r => ({
+        Date: formatDate(r.date),
+        Employee: r.employeeName || "-",
+        "Start Time": formatTime(r.loginTime),
+        "End Time": formatTime(r.logoutTime),
+        "Total Leave": `${leaveCounts[r.employeeId] || 0} Day(s)`,
+        Status: r.status || "Absent",
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+
+      const colWidths = Object.keys(dataToExport[0] || {}).map(key => {
+        const maxContentLength = Math.max(
+          key.length,
+          ...dataToExport.map(row => String(row[key] !== undefined && row[key] !== null ? row[key] : "").length).slice(0, 50)
+        );
+        return { wch: Math.min(Math.max(maxContentLength + 3, 12), 40) };
+      });
+      ws["!cols"] = colWidths;
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Attendance Logs");
+      const dateStr = new Date().toISOString().slice(0, 10);
+      downloadXLSX(wb, `Attendance_Logs_${dateStr}.xlsx`);
+      setToast({ message: `Exported ${dataToExport.length} attendance records to Excel!`, type: "success" });
+      setTimeout(() => setToast(null), 3500);
+    } catch (err) {
+      console.error("[AttendanceView] Export attendance error:", err);
+      setToast({ message: "Failed to export attendance logs to Excel.", type: "error" });
+      setTimeout(() => setToast(null), 3500);
+    } finally {
+      setExporting(false);
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -488,9 +517,12 @@ export default function AttendanceView() {
                 </div>
                 <button
                   onClick={handleExportExcel}
-                  className="bg-emerald-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-emerald-700 transition whitespace-nowrap mb-0 mt-auto h-[42px] flex items-center justify-center"
+                  disabled={exporting || !records || records.length === 0}
+                  className="bg-emerald-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-emerald-700 transition whitespace-nowrap mb-0 mt-auto h-[42px] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  title="Export Attendance Logs to Excel (.xlsx)"
                 >
-                  Export Excel
+                  {exporting && <Loader2 size={14} className="animate-spin" />}
+                  <span>{exporting ? "Exporting..." : "Export Excel"}</span>
                 </button>
               </div>
             )}

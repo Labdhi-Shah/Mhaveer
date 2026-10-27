@@ -449,5 +449,5 @@ export function generateMeetingPdf(meeting, currentUser) {
   const fileName = `Meeting_${safeName}_${dateStr}.pdf`;
 
   const blob = doc.output("blob");
-  downloadBlob(blob, fileName);
+  downloadBlob(blob, fileName, "application/pdf");
 }

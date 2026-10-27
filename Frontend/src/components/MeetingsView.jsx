@@ -814,29 +814,40 @@ export default function MeetingsView() {
                       );
                     })()}
 
-                    {/* Person Who Met The Client (From Fill Form Step 3) */}
-                    {meeting.meetingPersonName && (
-                      <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100 mt-2 bg-emerald-50/80 p-2.5 rounded-2xl border border-emerald-200/70">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-                            <User size={13} />
+                    {/* Person Who Met The Client & Manager Remarks (From Fill Form) */}
+                    {(meeting.meetingPersonName || meeting.meetingPersonNotes) && (
+                      <div className="text-xs pt-2.5 border-t border-slate-100 mt-2.5 bg-emerald-50/80 p-3 rounded-2xl border border-emerald-200/80 space-y-2.5">
+                        {meeting.meetingPersonName && (
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                                <User size={13} />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-[10px] text-emerald-800 font-extrabold uppercase tracking-wider">
+                                  Client Met By
+                                </p>
+                                <p className="font-black text-[#162335] text-xs truncate">
+                                  {meeting.meetingPersonName}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 shrink-0">
+                              Form Done
+                            </span>
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-[10px] text-emerald-800 font-extrabold uppercase tracking-wider">
-                              Client Met By
-                            </p>
-                            <p className="font-black text-[#162335] text-xs truncate">
-                              {meeting.meetingPersonName}
-                            </p>
-                          </div>
-                        </div>
+                        )}
+
                         {meeting.meetingPersonNotes && (
-                          <span
-                            className="text-[10px] font-medium text-emerald-700 bg-white px-2 py-0.5 rounded-lg border border-emerald-200 shrink-0 max-w-[120px] truncate"
-                            title={meeting.meetingPersonNotes}
-                          >
-                            {meeting.meetingPersonNotes}
-                          </span>
+                          <div className="bg-white p-2.5 rounded-xl border border-emerald-200/90 shadow-2xs text-xs space-y-1">
+                            <div className="flex items-center gap-1.5 text-[10px] font-black text-emerald-900 uppercase tracking-wider">
+                              <FileText size={12} className="text-emerald-700 shrink-0" />
+                              <span>Manager Visit Remarks / Discussion Notes:</span>
+                            </div>
+                            <div className="bg-slate-50/70 p-2.5 rounded-lg border border-slate-100 text-slate-800 font-semibold whitespace-pre-wrap leading-relaxed text-xs break-words max-h-36 overflow-y-auto">
+                              {meeting.meetingPersonNotes}
+                            </div>
+                          </div>
                         )}
                       </div>
                     )}
@@ -1063,13 +1074,13 @@ export default function MeetingsView() {
                     </div>
                     <div>
                       <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Visit Remarks</label>
-                      <input
-                        type="text"
+                      <textarea
                         name="meetingPersonNotes"
+                        rows="2"
                         value={formData.meetingPersonNotes || ""}
                         onChange={handleInputChange}
-                        placeholder="Visit notes / feedback"
-                        className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-purple-500/20"
+                        placeholder="Visit notes / feedback..."
+                        className="w-full bg-slate-50 border border-slate-200 text-sm font-semibold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-purple-500/20 resize-none"
                       />
                     </div>
                   </div>

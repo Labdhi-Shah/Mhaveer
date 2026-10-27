@@ -888,11 +888,11 @@ export default function FollowUpView() {
                         />
                       </div>
                       <div className="sm:col-span-2">
-                        <label className={labelClass}>Document List (Dastavej) Name *</label>
+                        <label className={labelClass}>Ownership Name *</label>
                         <input
                           type="text"
-                          placeholder="Enter dastavej name"
-                          {...registerConvert("ppDastavejName", { required: "Dastavej name is required" })}
+                          placeholder="Enter ownership name"
+                          {...registerConvert("ppDastavejName", { required: "Ownership Name is required" })}
                           className={inputClass}
                         />
                       </div>
@@ -1381,8 +1381,20 @@ export default function FollowUpView() {
 
                 {viewingLead.remarks && (
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1">
-                    <p className="text-[10px] font-black text-slate-400 uppercase">Remarks</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase">Employee Remarks</p>
                     <p className="text-slate-700 italic">{viewingLead.remarks}</p>
+                  </div>
+                )}
+
+                {(viewingLead.meetingPersonNotes || viewingLead.meetingPersonName) && (
+                  <div className="bg-emerald-50/70 p-4 rounded-2xl border border-emerald-200 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-black text-emerald-800 uppercase tracking-wider">Manager Visit Remarks</p>
+                      {viewingLead.meetingPersonName && (
+                        <span className="text-[10px] font-bold text-emerald-700">Met by: {viewingLead.meetingPersonName}</span>
+                      )}
+                    </div>
+                    <p className="text-slate-800 font-semibold whitespace-pre-wrap text-xs">{viewingLead.meetingPersonNotes}</p>
                   </div>
                 )}
               </div>

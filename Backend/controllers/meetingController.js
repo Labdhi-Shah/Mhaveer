@@ -145,6 +145,21 @@ exports.updateMeeting = async (req, res) => {
       runValidators: true,
     });
     
+    // Sync meetingPersonName and meetingPersonNotes to linked Lead if updated
+    if (meeting && meeting.leadId && (req.body.meetingPersonName !== undefined || req.body.meetingPersonNotes !== undefined)) {
+      const leadUpdates = {};
+      if (req.body.meetingPersonName !== undefined) leadUpdates.meetingPersonName = req.body.meetingPersonName;
+      if (req.body.meetingPersonNotes !== undefined) leadUpdates.meetingPersonNotes = req.body.meetingPersonNotes;
+      await Lead.findByIdAndUpdate(meeting.leadId, leadUpdates).catch(err => console.error("Lead sync error:", err));
+      emitDataChange({
+        entity: "lead",
+        action: "update",
+        id: meeting.leadId,
+        userId: req.user.id,
+        role: req.user.role,
+      });
+    }
+
     // Trigger assignment asynchronously to fill any newly freed slots
     assignPendingMeetings().catch(err => console.error("Auto-assignment error after update:", err.message));
     

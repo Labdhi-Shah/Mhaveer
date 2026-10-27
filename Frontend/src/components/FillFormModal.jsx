@@ -525,6 +525,35 @@ const [unsoldBV, setUnsoldBV] = useState(false);
         {/* Form Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
 
+          {/* Manager Visit Remarks & Discussion Notes Banner */}
+          {(meetingPersonNotes || selectedMeeting?.meetingPersonNotes) && !isSubmitted && (
+            <div className="mb-6 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200/90 p-4 sm:p-5 rounded-2xl shadow-xs">
+              <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-emerald-200/70 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
+                    <FileText size={14} />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-emerald-950 uppercase tracking-wider">
+                      Manager Visit Remarks & Client Discussion Notes
+                    </h4>
+                    <p className="text-[10px] text-emerald-700 font-medium">
+                      Recorded by manager upon completing the client visit form
+                    </p>
+                  </div>
+                </div>
+                {(meetingPersonName || selectedMeeting?.meetingPersonName) && (
+                  <span className="text-[11px] font-bold text-emerald-900 bg-white px-3 py-1 rounded-full border border-emerald-200 shadow-2xs">
+                    Client Met By: <strong>{meetingPersonName || selectedMeeting?.meetingPersonName}</strong>
+                  </span>
+                )}
+              </div>
+              <div className="bg-white/95 p-3.5 rounded-xl border border-emerald-200/80 text-xs text-slate-800 font-semibold whitespace-pre-wrap leading-relaxed shadow-2xs">
+                {meetingPersonNotes || selectedMeeting?.meetingPersonNotes}
+              </div>
+            </div>
+          )}
+
           {/* Stepper Header */}
           {!isSubmitted && (
             <div className="mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
@@ -708,8 +737,8 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                                   <input type="number" placeholder="Enter dastavej rate" value={ppDastavejRate} onChange={(e) => setPpDastavejRate(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" min="0" />
                                 </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Document List Name</label>
-                                  <input type="text" placeholder="Enter dastavej name" value={ppDastavejName} onChange={(e) => setPpDastavejName(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Ownership Name</label>
+                                  <input type="text" placeholder="Enter ownership name" value={ppDastavejName} onChange={(e) => setPpDastavejName(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                               </>
                             )}
@@ -1318,15 +1347,18 @@ const [unsoldBV, setUnsoldBV] = useState(false);
 
                   {/* Optional Visit Remarks / Notes */}
                   <div className="pt-2 border-t border-slate-100">
-                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
-                      Visit Remarks / Discussion Notes (Optional)
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                        Visit Remarks / Discussion Notes (Optional)
+                      </label>
+                      <span className="text-[10px] text-slate-400 font-medium">Visible to employee & on meeting card</span>
+                    </div>
                     <textarea
-                      rows={3}
+                      rows={4}
                       value={meetingPersonNotes}
                       onChange={(e) => setMeetingPersonNotes(e.target.value)}
                       placeholder="Add any key notes, client feedback, or loan requirement discussion points..."
-                      className="w-full bg-slate-50/70 border border-slate-200 text-sm font-medium text-slate-800 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all resize-none shadow-2xs"
+                      className="w-full bg-slate-50/70 border border-slate-200 text-sm font-semibold text-slate-800 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all shadow-2xs leading-relaxed"
                     />
                   </div>
                 </div>

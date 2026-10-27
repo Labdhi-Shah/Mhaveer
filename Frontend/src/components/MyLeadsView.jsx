@@ -968,7 +968,7 @@ export default function MyLeadsView() {
                         <p className="font-extrabold text-slate-700 text-xs mt-0.5">{formatINR(viewLead.ppDastavejRate) || viewLead.ppDastavejRate || "N/A"}</p>
                       </div>
                       <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dastavej Name</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ownership Name</span>
                         <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.ppDastavejName || "N/A"}</p>
                       </div>
                     </div>
@@ -1264,6 +1264,25 @@ export default function MyLeadsView() {
                   {viewLead.remarks || <span className="text-slate-400 italic">No remarks recorded by employee.</span>}
                 </div>
               </div>
+
+              {/* 6. MANAGER VISIT REMARKS CARD (From Manager's Fill Form) */}
+              {(viewLead.meetingPersonNotes || viewLead.meetingPersonName) && (
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-5 border border-emerald-200 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between border-b border-emerald-200/80 pb-2 flex-wrap gap-2">
+                    <h4 className="text-xs font-black text-emerald-950 uppercase tracking-wider flex items-center gap-2">
+                      <FileText size={14} className="text-emerald-700" /> Manager Visit Remarks & Form Notes
+                    </h4>
+                    {viewLead.meetingPersonName && (
+                      <span className="text-[10px] font-extrabold text-emerald-800 bg-white px-2.5 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
+                        Client Met By: <strong>{viewLead.meetingPersonName}</strong>
+                      </span>
+                    )}
+                  </div>
+                  <div className="bg-white border border-emerald-100 rounded-xl p-4 min-h-[70px] text-xs leading-relaxed text-slate-800 whitespace-pre-wrap font-semibold shadow-2xs">
+                    {viewLead.meetingPersonNotes || <span className="text-slate-400 italic">No visit remarks recorded.</span>}
+                  </div>
+                </div>
+              )}
 
             </div>
 

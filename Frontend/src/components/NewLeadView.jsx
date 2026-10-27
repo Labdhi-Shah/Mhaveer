@@ -752,8 +752,8 @@ export default function NewLeadView() {
                       {errors.ppDastavejRate && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.ppDastavejRate.message}</p>}
                     </div>
                     <div>
-                      <label className={labelClass}>Document List Name</label>
-                      <input type="text" placeholder="Enter dastavej name" {...register("ppDastavejName", { required: "Dastavej name is required" })} className={getInputClass(errors.ppDastavejName)} />
+                      <label className={labelClass}>Ownership Name</label>
+                      <input type="text" placeholder="Enter ownership name" {...register("ppDastavejName", { required: "Ownership Name is required" })} className={getInputClass(errors.ppDastavejName)} />
                       {errors.ppDastavejName && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.ppDastavejName.message}</p>}
                     </div>
                   </>

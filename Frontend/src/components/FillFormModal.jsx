@@ -184,7 +184,7 @@ const [unsoldBV, setUnsoldBV] = useState(false);
   const isStep1Valid = () => {
     if (!loanType) return false;
     if (loanType === "Property Purchase Loan") return !!propertyPurchaseCategory && !!ppLocation && !!ppMarketRate && !!ppDastavejRate && !!ppDastavejName;
-    if (loanType === "Business Loan") { if (businessLoanType === "Unsecured" && (!businessStartingYear || !businessTypeOfWork)) return false; return !!businessLoanType && !!businessType; }
+    if (loanType === "Business Loan") { if (businessLoanType === "Unsecured" && !businessTypeOfWork) return false; return !!businessLoanType && !!businessType; }
     if (loanType === "Property Loan") {
       if (!propertyLoanCategory) return false;
       if (["Working Capital"].includes(propertyLoanCategory) && !propertyLocation) return false;
@@ -724,7 +724,7 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                               <>
                                 <div>
                                   <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Company Starting Year</label>
-                                  <input type="text" placeholder="Enter starting year" value={businessStartingYear} onChange={(e) => setBusinessStartingYear(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
+                                  <input type="text" placeholder="Enter starting year" value={businessStartingYear} onChange={(e) => setBusinessStartingYear(e.target.value)} className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                                 <div>
                                   <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Type of Work</label>

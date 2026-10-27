@@ -1044,7 +1044,7 @@ export default function NewLeadView() {
                 <>
                   <div>
                     <label className={labelClass}>Company Starting Year</label>
-                    <input type="text" placeholder="Enter starting year" {...register("businessStartingYear", { required: "Company Starting Year is required" })} className={getInputClass(errors.businessStartingYear)} />
+                    <input type="text" placeholder="Enter starting year" {...register("businessStartingYear")} className={getInputClass(errors.businessStartingYear)} />
                     {errors.businessStartingYear && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.businessStartingYear.message}</p>}
                   </div>
                   <div>

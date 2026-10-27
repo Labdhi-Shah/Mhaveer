@@ -924,11 +924,11 @@ export default function FollowUpView() {
                       {convertBusinessLoanType === "Unsecured" && (
                         <>
                           <div>
-                            <label className={labelClass}>Company Starting Year *</label>
+                            <label className={labelClass}>Company Starting Year</label>
                             <input
                               type="text"
                               placeholder="e.g. 2018"
-                              {...registerConvert("businessStartingYear", { required: "Starting Year is required" })}
+                              {...registerConvert("businessStartingYear")}
                               className={inputClass}
                             />
                             {errorsConvert.businessStartingYear && (

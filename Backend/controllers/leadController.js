@@ -316,43 +316,51 @@ exports.updateLead = async (req, res) => {
       return res.status(403).json({ success: false, message: "Not authorized to update this lead" });
     }
 
+    if (req.body.phoneNumber) {
+      req.body.phone = req.body.phoneNumber;
+    } else if (req.body.phone) {
+      req.body.phoneNumber = req.body.phone;
+    }
+
     lead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     });
 
-    if (lead.meetingDate) {
-      let meeting = await Meeting.findOne({ leadId: lead._id });
-      if (meeting) {
+    let meeting = await Meeting.findOne({ leadId: lead._id });
+    if (meeting) {
+      if (lead.meetingDate) {
         meeting.date = lead.meetingDate;
         meeting.time = lead.meetingTime || meeting.time;
-        meeting.customerName = lead.contactPerson || lead.companyName;
-        meeting.customerPhone = lead.phoneNumber;
         meeting.location = lead.address || "";
-        await meeting.save();
-      } else {
-        const newMeeting = new Meeting({
-          title: "Initial Consultation",
-          leadId: lead._id,
-          customerName: lead.contactPerson || lead.companyName,
-          customerPhone: lead.phoneNumber,
-          date: lead.meetingDate,
-          time: lead.meetingTime || "10:00 AM",
-          location: lead.address || "",
-          type: "Consultation",
-          status: "Scheduled",
-          notes: `Created from Lead Update. Interested: ${lead.interested}`,
-          employeeId: lead.employeeId || req.user.id,
-          employeeName: lead.employeeName || req.user.name || "Employee",
-          department: req.user.department || "",
-        });
-        await newMeeting.save();
-        // Auto-assign to Sales employee (non-fatal)
-        try {
-          await assignMeetingToSalesEmployee(newMeeting);
-        } catch (assignErr) {
-          console.error("[SalesAssignment] Lead update meeting assignment error:", assignErr.message);
-        }
+      }
+      meeting.customerName = lead.contactPerson || lead.companyName;
+      if (lead.phoneNumber) {
+        meeting.customerPhone = lead.phoneNumber;
+      }
+      await meeting.save();
+    } else if (lead.meetingDate) {
+      const newMeeting = new Meeting({
+        title: "Initial Consultation",
+        leadId: lead._id,
+        customerName: lead.contactPerson || lead.companyName,
+        customerPhone: lead.phoneNumber,
+        date: lead.meetingDate,
+        time: lead.meetingTime || "10:00 AM",
+        location: lead.address || "",
+        type: "Consultation",
+        status: "Scheduled",
+        notes: `Created from Lead Update. Interested: ${lead.interested}`,
+        employeeId: lead.employeeId || req.user.id,
+        employeeName: lead.employeeName || req.user.name || "Employee",
+        department: req.user.department || "",
+      });
+      await newMeeting.save();
+      // Auto-assign to Sales employee (non-fatal)
+      try {
+        await assignMeetingToSalesEmployee(newMeeting);
+      } catch (assignErr) {
+        console.error("[SalesAssignment] Lead update meeting assignment error:", assignErr.message);
       }
     }
 

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Search, Eye, Edit2, Trash2, Loader2, ArrowLeft, Filter, RefreshCw, AlertCircle, CheckCircle, Clock,
   Briefcase, User, DollarSign, Calendar, Phone, X,
-  Building2, Landmark, FileText, FileSpreadsheet
+  Building2, Landmark, FileText, FileSpreadsheet, Plus
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { downloadXLSX } from "../utils/fileDownloader";
@@ -102,6 +102,7 @@ export default function MyLeadsView() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [submittingEdit, setSubmittingEdit] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [editActivePhoneIndex, setEditActivePhoneIndex] = useState(0);
 
   const handleExportExcel = () => {
     if (!leads || leads.length === 0) {
@@ -216,9 +217,11 @@ export default function MyLeadsView() {
       clearErrors(["companyTurnover", "loanAmount", "loanType", "propertyLoanCategory"]);
     }
     if (isEditWrongNumber) {
-      clearErrors(["companyName", "contactPerson", "city", "state", "phone", "followUpDate", "followUpTime"]);
+      clearErrors(["companyName", "contactPerson", "city", "state", "phone", "phone0", "phone1", "phone2", "phone3", "followUpDate", "followUpTime"]);
     }
   }, [isEditAllMandatory, isEditWrongNumber, clearErrors]);
+
+
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -334,10 +337,21 @@ export default function MyLeadsView() {
   // Open edit modal and populate values
   const openEditModal = (lead) => {
     setEditLead(lead);
+    setEditActivePhoneIndex(0);
+
+    const rawPhones = (lead.phoneNumber || lead.phone || "")
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean);
+
     reset({
       companyName: lead.companyName,
       contactPerson: lead.contactPerson,
-      phone: lead.phone || lead.phoneNumber,
+      phone0: rawPhones[0] || "",
+      phone1: rawPhones[1] || "",
+      phone2: rawPhones[2] || "",
+      phone3: rawPhones[3] || "",
+      phone: rawPhones[0] || "",
       city: lead.city || "",
       state: lead.state || "",
       companyTurnover: lead.companyTurnover !== undefined ? lead.companyTurnover : lead.yearlyIncome,
@@ -370,12 +384,29 @@ export default function MyLeadsView() {
       }
 
       const isWrongNum = data.callStatus === "Wrong Number";
+
+      // Combine phone numbers into comma-separated string
+      const phoneNumbers = [data.phone0, data.phone1, data.phone2, data.phone3]
+        .filter(Boolean)
+        .map(s => String(s).trim())
+        .filter(Boolean)
+        .join(", ");
+
+      const primaryPhone = (data.phone0 && String(data.phone0).trim()) || (data.phone && String(data.phone).trim()) || "";
+
       const payload = {
         ...data,
-        phoneNumber: data.phone,
+        phoneNumber: isWrongNum ? (phoneNumbers || "Wrong Number") : (phoneNumbers || primaryPhone),
+        phone: isWrongNum ? (phoneNumbers || "Wrong Number") : (phoneNumbers || primaryPhone),
         companyTurnover: data.companyTurnover && !isNaN(parseFloat(data.companyTurnover)) ? parseFloat(data.companyTurnover) : undefined,
         loanAmount: data.loanAmount && !isNaN(parseFloat(data.loanAmount)) ? parseFloat(data.loanAmount) : undefined
       };
+
+      // Remove component helper fields before sending
+      delete payload.phone0;
+      delete payload.phone1;
+      delete payload.phone2;
+      delete payload.phone3;
 
       if (isWrongNum) {
         payload.interested = "No";
@@ -399,11 +430,14 @@ export default function MyLeadsView() {
       if (res.data.success) {
         showToast("Lead updated successfully!", "success");
         setEditLead(null);
+        if (viewLead && viewLead._id === editLead._id) {
+          setViewLead((prev) => ({ ...prev, ...res.data.data }));
+        }
         fetchLeads();
       }
     } catch (err) {
       console.error(err);
-      showToast("Failed to update lead.", "error");
+      showToast(err.response?.data?.message || "Failed to update lead.", "error");
     } finally {
       setSubmittingEdit(false);
     }
@@ -579,25 +613,30 @@ export default function MyLeadsView() {
                         {lead.followUpDate ? `${lead.followUpDate} ${lead.followUpTime || ""}` : "N/A"}
                       </td>
                       <td className="py-3.5 px-4 text-center">
-                        <div className="flex justify-center gap-1.5">
+                        <div className="flex items-center justify-center gap-1.5">
+                          {/* Quick View Profile Button */}
                           <button 
                             onClick={() => handleOpenViewLead(lead)}
-                            className="p-1.5 text-slate-400 hover:text-[#162335] hover:bg-slate-100 rounded-lg transition"
+                            className="p-1.5 text-slate-400 hover:text-[#162335] hover:bg-slate-100 rounded-lg transition cursor-pointer"
                             title="View Profile"
                           >
                             <Eye size={14} />
                           </button>
+
+                          {/* Quick Edit Lead Button */}
                           <button 
                             onClick={() => openEditModal(lead)}
-                            className="p-1.5 text-slate-400 hover:text-[#9ca3af] hover:bg-slate-100 rounded-lg transition"
+                            className="p-1.5 text-slate-400 hover:text-[#162335] hover:bg-slate-100 rounded-lg transition cursor-pointer"
                             title="Edit Lead"
                           >
                             <Edit2 size={14} />
                           </button>
+
+                          {/* Quick Delete Lead Button (Managers only) */}
                           {isManager && (
                             <button 
                               onClick={() => setDeleteConfirm(lead._id)}
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition"
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                               title="Delete Lead"
                             >
                               <Trash2 size={14} />
@@ -1286,21 +1325,133 @@ export default function MyLeadsView() {
                   {errors.contactPerson && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.contactPerson.message}</p>}
                 </div>
 
-                {/* Phone Number */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Phone Number *</label>
-                  <input
-                    type="tel"
-                    {...register("phone", { 
-                      required: "Phone is required",
-                      pattern: {
-                        value: /^[6-9]\d{9}$/,
-                        message: "10 digit mobile starting with 6-9 only"
+                {/* Phone Numbers Section */}
+                <div className="sm:col-span-2 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700">
+                        Phone Number {!isEditWrongNumber && "*"}
+                      </label>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        Add or update contact phone numbers for this lead
+                      </span>
+                    </div>
+
+                    {/* Phone Tabs (Phone 1, Phone 2, Phone 3, Phone 4) + Add Phone button */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {[0, 1, 2, 3].map((idx) => {
+                        const val = watch(`phone${idx}`);
+                        const isFilled = val && String(val).trim().length > 0;
+                        const isActive = editActivePhoneIndex === idx;
+                        const hasError = errors[`phone${idx}`];
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setEditActivePhoneIndex(idx)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border cursor-pointer ${
+                              isActive
+                                ? "bg-[#162335] text-white border-[#162335] shadow-xs"
+                                : hasError
+                                  ? "bg-rose-50 text-rose-600 border-rose-300"
+                                  : isFilled
+                                    ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
+                            }`}
+                          >
+                            <span>Phone {idx + 1}</span>
+                            {isFilled && (
+                              <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-emerald-400" : "bg-emerald-600"}`} />
+                            )}
+                          </button>
+                        );
+                      })}
+
+                      {(() => {
+                        const nextEmpty = [0, 1, 2, 3].find((i) => !watch(`phone${i}`));
+                        if (nextEmpty !== undefined && nextEmpty !== editActivePhoneIndex) {
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => setEditActivePhoneIndex(nextEmpty)}
+                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-[#162335] bg-white hover:bg-slate-100 border border-dashed border-slate-300 transition flex items-center gap-1 cursor-pointer"
+                              title="Add another phone number"
+                            >
+                              <Plus size={12} />
+                              <span>Add Phone</span>
+                            </button>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Active Phone Input */}
+                  {[0, 1, 2, 3].map((idx) => (
+                    <div key={idx} className={editActivePhoneIndex === idx ? "block" : "hidden"}>
+                      <div className="relative">
+                        <input
+                          type="tel"
+                          placeholder={idx === 0 ? "Enter primary 10-digit mobile number *" : `Enter Phone ${idx + 1} (optional 10-digit mobile)`}
+                          {...register(`phone${idx}`, {
+                            required: !isEditWrongNumber && idx === 0 ? "Primary phone is required" : false,
+                            pattern: {
+                              value: /^[6-9]\d{9}$/,
+                              message: "10 digit mobile starting with 6-9 only"
+                            }
+                          })}
+                          className={`w-full px-4 py-2 bg-white border rounded-xl text-xs outline-none focus:border-[#162335] ${
+                            errors[`phone${idx}`] ? "border-rose-455 bg-rose-50/20" : "border-slate-200"
+                          }`}
+                        />
+                        {watch(`phone${idx}`) && (
+                          <button
+                            type="button"
+                            onClick={() => setValue(`phone${idx}`, "", { shouldValidate: true, shouldDirty: true })}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 text-xs px-1 cursor-pointer"
+                            title="Clear this number"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                      {errors[`phone${idx}`] && (
+                        <p className="text-[10px] text-rose-500 mt-1 font-bold">
+                          {errors[`phone${idx}`].message}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Summary of all active phone numbers for this lead */}
+                  <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Numbers on Lead:
+                    </span>
+                    {(() => {
+                      const activeNums = [0, 1, 2, 3]
+                        .map((i) => ({ idx: i, num: watch(`phone${i}`) }))
+                        .filter((item) => item.num && String(item.num).trim());
+
+                      if (activeNums.length === 0) {
+                        return <span className="text-[10px] text-slate-400 italic">No numbers entered</span>;
                       }
-                    })}
-                    className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#162335] ${errors.phone ? "border-rose-455" : "border-slate-200"}`}
-                  />
-                  {errors.phone && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.phone.message}</p>}
+
+                      return activeNums.map(({ idx, num }) => (
+                        <span
+                          key={idx}
+                          onClick={() => setEditActivePhoneIndex(idx)}
+                          className="cursor-pointer inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-slate-700 border border-slate-200 hover:border-slate-300 shadow-2xs transition"
+                          title={`Click to edit Phone ${idx + 1}`}
+                        >
+                          <Phone size={9} className="text-slate-400" />
+                          <span className="text-slate-400 font-medium">Phone {idx + 1}:</span>
+                          <span className="font-mono">{num}</span>
+                        </span>
+                      ));
+                    })()}
+                  </div>
                 </div>
 
                 {/* City */}

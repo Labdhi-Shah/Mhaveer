@@ -121,6 +121,20 @@ const [unsoldBV, setUnsoldBV] = useState(false);
       if (selectedMeeting.leadId?.propertyPurchaseCategory && !propertyPurchaseCategory) {
         setPropertyPurchaseCategory(selectedMeeting.leadId.propertyPurchaseCategory);
       }
+
+      if (selectedMeeting._id) {
+        api.get(`/customers/by-meeting/${selectedMeeting._id}`)
+          .then(res => {
+            if (res.data?.success && res.data?.data) {
+              const c = res.data.data;
+              if (c.loanType) setLoanType(c.loanType);
+              if (c.propertyLoanType) setPropertyLoanType(c.propertyLoanType);
+              if (c.meetingPersonName) setMeetingPersonName(c.meetingPersonName);
+              if (c.meetingPersonNotes) setMeetingPersonNotes(c.meetingPersonNotes);
+            }
+          })
+          .catch(() => {});
+      }
     }
   }, [selectedMeeting]);
 
@@ -173,7 +187,7 @@ const [unsoldBV, setUnsoldBV] = useState(false);
     if (loanType === "Business Loan") { if (businessLoanType === "Unsecured" && (!businessStartingYear || !businessTypeOfWork)) return false; return !!businessLoanType && !!businessType; }
     if (loanType === "Property Loan") {
       if (!propertyLoanCategory) return false;
-      if (["Working Capital"].includes(propertyLoanCategory) && (!propertyLocation || !durationOfRentProperty)) return false;
+      if (["Working Capital"].includes(propertyLoanCategory) && !propertyLocation) return false;
       if (propertyLoanCategory === "LAP" && (!lapPropertyType || !lapPropertyLocation || !lapPropertyMarketValue || !lapPropertyWork || !lapPropertyDocumentList)) return false;
       if (propertyLoanCategory === "Unsold" && (!unsoldUnit || !unsoldMV || !unsoldBV || !unsoldScheme || !unsoldLocation || !unsoldFloor || !unsoldDastavej || !unsoldPartnership)) return false;
       if (propertyLoanCategory === "LRD" && (!lrdRent || !lrdMarketValue || !lrdLocation || !lrdLoiYear || !lrdSchemeName || !lrdDastavej)) return false;
@@ -337,7 +351,14 @@ const [unsoldBV, setUnsoldBV] = useState(false);
   // Submit Handler — POSTs to /api/customers/from-meeting as multipart/form-data
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    if (!isStep1Valid() || !isStep2Valid()) return;
+    if (!isStep1Valid() || !isStep2Valid()) {
+      if (!isStep1Valid()) {
+        setSubmitError("Please complete all required fields in Step 1 (Loan Requirement).");
+      } else if (!isStep2Valid()) {
+        setSubmitError("Please enter the name of the representative who met the client in Step 2.");
+      }
+      return;
+    }
 
     setIsSubmitting(true);
     setSubmitError("");
@@ -585,7 +606,7 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                   <div className="space-y-1.5 text-xs">
                     <p className="flex justify-between"><span className="text-slate-400">Loan Type:</span> <strong className="text-[#162335]">{loanType}</strong></p>
                     <p className="flex justify-between"><span className="text-slate-400">Lead Created By:</span> <strong className="text-[#162335] font-black">{leadCreatorEmployeeName}</strong></p>
-                    <p className="flex justify-between"><span className="text-slate-400">Pattern Name (Met Client):</span> <strong className="text-emerald-700 font-black">{meetingPersonName || "N/A"}</strong></p>
+                    <p className="flex justify-between"><span className="text-slate-400">Person Name (Met Client):</span> <strong className="text-emerald-700 font-black">{meetingPersonName || "N/A"}</strong></p>
                     {meetingPersonNotes && (
                       <p className="flex flex-col gap-0.5 pt-1 border-t border-slate-200">
                         <span className="text-slate-400 text-[10px] uppercase font-bold">Visit Remarks:</span>
@@ -775,16 +796,10 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                             </div>
                             
                             {propertyLoanCategory && ["Working Capital"].includes(propertyLoanCategory) && (
-                              <>
-                                <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Property Location</label>
-                                  <input type="text" placeholder="Enter location" value={propertyLocation} onChange={(e) => setPropertyLocation(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
-                                </div>
-                                <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Duration of Rent Property</label>
-                                  <input type="text" placeholder="e.g. 5 Years" value={durationOfRentProperty} onChange={(e) => setDurationOfRentProperty(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
-                                </div>
-                              </>
+                              <div>
+                                <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Property Location</label>
+                                <input type="text" placeholder="Enter location" value={propertyLocation} onChange={(e) => setPropertyLocation(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
+                              </div>
                             )}
 
                             {propertyLoanCategory === "LAP" && (
@@ -1269,7 +1284,7 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
-                          Pattern Name (Who Met Client) <span className="text-rose-500">*</span>
+                          Person Name (Who Met Client) <span className="text-rose-500">*</span>
                         </label>
                         <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                           Enter Manually

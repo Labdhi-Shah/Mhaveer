@@ -125,7 +125,9 @@ exports.getLeads = async (req, res) => {
       query.$or = [
         { companyName: { $regex: search, $options: "i" } },
         { contactPerson: { $regex: search, $options: "i" } },
-        { leadId: { $regex: search, $options: "i" } }
+        { leadId: { $regex: search, $options: "i" } },
+        { employeeName: { $regex: search, $options: "i" } },
+        { employeeCode: { $regex: search, $options: "i" } }
       ];
     }
     
@@ -172,7 +174,13 @@ exports.getLeads = async (req, res) => {
     let leads = await Lead.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
 
     // Enrich any lead that might be missing employeeName or officialEmail
-    const missingEmpIds = [...new Set(leads.filter(l => l.employeeId && (!l.employeeName || !l.officialEmail)).map(l => l.employeeId.toString()))];
+    const missingEmpIds = [
+      ...new Set(
+        leads
+          .filter(l => (!l.employeeName || !l.officialEmail) && (l.employeeId || (l.createdBy && l.createdBy !== "System")))
+          .map(l => (l.employeeId || l.createdBy).toString())
+      )
+    ];
     if (missingEmpIds.length > 0) {
       const mongoose = require("mongoose");
       const validObjectIds = missingEmpIds.filter(id => mongoose.Types.ObjectId.isValid(id));
@@ -190,8 +198,9 @@ exports.getLeads = async (req, res) => {
       });
 
       leads = leads.map(l => {
-        if (l.employeeId) {
-          const emp = empMap.get(l.employeeId.toString()) || empMap.get(l.employeeId);
+        const targetEmpId = l.employeeId ? l.employeeId.toString() : (l.createdBy && l.createdBy !== "System" ? l.createdBy.toString() : null);
+        if (targetEmpId) {
+          const emp = empMap.get(targetEmpId) || (l.employeeId ? empMap.get(l.employeeId.toString()) : null);
           if (emp) {
             return {
               ...l,

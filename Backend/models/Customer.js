@@ -19,7 +19,7 @@ const customerSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: true
+      default: ""
     },
     email: {
       type: String,
@@ -62,20 +62,19 @@ const customerSchema = new mongoose.Schema(
     // ── Source Reference ─────────────────────────────────────────────────────
     // The Meeting this form was filled for (nullable — can also be standalone)
     meetingId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed,
       ref: "Meeting",
       default: null
     },
 
     // ── Sales Rep ────────────────────────────────────────────────────────────
     salesRepresentativeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Employee",
-      required: true
+      type: mongoose.Schema.Types.Mixed,
+      default: null
     },
     salesRepresentativeName: {
       type: String,
-      required: true
+      default: "Sales Representative"
     },
 
     // ── Meeting & Representative Details ─────────────────────────────────────

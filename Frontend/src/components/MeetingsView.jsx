@@ -845,14 +845,22 @@ export default function MeetingsView() {
                   {/* Action Buttons */}
                   <div className="border-t border-slate-100 pt-3 mt-4 flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-3">
-                      {isManager && (
+                      {meeting.status === "Completed" && meeting.meetingPersonName ? (
+                        <button
+                          onClick={() => handleFillFormForCard(meeting)}
+                          className="px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 cursor-pointer"
+                          title="Form submitted — Click to view or update application"
+                        >
+                          <CheckCircle size={13} className="text-emerald-600" /> Form Submitted
+                        </button>
+                      ) : isManager ? (
                         <button
                           onClick={() => handleFillFormForCard(meeting)}
                           className="px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-xs bg-[#162335] hover:bg-[#162335]/90 text-[#9ca3af] cursor-pointer"
                         >
                           <ClipboardList size={13} /> Fill Form
                         </button>
-                      )}
+                      ) : null}
 
                       <div className="flex gap-1.5">
                         {isManager && (
@@ -1109,7 +1117,11 @@ export default function MeetingsView() {
             isOpen={isFormOpen} 
             onClose={(wasSubmitted) => {
               setIsFormOpen(false);
-              if (wasSubmitted) fetchMeetings();
+              setSelectedMeeting(null);
+              if (wasSubmitted) {
+                fetchMeetings();
+                showToast("Meeting form submitted and marked as Completed!", "success");
+              }
             }} 
             selectedMeeting={selectedMeeting} 
           />

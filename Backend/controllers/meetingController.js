@@ -55,12 +55,17 @@ exports.getMeetings = async (req, res) => {
       query = { employeeId: userId };
     }
 
-    // Auto-update logic: mark past Scheduled meetings as Completed
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Revert any meetings falsely auto-completed in the past without a form/person name
     await Meeting.updateMany(
-      { date: { $lt: today }, status: "Scheduled" },
-      { $set: { status: "Completed" } }
+      {
+        status: "Completed",
+        $or: [
+          { meetingPersonName: { $exists: false } },
+          { meetingPersonName: "" },
+          { meetingPersonName: null }
+        ]
+      },
+      { $set: { status: "Scheduled" } }
     );
 
     const meetings = await Meeting.find(query)

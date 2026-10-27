@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
+const mongoose = require("mongoose");
 const Customer = require("../models/Customer");
 const { emitDataChange } = require("../services/websocket");
 
@@ -400,9 +401,23 @@ exports.submitMeetingForm = (req, res) => {
         });
       }
 
+      if (!meetingPersonName || !meetingPersonName.trim()) {
+        if (req.files) {
+          Object.values(req.files).flat().forEach((f) => {
+            if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
+          });
+        }
+        return res.status(400).json({
+          success: false,
+          message: "Person name (who met client) is required to submit and complete the meeting."
+        });
+      }
+
+      const isValidMeetingId = meetingId && mongoose.Types.ObjectId.isValid(meetingId);
+
       // Check if customer already exists for this meeting, update if exists, otherwise create new
       let customer = null;
-      if (meetingId) {
+      if (isValidMeetingId) {
         customer = await Customer.findOne({ meetingId });
       }
 
@@ -428,7 +443,7 @@ exports.submitMeetingForm = (req, res) => {
 
       let finalLoanAmount = 0;
       let finalCibilScore = cibilScore || "";
-      if (meetingId) {
+      if (isValidMeetingId) {
         const Meeting = require("../models/Meeting");
         const Lead = require("../models/Lead");
         const meeting = await Meeting.findById(meetingId);
@@ -443,6 +458,9 @@ exports.submitMeetingForm = (req, res) => {
         }
       }
 
+      const salesRepId = req.user?.id || req.user?._id || "manager";
+      const salesRepName = req.user?.name || req.user?.fullName || "Sales Officer";
+
       if (customer) {
         customer.fullName = customerName;
         if (customerPhone) customer.phone = customerPhone;
@@ -450,8 +468,8 @@ exports.submitMeetingForm = (req, res) => {
         if (finalLoanAmount) customer.loanAmount = finalLoanAmount;
         if (propertyLoanType) customer.propertyLoanType = propertyLoanType;
         if (finalCibilScore) customer.cibilScore = finalCibilScore;
-        customer.salesRepresentativeId = req.user.id;
-        customer.salesRepresentativeName = req.user.name || req.user.fullName || "Sales Officer";
+        customer.salesRepresentativeId = salesRepId;
+        customer.salesRepresentativeName = salesRepName;
         customer.meetingPersonName = meetingPersonName || customer.meetingPersonName || "";
         customer.meetingPersonNotes = meetingPersonNotes || customer.meetingPersonNotes || "";
         customer.leadCreatedByName = leadCreatedByName || customer.leadCreatedByName || "";
@@ -460,15 +478,15 @@ exports.submitMeetingForm = (req, res) => {
       } else {
         customer = new Customer({
           fullName: customerName,
-          phone: customerPhone || "",
+          phone: customerPhone || "N/A",
           email: "",
           loanType,
           loanAmount: finalLoanAmount,
           propertyLoanType: propertyLoanType || "",
           cibilScore: finalCibilScore,
-          meetingId: meetingId || null,
-          salesRepresentativeId: req.user.id,
-          salesRepresentativeName: req.user.name || req.user.fullName || "Sales Officer",
+          meetingId: isValidMeetingId ? meetingId : null,
+          salesRepresentativeId: salesRepId,
+          salesRepresentativeName: salesRepName,
           status: "Pending Verification",
           eligibility: {
             age: eligibility_age || "",
@@ -488,10 +506,10 @@ exports.submitMeetingForm = (req, res) => {
         await customer.save();
       }
 
-      console.log(`[FillForm] Customer application saved: ${customer._id} by ${req.user.name} for meeting ${meetingId || "N/A"}`);
+      console.log(`[FillForm] Customer application saved: ${customer._id} by ${salesRepName} for meeting ${meetingId || "N/A"}`);
 
       // Update the associated meeting status to "Completed"
-      if (meetingId) {
+      if (isValidMeetingId) {
         const Meeting = require("../models/Meeting");
         const updatedMeeting = await Meeting.findByIdAndUpdate(
           meetingId,
@@ -511,6 +529,23 @@ exports.submitMeetingForm = (req, res) => {
           userId: req.user.id,
           role: req.user.role,
         });
+
+        // Also update associated lead if exists
+        if (updatedMeeting && updatedMeeting.leadId) {
+          const Lead = require("../models/Lead");
+          await Lead.findByIdAndUpdate(updatedMeeting.leadId, {
+            status: "Meeting Done",
+            meetingPersonName: meetingPersonName || "",
+            meetingPersonNotes: meetingPersonNotes || ""
+          });
+          emitDataChange({
+            entity: "lead",
+            action: "update",
+            id: updatedMeeting.leadId,
+            userId: req.user.id,
+            role: req.user.role,
+          });
+        }
       }
 
       emitDataChange({
@@ -521,8 +556,6 @@ exports.submitMeetingForm = (req, res) => {
         userId: req.user.id,
         role: req.user.role,
       });
-
-      // Auto-assign to Credit Department removed
 
       res.status(201).json({
         success: true,
@@ -542,4 +575,20 @@ exports.submitMeetingForm = (req, res) => {
       res.status(500).json({ success: false, message: error.message || "Internal Server Error" });
     }
   });
+};
+
+// @desc    Get customer by meeting ID
+// @route   GET /api/customers/by-meeting/:meetingId
+exports.getCustomerByMeetingId = async (req, res) => {
+  try {
+    const { meetingId } = req.params;
+    if (!meetingId) {
+      return res.status(400).json({ success: false, message: "Meeting ID is required" });
+    }
+    const customer = await Customer.findOne({ meetingId });
+    res.status(200).json({ success: true, data: customer || null });
+  } catch (error) {
+    console.error("Get Customer by Meeting ID Error:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
 };

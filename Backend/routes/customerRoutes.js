@@ -11,6 +11,7 @@ const {
   deleteDocument,
   deleteCustomer,
   submitMeetingForm,
+  getCustomerByMeetingId,
 } = require("../controllers/customerController");
 
 // Protect all routes with authMiddleware
@@ -18,6 +19,7 @@ router.use(authMiddleware);
 
 // ── Fill Form: single multipart endpoint (must be before /:id) ────────────
 router.post("/from-meeting", submitMeetingForm);
+router.get("/by-meeting/:meetingId", getCustomerByMeetingId);
 
 // ── Customer CRUD ─────────────────────────────────────────────────────────
 router.post("/", registerCustomer);

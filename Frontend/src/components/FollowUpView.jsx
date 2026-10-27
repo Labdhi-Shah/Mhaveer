@@ -1,14 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Clock, Phone, Loader2, Calendar, AlertCircle, CheckCircle, Eye, X, Search, 
-  Building2, User, DollarSign, MapPin, FileText, ChevronDown, Check, Briefcase, 
-  ShieldCheck, ArrowRight, ThumbsUp, ThumbsDown
+  Building2, User, UserCheck, DollarSign, MapPin, FileText, ChevronDown, Check, Briefcase, 
+  ShieldCheck, ArrowRight, ThumbsUp, ThumbsDown, Filter
 } from "lucide-react";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
-import { getMergedLeadsAndStats } from "../utils/hierarchy";
+import { getMergedLeadsAndStats, getUserRole } from "../utils/hierarchy";
 import socket from "../utils/socket";
 
 const formatFriendlyDate = (dateStr) => {
@@ -52,9 +52,13 @@ const getTurnoverInINR = (amount, unit) => {
 
 export default function FollowUpView() {
   const { user } = useAuth();
+  const role = getUserRole(user);
+  const isManager = role === "Manager";
+
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [selectedEmployee, setSelectedEmployee] = useState("All");
   const [toast, setToast] = useState(null);
 
   // Modals state
@@ -91,7 +95,7 @@ export default function FollowUpView() {
   const fetchFollowups = async (showLoading = true) => {
     if (showLoading) setLoading(true);
     try {
-      const res = await api.get("/leads?limit=100");
+      const res = await api.get("/leads?limit=1000");
       if (res.data.success) {
         const ownLeads = res.data.data.map(lead => ({
           ...lead,
@@ -391,8 +395,40 @@ export default function FollowUpView() {
     }
   };
 
+  const getLeadEmployee = (lead) => {
+    const name =
+      lead?.employeeName ||
+      (typeof lead?.employeeId === "object" ? lead?.employeeId?.name : null) ||
+      (lead?.createdBy && lead?.createdBy !== "System" ? lead?.createdBy : null) ||
+      "Unassigned";
+    const code =
+      lead?.employeeCode ||
+      (typeof lead?.employeeId === "object" ? lead?.employeeId?.employeeId : null) ||
+      "";
+    const email =
+      lead?.officialEmail ||
+      (typeof lead?.employeeId === "object" ? lead?.employeeId?.officialEmail : null) ||
+      "";
+    return { name, code, email };
+  };
+
+  const employeeOptions = useMemo(() => {
+    const set = new Set();
+    leads.forEach((l) => {
+      const emp = getLeadEmployee(l);
+      if (emp.name && emp.name !== "Unassigned" && emp.name !== "System") {
+        set.add(emp.name);
+      }
+    });
+    return Array.from(set).sort();
+  }, [leads]);
+
   // Filtered Leads
   const filteredLeads = leads.filter(lead => {
+    const emp = getLeadEmployee(lead);
+    if (selectedEmployee !== "All" && emp.name !== selectedEmployee) {
+      return false;
+    }
     if (!search) return true;
     const s = search.toLowerCase();
     return (
@@ -400,7 +436,9 @@ export default function FollowUpView() {
       (lead.contactPerson || "").toLowerCase().includes(s) ||
       (lead.leadId || "").toLowerCase().includes(s) ||
       (lead.phone || "").toLowerCase().includes(s) ||
-      (lead.city || "").toLowerCase().includes(s)
+      (lead.city || "").toLowerCase().includes(s) ||
+      emp.name.toLowerCase().includes(s) ||
+      emp.code.toLowerCase().includes(s)
     );
   });
 
@@ -449,21 +487,46 @@ export default function FollowUpView() {
           </p>
         </div>
 
-        {/* Search */}
-        <div className="relative min-w-[260px]">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search follow-ups..."
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-700 outline-none focus:border-[#162335] focus:bg-white transition"
-          />
-          {search && (
-            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-              <X size={14} />
-            </button>
+        {/* Search & Employee Filter */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 min-w-[280px]">
+          {/* Employee Filter */}
+          {employeeOptions.length > 0 && (
+            <div className="relative">
+              <select
+                value={selectedEmployee}
+                onChange={(e) => setSelectedEmployee(e.target.value)}
+                className="w-full sm:w-auto appearance-none bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 pr-9 text-xs font-bold text-slate-700 outline-none focus:border-[#162335] cursor-pointer"
+              >
+                <option value="All">All Employees ({leads.length})</option>
+                {employeeOptions.map(name => {
+                  const count = leads.filter(l => getLeadEmployee(l).name === name).length;
+                  return (
+                    <option key={name} value={name}>
+                      {name} ({count})
+                    </option>
+                  );
+                })}
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
           )}
+
+          {/* Search */}
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by company, contact, employee..."
+              className="w-full pl-10 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-700 outline-none focus:border-[#162335] focus:bg-white transition"
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <X size={14} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -506,6 +569,33 @@ export default function FollowUpView() {
                     <User size={13} className="text-slate-400" /> {lead.contactPerson}
                   </p>
                 </div>
+
+                {/* Employee / Agent Name */}
+                {(() => {
+                  const emp = getLeadEmployee(lead);
+                  return (
+                    <div className="flex items-center justify-between text-xs bg-purple-50/70 border border-purple-100 p-2.5 rounded-2xl">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-6 h-6 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                          <User size={12} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[9px] text-purple-700 font-black uppercase tracking-wider leading-none">
+                            Employee / Telecaller
+                          </p>
+                          <p className="font-black text-[#162335] text-xs truncate mt-0.5" title={emp.name}>
+                            {emp.name}
+                            {emp.code ? (
+                              <span className="text-[10px] font-mono text-slate-500 font-normal ml-1">
+                                ({emp.code})
+                              </span>
+                            ) : null}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Follow-up Timing Card */}
                 <div className="bg-amber-50/70 p-3 rounded-2xl border border-amber-200/70 text-xs">
@@ -618,7 +708,7 @@ export default function FollowUpView() {
                 className="overflow-y-auto p-6 space-y-6 custom-scrollbar flex-1"
               >
                 {/* Client Overview Card */}
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-xs">
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase">Company</span>
                     <p className="font-black text-slate-800 mt-0.5">{convertingLead.companyName}</p>
@@ -626,6 +716,12 @@ export default function FollowUpView() {
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase">Contact Person</span>
                     <p className="font-bold text-slate-800 mt-0.5">{convertingLead.contactPerson}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-purple-700 uppercase">Employee</span>
+                    <p className="font-bold text-[#162335] mt-0.5 truncate">
+                      {getLeadEmployee(convertingLead).name}
+                    </p>
                   </div>
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase">Phone</span>
@@ -1231,6 +1327,34 @@ export default function FollowUpView() {
               </div>
 
               <div className="p-6 overflow-y-auto space-y-4 text-xs custom-scrollbar">
+                {/* Employee / Telecaller Info Box */}
+                {(() => {
+                  const emp = getLeadEmployee(viewingLead);
+                  return (
+                    <div className="bg-purple-50/70 p-3.5 rounded-2xl border border-purple-100 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm shrink-0 shadow-2xs">
+                          <User size={14} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-black text-purple-700 uppercase tracking-wider">Employee / Telecaller</p>
+                          <p className="text-xs font-black text-[#162335] truncate mt-0.5">
+                            {emp.name}
+                          </p>
+                          {emp.email && (
+                            <p className="text-[10px] text-slate-500 font-medium truncate">{emp.email}</p>
+                          )}
+                        </div>
+                      </div>
+                      {emp.code && (
+                        <span className="font-mono text-[11px] font-bold bg-white text-purple-700 border border-purple-200 px-2.5 py-1 rounded-xl shrink-0">
+                          {emp.code}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2">
                   <p className="text-[10px] font-black text-slate-400 uppercase">Company Information</p>
                   <p className="text-sm font-black text-slate-800">{viewingLead.companyName}</p>

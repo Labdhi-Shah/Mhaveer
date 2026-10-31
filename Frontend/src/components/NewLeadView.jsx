@@ -724,7 +724,7 @@ export default function NewLeadView() {
               <>
                 <div>
                   <label className={labelClass}>Type of Category</label>
-                  <select {...register("propertyPurchaseCategory", { required: "Category is required" })} className={getInputClass(errors.propertyPurchaseCategory)}>
+                  <select {...register("propertyPurchaseCategory")} className={getInputClass(errors.propertyPurchaseCategory)}>
                     <option value="">Select Category</option>
                     <option value="Home">Home</option>
                     <option value="NA Plot">NA Plot</option>
@@ -738,22 +738,22 @@ export default function NewLeadView() {
                   <>
                     <div>
                       <label className={labelClass}>Property of Location</label>
-                      <input type="text" placeholder="Enter location" {...register("ppLocation", { required: "Location is required" })} className={getInputClass(errors.ppLocation)} />
+                      <input type="text" placeholder="Enter location" {...register("ppLocation")} className={getInputClass(errors.ppLocation)} />
                       {errors.ppLocation && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.ppLocation.message}</p>}
                     </div>
                     <div>
                       <label className={labelClass}>Market Rate</label>
-                      <input type="number" placeholder="Enter market rate" {...register("ppMarketRate", { required: "Market rate is required", min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.ppMarketRate)} />
+                      <input type="number" placeholder="Enter market rate" {...register("ppMarketRate", { min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.ppMarketRate)} />
                       {errors.ppMarketRate && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.ppMarketRate.message}</p>}
                     </div>
                     <div>
                       <label className={labelClass}>Document List Rate</label>
-                      <input type="number" placeholder="Enter dastavej rate" {...register("ppDastavejRate", { required: "Dastavej rate is required", min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.ppDastavejRate)} />
+                      <input type="number" placeholder="Enter dastavej rate" {...register("ppDastavejRate", { min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.ppDastavejRate)} />
                       {errors.ppDastavejRate && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.ppDastavejRate.message}</p>}
                     </div>
                     <div>
                       <label className={labelClass}>Ownership Name</label>
-                      <input type="text" placeholder="Enter ownership name" {...register("ppDastavejName", { required: "Ownership Name is required" })} className={getInputClass(errors.ppDastavejName)} />
+                      <input type="text" placeholder="Enter ownership name" {...register("ppDastavejName")} className={getInputClass(errors.ppDastavejName)} />
                       {errors.ppDastavejName && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.ppDastavejName.message}</p>}
                     </div>
                   </>
@@ -765,7 +765,7 @@ export default function NewLeadView() {
               <>
                 <div>
                   <label className={labelClass}>Property Loan Category</label>
-                  <select {...register("propertyLoanCategory", { required: "Property Loan Category is required" })} className={getInputClass(errors.propertyLoanCategory)}>
+                  <select {...register("propertyLoanCategory")} className={getInputClass(errors.propertyLoanCategory)}>
                     <option value="">Select Category</option>
                     <option value="Working Capital">Working Capital</option>
                     <option value="LAP">LAP</option>
@@ -779,12 +779,12 @@ export default function NewLeadView() {
                   <>
                     <div>
                       <label className={labelClass}>Property Location</label>
-                      <input type="text" placeholder="Enter location" {...register("propertyLocation", { required: "Property Location is required" })} className={getInputClass(errors.propertyLocation)} />
+                      <input type="text" placeholder="Enter location" {...register("propertyLocation")} className={getInputClass(errors.propertyLocation)} />
                       {errors.propertyLocation && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.propertyLocation.message}</p>}
                     </div>
                     <div>
                       <label className={labelClass}>Duration of Rent Property</label>
-                      <input type="text" placeholder="e.g. 5 Years" {...register("durationOfRentProperty", { required: "Duration is required" })} className={getInputClass(errors.durationOfRentProperty)} />
+                      <input type="text" placeholder="e.g. 5 Years" {...register("durationOfRentProperty")} className={getInputClass(errors.durationOfRentProperty)} />
                       {errors.durationOfRentProperty && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.durationOfRentProperty.message}</p>}
                     </div>
                   </>
@@ -796,12 +796,12 @@ export default function NewLeadView() {
               <>
                 <div>
                   <label className={labelClass}>Unit</label>
-                  <input type="text" placeholder="Enter unit" {...register("unsoldUnit", { required: "Unit is required" })} className={getInputClass(errors.unsoldUnit)} />
+                  <input type="text" placeholder="Enter unit" {...register("unsoldUnit")} className={getInputClass(errors.unsoldUnit)} />
                   {errors.unsoldUnit && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.unsoldUnit.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Property Market Value</label>
-                  <input type="number" placeholder="Enter M.V" {...register("unsoldMV", { required: "M.V is required", min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.unsoldMV)} />
+                  <input type="number" placeholder="Enter M.V" {...register("unsoldMV", { min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.unsoldMV)} />
                   {errors.unsoldMV && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.unsoldMV.message}</p>}
                 </div>
                 
@@ -849,27 +849,27 @@ export default function NewLeadView() {
                 </div>
                 <div>
                   <label className={labelClass}>Scheme Name</label>
-                  <input type="text" placeholder="Enter scheme" {...register("unsoldScheme", { required: "Scheme Name is required" })} className={getInputClass(errors.unsoldScheme)} />
+                  <input type="text" placeholder="Enter scheme" {...register("unsoldScheme")} className={getInputClass(errors.unsoldScheme)} />
                   {errors.unsoldScheme && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.unsoldScheme.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Property of Location</label>
-                  <input type="text" placeholder="Enter location" {...register("unsoldLocation", { required: "Location is required" })} className={getInputClass(errors.unsoldLocation)} />
+                  <input type="text" placeholder="Enter location" {...register("unsoldLocation")} className={getInputClass(errors.unsoldLocation)} />
                   {errors.unsoldLocation && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.unsoldLocation.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Floor</label>
-                  <input type="text" placeholder="Enter floor" {...register("unsoldFloor", { required: "Floor is required" })} className={getInputClass(errors.unsoldFloor)} />
+                  <input type="text" placeholder="Enter floor" {...register("unsoldFloor")} className={getInputClass(errors.unsoldFloor)} />
                   {errors.unsoldFloor && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.unsoldFloor.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Document List</label>
-                  <input type="text" placeholder="Enter dastavej" {...register("unsoldDastavej", { required: "Dastavej is required" })} className={getInputClass(errors.unsoldDastavej)} />
+                  <input type="text" placeholder="Enter dastavej" {...register("unsoldDastavej")} className={getInputClass(errors.unsoldDastavej)} />
                   {errors.unsoldDastavej && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.unsoldDastavej.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Partnership</label>
-                  <input type="text" placeholder="Enter partnership" {...register("unsoldPartnership", { required: "Partnership is required" })} className={getInputClass(errors.unsoldPartnership)} />
+                  <input type="text" placeholder="Enter partnership" {...register("unsoldPartnership")} className={getInputClass(errors.unsoldPartnership)} />
                   {errors.unsoldPartnership && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.unsoldPartnership.message}</p>}
                 </div>
               </>
@@ -879,32 +879,32 @@ export default function NewLeadView() {
               <>
                 <div>
                   <label className={labelClass}>Rent</label>
-                  <input type="number" placeholder="Enter rent" {...register("lrdRent", { required: "Rent is required", min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.lrdRent)} />
+                  <input type="number" placeholder="Enter rent" {...register("lrdRent", { min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.lrdRent)} />
                   {errors.lrdRent && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lrdRent.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Market Value</label>
-                  <input type="number" placeholder="Enter market value" {...register("lrdMarketValue", { required: "Market Value is required", min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.lrdMarketValue)} />
+                  <input type="number" placeholder="Enter market value" {...register("lrdMarketValue", { min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.lrdMarketValue)} />
                   {errors.lrdMarketValue && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lrdMarketValue.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Property of Location</label>
-                  <input type="text" placeholder="Enter location" {...register("lrdLocation", { required: "Location is required" })} className={getInputClass(errors.lrdLocation)} />
+                  <input type="text" placeholder="Enter location" {...register("lrdLocation")} className={getInputClass(errors.lrdLocation)} />
                   {errors.lrdLocation && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lrdLocation.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>LOI Year</label>
-                  <input type="text" placeholder="Enter LOI year" {...register("lrdLoiYear", { required: "LOI Year is required" })} className={getInputClass(errors.lrdLoiYear)} />
+                  <input type="text" placeholder="Enter LOI year" {...register("lrdLoiYear")} className={getInputClass(errors.lrdLoiYear)} />
                   {errors.lrdLoiYear && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lrdLoiYear.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Scheme Name</label>
-                  <input type="text" placeholder="Enter scheme name" {...register("lrdSchemeName", { required: "Scheme Name is required" })} className={getInputClass(errors.lrdSchemeName)} />
+                  <input type="text" placeholder="Enter scheme name" {...register("lrdSchemeName")} className={getInputClass(errors.lrdSchemeName)} />
                   {errors.lrdSchemeName && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lrdSchemeName.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Document List</label>
-                  <input type="text" placeholder="Enter dastavej" {...register("lrdDastavej", { required: "Dastavej is required" })} className={getInputClass(errors.lrdDastavej)} />
+                  <input type="text" placeholder="Enter dastavej" {...register("lrdDastavej")} className={getInputClass(errors.lrdDastavej)} />
                   {errors.lrdDastavej && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lrdDastavej.message}</p>}
                 </div>
               </>
@@ -914,12 +914,12 @@ export default function NewLeadView() {
               <>
                 <div>
                   <label className={labelClass}>Property of Location</label>
-                  <input type="text" placeholder="Enter location" {...register("naPlotLocation", { required: "Location is required" })} className={getInputClass(errors.naPlotLocation)} />
+                  <input type="text" placeholder="Enter location" {...register("naPlotLocation")} className={getInputClass(errors.naPlotLocation)} />
                   {errors.naPlotLocation && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.naPlotLocation.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Property Market Value</label>
-                  <input type="number" placeholder="Enter M.V" {...register("naPlotMV", { required: "Property Market Value is required", min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.naPlotMV)} />
+                  <input type="number" placeholder="Enter M.V" {...register("naPlotMV", { min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.naPlotMV)} />
                   {errors.naPlotMV && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.naPlotMV.message}</p>}
                 </div>
                 <div className="hidden">
@@ -927,17 +927,17 @@ export default function NewLeadView() {
                 </div>
                 <div>
                   <label className={labelClass}>Document List</label>
-                  <input type="text" placeholder="Enter dastavej" {...register("naPlotDastavej", { required: "Dastavej is required" })} className={getInputClass(errors.naPlotDastavej)} />
+                  <input type="text" placeholder="Enter dastavej" {...register("naPlotDastavej")} className={getInputClass(errors.naPlotDastavej)} />
                   {errors.naPlotDastavej && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.naPlotDastavej.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>VAR</label>
-                  <input type="text" placeholder="Enter VAR" {...register("naPlotVAR", { required: "VAR is required" })} className={getInputClass(errors.naPlotVAR)} />
+                  <input type="text" placeholder="Enter VAR" {...register("naPlotVAR")} className={getInputClass(errors.naPlotVAR)} />
                   {errors.naPlotVAR && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.naPlotVAR.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Scheme Name</label>
-                  <input type="text" placeholder="Enter scheme" {...register("naPlotScheme", { required: "Scheme Name is required" })} className={getInputClass(errors.naPlotScheme)} />
+                  <input type="text" placeholder="Enter scheme" {...register("naPlotScheme")} className={getInputClass(errors.naPlotScheme)} />
                   {errors.naPlotScheme && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.naPlotScheme.message}</p>}
                 </div>
                 <div className="hidden">
@@ -992,7 +992,7 @@ export default function NewLeadView() {
               <>
                 <div>
                   <label className={labelClass}>Property Type</label>
-                  <select {...register("lapPropertyType", { required: "Property Type is required" })} className={getInputClass(errors.lapPropertyType)}>
+                  <select {...register("lapPropertyType")} className={getInputClass(errors.lapPropertyType)}>
                     <option value="">Select Property Type</option>
                     <option value="Commercial">Commercial</option>
                     <option value="Residential">Residential</option>
@@ -1004,22 +1004,22 @@ export default function NewLeadView() {
                   <>
                     <div>
                       <label className={labelClass}>Property Location</label>
-                      <input type="text" placeholder="Enter location" {...register("lapPropertyLocation", { required: "Location is required" })} className={getInputClass(errors.lapPropertyLocation)} />
+                      <input type="text" placeholder="Enter location" {...register("lapPropertyLocation")} className={getInputClass(errors.lapPropertyLocation)} />
                       {errors.lapPropertyLocation && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lapPropertyLocation.message}</p>}
                     </div>
                     <div>
                       <label className={labelClass}>Property Market Value</label>
-                      <input type="number" placeholder="Enter market value" {...register("lapPropertyMarketValue", { required: "Market value is required", min: { value: 1, message: "Value must be positive" } })} className={getInputClass(errors.lapPropertyMarketValue)} />
+                      <input type="number" placeholder="Enter market value" {...register("lapPropertyMarketValue", { min: { value: 0, message: "Value must be positive" } })} className={getInputClass(errors.lapPropertyMarketValue)} />
                       {errors.lapPropertyMarketValue && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lapPropertyMarketValue.message}</p>}
                     </div>
                       <div>
                         <label className={labelClass}>Work</label>
-                        <input type="text" placeholder="Enter work" {...register("lapPropertyWork", { required: "Work is required" })} className={getInputClass(errors.lapPropertyWork)} />
+                        <input type="text" placeholder="Enter work" {...register("lapPropertyWork")} className={getInputClass(errors.lapPropertyWork)} />
                         {errors.lapPropertyWork && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lapPropertyWork.message}</p>}
                       </div>
                       <div>
                         <label className={labelClass}>Document List</label>
-                        <input type="text" placeholder="Enter document list" {...register("lapPropertyDocumentList", { required: "Document List is required" })} className={getInputClass(errors.lapPropertyDocumentList)} />
+                        <input type="text" placeholder="Enter document list" {...register("lapPropertyDocumentList")} className={getInputClass(errors.lapPropertyDocumentList)} />
                         {errors.lapPropertyDocumentList && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lapPropertyDocumentList.message}</p>}
                       </div>
                   </>
@@ -1030,7 +1030,7 @@ export default function NewLeadView() {
             {loanTypeValue === "Business Loan" && (
               <div>
                 <label className={labelClass}>Business Loan Type</label>
-                <select {...register("businessLoanType", { required: "Business Loan Type is required" })} className={getInputClass(errors.businessLoanType)}>
+                <select {...register("businessLoanType")} className={getInputClass(errors.businessLoanType)}>
                   <option value="">Select Category</option>
                   <option value="CGTMS">CGTMS</option>
                   <option value="MSME">MSME</option>
@@ -1049,7 +1049,7 @@ export default function NewLeadView() {
                   </div>
                   <div>
                     <label className={labelClass}>Type of Work</label>
-                    <input type="text" placeholder="Enter type of work" {...register("businessTypeOfWork", { required: "Type of Work is required" })} className={getInputClass(errors.businessTypeOfWork)} />
+                    <input type="text" placeholder="Enter type of work" {...register("businessTypeOfWork")} className={getInputClass(errors.businessTypeOfWork)} />
                     {errors.businessTypeOfWork && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.businessTypeOfWork.message}</p>}
                   </div>
                 </>
@@ -1059,43 +1059,43 @@ export default function NewLeadView() {
               <>
                 <div>
                   <label className={labelClass}>Bank Name</label>
-                  <input type="text" placeholder="Enter bank name" {...register("btBankName", { required: "Bank Name is required" })} className={getInputClass(errors.btBankName)} />
+                  <input type="text" placeholder="Enter bank name" {...register("btBankName")} className={getInputClass(errors.btBankName)} />
                   {errors.btBankName && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.btBankName.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Rate of Interest (%)</label>
-                  <input type="number" step="0.01" placeholder="e.g. 8.5" {...register("btRateOfInterest", { required: "Rate of Interest is required", min: { value: 0, message: "Value must be positive" } })} className={getInputClass(errors.btRateOfInterest)} />
+                  <input type="number" step="0.01" placeholder="e.g. 8.5" {...register("btRateOfInterest", { min: { value: 0, message: "Value must be positive" } })} className={getInputClass(errors.btRateOfInterest)} />
                   {errors.btRateOfInterest && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.btRateOfInterest.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Property Type</label>
-                  <input type="text" placeholder="Enter property type" {...register("btPropertyType", { required: "Property Type is required" })} className={getInputClass(errors.btPropertyType)} />
+                  <input type="text" placeholder="Enter property type" {...register("btPropertyType")} className={getInputClass(errors.btPropertyType)} />
                   {errors.btPropertyType && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.btPropertyType.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Market Value</label>
-                  <input type="number" placeholder="Enter market value" {...register("btMarketValue", { required: "Market value is required", min: { value: 1, message: "Value must be positive" } })} className={getInputClass(errors.btMarketValue)} />
+                  <input type="number" placeholder="Enter market value" {...register("btMarketValue", { min: { value: 0, message: "Value must be positive" } })} className={getInputClass(errors.btMarketValue)} />
                   {errors.btMarketValue && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.btMarketValue.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Property of Location</label>
-                  <input type="text" placeholder="Enter Location" {...register("btLocation", { required: "Location is required" })} className={getInputClass(errors.btLocation)} />
+                  <input type="text" placeholder="Enter Location" {...register("btLocation")} className={getInputClass(errors.btLocation)} />
                   {errors.btLocation && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.btLocation.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Duration</label>
-                  <input type="text" placeholder="Enter duration" {...register("btDuration", { required: "Duration is required" })} className={getInputClass(errors.btDuration)} />
+                  <input type="text" placeholder="Enter duration" {...register("btDuration")} className={getInputClass(errors.btDuration)} />
                   {errors.btDuration && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.btDuration.message}</p>}
                 </div>
                 
                 <div>
                   <label className={labelClass}>Outstanding</label>
-                  <input type="number" placeholder="Enter outstanding" {...register("btOutstanding", { required: "Outstanding is required", min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.btOutstanding)} />
+                  <input type="number" placeholder="Enter outstanding" {...register("btOutstanding", { min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.btOutstanding)} />
                   {errors.btOutstanding && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.btOutstanding.message}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Foreclosure Charge</label>
-                  <input type="number" placeholder="Enter foreclosure charge" {...register("btForeclosureCharge", { required: "Foreclosure Charge is required", min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.btForeclosureCharge)} />
+                  <input type="number" placeholder="Enter foreclosure charge" {...register("btForeclosureCharge", { min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.btForeclosureCharge)} />
                   {errors.btForeclosureCharge && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.btForeclosureCharge.message}</p>}
                 </div>
               </>

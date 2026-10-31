@@ -1523,7 +1523,7 @@ export default function EmployeeDashboard() {
                           <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.lapPropertyWork || "N/A"}</p>
                         </div>
                         <div className="sm:col-span-2">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Document List</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ownership list</span>
                           <p className="font-extrabold text-slate-700 text-xs mt-0.5">{viewLead.lapPropertyDocumentList || "N/A"}</p>
                         </div>
                       </div>

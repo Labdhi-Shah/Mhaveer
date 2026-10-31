@@ -4,16 +4,16 @@ function updateFile(file) {
     if (!fs.existsSync(file)) return;
     let content = fs.readFileSync(file, 'utf8');
 
-    // 1. Property Purchase Loan -> Category (Dastavej -> Document List)
+    // 1. Property Purchase Loan -> Category (Dastavej -> Ownership list)
     // Only in Property Purchase Loan section! But wait, Dastavej is used elsewhere too.
-    // The user said: "Property Purchase Loan -> Category: Wherever the label “Dastavej” appears within the Category section, change it to “Document List”."
+    // The user said: "Property Purchase Loan -> Category: Wherever the label “Dastavej” appears within the Category section, change it to “Ownership list”."
     // Wait, earlier I checked and `Dastavej Rate` and `Dastavej Name` are the only ones left in Property Purchase!
     // But there are also `unsoldDastavej`, `lrdDastavej`, `naPlotDastavej`. Should I change the label "Dastavej" for them too?
-    // The user explicitly said: "Property Purchase Loan → Category: Wherever the label “Dastavej” appears within the Category section, change it to “Document List”."
+    // The user explicitly said: "Property Purchase Loan → Category: Wherever the label “Dastavej” appears within the Category section, change it to “Ownership list”."
     // This implies ONLY for Property Purchase Loan Category section.
     // So I will only replace "Dastavej Rate" and "Dastavej Name" labels!
-    content = content.replace(/>Dastavej Rate</g, '>Document List Rate<');
-    content = content.replace(/>Dastavej Name</g, '>Document List Name<');
+    content = content.replace(/>Dastavej Rate</g, '>Ownership list Rate<');
+    content = content.replace(/>Dastavej Name</g, '>Ownership list Name<');
 
     // 2. Remove "Plot Loan" option entirely
     content = content.replace(/<option value="Plot Loan">Plot Loan<\/option>\s*/g, '');

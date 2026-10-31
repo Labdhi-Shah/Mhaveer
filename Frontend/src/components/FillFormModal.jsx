@@ -733,7 +733,7 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                                   <input type="number" placeholder="Enter market rate" value={ppMarketRate} onChange={(e) => setPpMarketRate(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" min="0" />
                                 </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Document List Rate</label>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Ownership list Rate</label>
                                   <input type="number" placeholder="Enter dastavej rate" value={ppDastavejRate} onChange={(e) => setPpDastavejRate(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" min="0" />
                                 </div>
                                 <div>
@@ -857,8 +857,8 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                                         <input type="text" placeholder="Enter work" value={lapPropertyWork} onChange={(e) => setLapPropertyWork(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                       </div>
                                       <div>
-                                        <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Document List</label>
-                                        <input type="text" placeholder="Enter document list" value={lapPropertyDocumentList} onChange={(e) => setLapPropertyDocumentList(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
+                                        <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Ownership list</label>
+                                        <input type="text" placeholder="Enter Ownership list" value={lapPropertyDocumentList} onChange={(e) => setLapPropertyDocumentList(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                       </div>
                                   </>
                                 )}
@@ -930,7 +930,7 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                                   <input type="text" placeholder="Enter floor" value={unsoldFloor} onChange={(e) => setUnsoldFloor(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Document List</label>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Ownership list</label>
                                   <input type="text" placeholder="Enter dastavej" value={unsoldDastavej} onChange={(e) => setUnsoldDastavej(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                                 <div>
@@ -963,7 +963,7 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                                   <input type="text" placeholder="Enter scheme name" value={lrdSchemeName} onChange={(e) => setLrdSchemeName(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Document List</label>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Ownership list</label>
                                   <input type="text" placeholder="Enter dastavej" value={lrdDastavej} onChange={(e) => setLrdDastavej(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                               </>
@@ -983,7 +983,7 @@ const [unsoldBV, setUnsoldBV] = useState(false);
                                     <input type="checkbox" id="naPlotYesNoModal" checked={naPlotYesNo} onChange={(e) => setNaPlotYesNo(e.target.checked)} />
                                   </div>
                                 <div>
-                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Document List</label>
+                                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Ownership list</label>
                                   <input type="text" placeholder="Enter dastavej" value={naPlotDastavej} onChange={(e) => setNaPlotDastavej(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                 </div>
                                 <div>

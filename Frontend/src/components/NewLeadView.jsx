@@ -12,14 +12,14 @@ export default function NewLeadView() {
   const [activePhoneIndex, setActivePhoneIndex] = useState(0);
   const [activeTurnoverIndex, setActiveTurnoverIndex] = useState(0);
 
-  const { 
-    register, 
-    handleSubmit, 
-    watch, 
+  const {
+    register,
+    handleSubmit,
+    watch,
     reset,
-    setValue, 
+    setValue,
     clearErrors,
-    formState: { errors } 
+    formState: { errors }
   } = useForm({
     defaultValues: {
       companyName0: "",
@@ -131,7 +131,7 @@ export default function NewLeadView() {
   // Dynamic registration of Turnover and Loan Amount based on mode
   useEffect(() => {
     // Company Turnover is NOT mandatory for any loan type or mode
-    register("turnoverAmount0", { 
+    register("turnoverAmount0", {
       required: false,
       validate: (val) => !val || parseFloat(val) > 0 || "Turnover must be greater than 0"
     });
@@ -170,11 +170,11 @@ export default function NewLeadView() {
   }, [isWrongNumber, clearErrors]);
 
   useEffect(() => {
-    register("turnoverAmount1", { 
+    register("turnoverAmount1", {
       required: false,
       validate: (val) => !val || parseFloat(val) > 0 || "Turnover must be greater than 0"
     });
-    register("turnoverAmount2", { 
+    register("turnoverAmount2", {
       required: false,
       validate: (val) => !val || parseFloat(val) > 0 || "Turnover must be greater than 0"
     });
@@ -268,7 +268,7 @@ export default function NewLeadView() {
         companyTurnover2: turnover2 !== null ? turnover2 : undefined,
         loanAmount: loanAmountConverted !== null ? loanAmountConverted : (data.loanAmount ? parseFloat(data.loanAmount) : undefined)
       };
-      
+
       delete payload.companyName0;
       delete payload.companyName1;
       delete payload.contactPerson0;
@@ -382,10 +382,10 @@ export default function NewLeadView() {
       const res = await api.post("/leads", payload);
 
       if (res.data.success) {
-        const successMsg = isWrongNumber 
-          ? "Lead marked as Wrong Number." 
-          : isFollowUp 
-            ? "Follow-up lead saved successfully!" 
+        const successMsg = isWrongNumber
+          ? "Lead marked as Wrong Number."
+          : isFollowUp
+            ? "Follow-up lead saved successfully!"
             : "Lead saved successfully!";
         showToast(successMsg, "success");
         reset();
@@ -403,11 +403,10 @@ export default function NewLeadView() {
   };
 
   const labelClass = "block text-[13px] font-semibold text-slate-700 mb-2";
-  const getInputClass = (hasError) => 
-    `w-full px-4 py-3 rounded-xl border text-sm text-slate-800 placeholder:text-slate-400 bg-slate-50 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all duration-200 ${
-      hasError 
-        ? "border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/50" 
-        : "border-slate-200 focus:border-[#162335] focus:ring-2 focus:ring-[#162335]/20 focus:bg-white"
+  const getInputClass = (hasError) =>
+    `w-full px-4 py-3 rounded-xl border text-sm text-slate-800 placeholder:text-slate-400 bg-slate-50 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all duration-200 ${hasError
+      ? "border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/50"
+      : "border-slate-200 focus:border-[#162335] focus:ring-2 focus:ring-[#162335]/20 focus:bg-white"
     }`;
 
   const loanUnitVal = watch("loanAmountUnit") || "Cr";
@@ -421,11 +420,10 @@ export default function NewLeadView() {
             initial={{ opacity: 0, y: -50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.9 }}
-            className={`fixed top-20 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border ${
-              toast.type === "success" 
-                ? "bg-emerald-50 text-emerald-800 border-emerald-200" 
+            className={`fixed top-20 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border ${toast.type === "success"
+                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
                 : "bg-rose-50 text-rose-800 border-rose-200"
-            }`}
+              }`}
           >
             {toast.type === "success" ? (
               <CheckCircle className="text-emerald-600 shrink-0" size={20} />
@@ -468,13 +466,12 @@ export default function NewLeadView() {
                     key={idx}
                     type="button"
                     onClick={() => setActiveCompanyIndex(idx)}
-                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border ${
-                      activeCompanyIndex === idx 
-                        ? "bg-[#162335] text-white border-[#162335] shadow-md" 
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border ${activeCompanyIndex === idx
+                        ? "bg-[#162335] text-white border-[#162335] shadow-md"
                         : errors[`companyName${idx}`]
                           ? "bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100"
                           : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
-                    }`}
+                      }`}
                   >
                     Company {idx + 1}
                   </button>
@@ -482,11 +479,11 @@ export default function NewLeadView() {
               </div>
               {[0, 1].map((idx) => (
                 <div key={idx} className={activeCompanyIndex === idx ? "block" : "hidden"}>
-                  <input 
-                    type="text" 
-                    placeholder="Enter company name" 
-                    {...register(`companyName${idx}`, { required: isWrongNumber ? false : (idx === 0 ? "Primary Company Name is required" : false) })} 
-                    className={getInputClass(errors[`companyName${idx}`])} 
+                  <input
+                    type="text"
+                    placeholder="Enter company name"
+                    {...register(`companyName${idx}`, { required: isWrongNumber ? false : (idx === 0 ? "Primary Company Name is required" : false) })}
+                    className={getInputClass(errors[`companyName${idx}`])}
                   />
                   {errors[`companyName${idx}`] && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors[`companyName${idx}`].message}</p>}
                 </div>
@@ -501,13 +498,12 @@ export default function NewLeadView() {
                     key={idx}
                     type="button"
                     onClick={() => setActiveContactIndex(idx)}
-                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border ${
-                      activeContactIndex === idx 
-                        ? "bg-[#162335] text-white border-[#162335] shadow-md" 
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border ${activeContactIndex === idx
+                        ? "bg-[#162335] text-white border-[#162335] shadow-md"
                         : errors[`contactPerson${idx}`]
                           ? "bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100"
                           : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
-                    }`}
+                      }`}
                   >
                     Person {idx + 1}
                   </button>
@@ -515,11 +511,11 @@ export default function NewLeadView() {
               </div>
               {[0, 1, 2, 3].map((idx) => (
                 <div key={idx} className={activeContactIndex === idx ? "block" : "hidden"}>
-                  <input 
-                    type="text" 
-                    placeholder="Enter full name" 
-                    {...register(`contactPerson${idx}`, { required: isWrongNumber ? false : (idx === 0 ? "Primary Contact Person is required" : false) })} 
-                    className={getInputClass(errors[`contactPerson${idx}`])} 
+                  <input
+                    type="text"
+                    placeholder="Enter full name"
+                    {...register(`contactPerson${idx}`, { required: isWrongNumber ? false : (idx === 0 ? "Primary Contact Person is required" : false) })}
+                    className={getInputClass(errors[`contactPerson${idx}`])}
                   />
                   {errors[`contactPerson${idx}`] && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors[`contactPerson${idx}`].message}</p>}
                 </div>
@@ -534,13 +530,12 @@ export default function NewLeadView() {
                     key={idx}
                     type="button"
                     onClick={() => setActivePhoneIndex(idx)}
-                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border ${
-                      activePhoneIndex === idx 
-                        ? "bg-[#162335] text-white border-[#162335] shadow-md" 
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border ${activePhoneIndex === idx
+                        ? "bg-[#162335] text-white border-[#162335] shadow-md"
                         : errors[`phone${idx}`]
                           ? "bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100"
                           : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
-                    }`}
+                      }`}
                   >
                     Phone {idx + 1}
                   </button>
@@ -548,14 +543,14 @@ export default function NewLeadView() {
               </div>
               {[0, 1, 2, 3].map((idx) => (
                 <div key={idx} className={activePhoneIndex === idx ? "block" : "hidden"}>
-                  <input 
-                    type="tel" 
-                    placeholder="10-digit mobile number" 
-                    {...register(`phone${idx}`, { 
-                      required: idx === 0 ? "Primary Phone is required" : false, 
+                  <input
+                    type="tel"
+                    placeholder="10-digit mobile number"
+                    {...register(`phone${idx}`, {
+                      required: idx === 0 ? "Primary Phone is required" : false,
                       pattern: { value: /^[6-9]\d{9}$/, message: "Indian mobile only (10 digits starting with 6-9)" }
-                    })} 
-                    className={getInputClass(errors[`phone${idx}`])} 
+                    })}
+                    className={getInputClass(errors[`phone${idx}`])}
                   />
                   {errors[`phone${idx}`] && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors[`phone${idx}`].message}</p>}
                 </div>
@@ -574,13 +569,12 @@ export default function NewLeadView() {
                       key={idx}
                       type="button"
                       onClick={() => setActiveTurnoverIndex(idx)}
-                      className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border ${
-                        activeTurnoverIndex === idx 
-                          ? "bg-[#162335] text-white border-[#162335] shadow-md" 
+                      className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border ${activeTurnoverIndex === idx
+                          ? "bg-[#162335] text-white border-[#162335] shadow-md"
                           : hasErr
                             ? "bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100"
                             : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
-                      }`}
+                        }`}
                     >
                       {t}
                     </button>
@@ -595,20 +589,19 @@ export default function NewLeadView() {
 
                 return (
                   <div key={idx} className={activeTurnoverIndex === idx ? "block" : "hidden"}>
-                    <div className={`flex items-stretch rounded-xl border overflow-hidden transition-all duration-200 ${
-                      hasErr
-                        ? "border-rose-400 ring-2 ring-rose-500/20 bg-rose-50/50" 
+                    <div className={`flex items-stretch rounded-xl border overflow-hidden transition-all duration-200 ${hasErr
+                        ? "border-rose-400 ring-2 ring-rose-500/20 bg-rose-50/50"
                         : "border-slate-200 focus-within:border-[#162335] focus-within:ring-2 focus-within:ring-[#162335]/20 focus-within:bg-white bg-slate-50"
-                    }`}>
-                      <input 
-                        type="text" 
+                      }`}>
+                      <input
+                        type="text"
                         inputMode="decimal"
                         value={amountVal}
                         onChange={(e) => handleTurnoverChange(e, idx)}
                         onKeyDown={handleKeyDownNoSign}
                         onWheel={(e) => e.target.blur()}
-                        placeholder={unitVal === "Cr" ? "e.g. 5" : unitVal === "Lakhs" ? "e.g. 50" : "e.g. 600000"} 
-                        className="w-full px-4 py-3 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                        placeholder={unitVal === "Cr" ? "e.g. 5" : unitVal === "Lakhs" ? "e.g. 50" : "e.g. 600000"}
+                        className="w-full px-4 py-3 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                       <div className="relative border-l border-slate-200 flex items-center bg-slate-100/70">
                         <select
@@ -641,22 +634,22 @@ export default function NewLeadView() {
 
             <div>
               <label className={labelClass}>State {!isWrongNumber && "*"}</label>
-              <input 
-                type="text" 
-                placeholder="Enter state" 
-                {...register("state", { required: isWrongNumber ? false : "State is required" })} 
-                className={getInputClass(errors.state)} 
+              <input
+                type="text"
+                placeholder="Enter state"
+                {...register("state", { required: isWrongNumber ? false : "State is required" })}
+                className={getInputClass(errors.state)}
               />
               {errors.state && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.state.message}</p>}
             </div>
 
             <div>
               <label className={labelClass}>City {!isWrongNumber && "*"}</label>
-              <input 
-                type="text" 
-                placeholder="Enter city" 
-                {...register("city", { required: isWrongNumber ? false : "City is required" })} 
-                className={getInputClass(errors.city)} 
+              <input
+                type="text"
+                placeholder="Enter city"
+                {...register("city", { required: isWrongNumber ? false : "City is required" })}
+                className={getInputClass(errors.city)}
               />
               {errors.city && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.city.message}</p>}
             </div>
@@ -665,20 +658,19 @@ export default function NewLeadView() {
               <label className={labelClass}>
                 Loan Amount Required {isAllMandatory ? "*" : <span className="text-slate-400 font-normal text-xs">(Optional for Follow-up)</span>}
               </label>
-              <div className={`flex items-stretch rounded-xl border overflow-hidden transition-all duration-200 ${
-                errors.loanAmountInput
-                  ? "border-rose-400 ring-2 ring-rose-500/20 bg-rose-50/50" 
+              <div className={`flex items-stretch rounded-xl border overflow-hidden transition-all duration-200 ${errors.loanAmountInput
+                  ? "border-rose-400 ring-2 ring-rose-500/20 bg-rose-50/50"
                   : "border-slate-200 focus-within:border-[#162335] focus-within:ring-2 focus-within:ring-[#162335]/20 focus-within:bg-white bg-slate-50"
-              }`}>
-                <input 
-                  type="text" 
+                }`}>
+                <input
+                  type="text"
                   inputMode="decimal"
                   value={watch("loanAmountInput") || ""}
                   onChange={handleLoanAmountChange}
                   onKeyDown={handleKeyDownNoSign}
                   onWheel={(e) => e.target.blur()}
-                  placeholder={loanUnitVal === "Cr" ? "e.g. 1.5" : loanUnitVal === "Lakhs" ? "e.g. 50" : "e.g. 1500000"} 
-                  className="w-full px-4 py-3 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                  placeholder={loanUnitVal === "Cr" ? "e.g. 1.5" : loanUnitVal === "Lakhs" ? "e.g. 50" : "e.g. 1500000"}
+                  className="w-full px-4 py-3 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <div className="relative border-l border-slate-200 flex items-center bg-slate-100/70">
                   <select
@@ -747,7 +739,7 @@ export default function NewLeadView() {
                       {errors.ppMarketRate && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.ppMarketRate.message}</p>}
                     </div>
                     <div>
-                      <label className={labelClass}>Document List Rate</label>
+                      <label className={labelClass}>Ownership list Rate</label>
                       <input type="number" placeholder="Enter dastavej rate" {...register("ppDastavejRate", { min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.ppDastavejRate)} />
                       {errors.ppDastavejRate && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.ppDastavejRate.message}</p>}
                     </div>
@@ -804,44 +796,40 @@ export default function NewLeadView() {
                   <input type="number" placeholder="Enter M.V" {...register("unsoldMV", { min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.unsoldMV)} />
                   {errors.unsoldMV && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.unsoldMV.message}</p>}
                 </div>
-                
+
                 <div>
                   <label className={labelClass}>B.U</label>
                   <div className="flex items-center gap-4">
                     <button
                       type="button"
                       onClick={() => setValue("unsoldBV", true, { shouldValidate: true })}
-                      className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
-                        unsoldBVValue === true
+                      className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${unsoldBVValue === true
                           ? "border-[#162335] bg-[#162335]/5 text-[#162335]"
                           : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                      }`}
+                        }`}
                     >
                       Yes
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                        unsoldBVValue === true
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${unsoldBVValue === true
                           ? "border-[#162335] bg-[#162335]"
                           : "border-slate-300"
-                      }`}>
+                        }`}>
                         {unsoldBVValue === true && <CheckCircle size={14} className="text-white" />}
                       </div>
                     </button>
-                    
+
                     <button
                       type="button"
                       onClick={() => setValue("unsoldBV", false, { shouldValidate: true })}
-                      className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
-                        unsoldBVValue === false
+                      className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${unsoldBVValue === false
                           ? "border-[#162335] bg-[#162335]/5 text-[#162335]"
                           : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                      }`}
+                        }`}
                     >
                       No
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                        unsoldBVValue === false
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${unsoldBVValue === false
                           ? "border-[#162335] bg-[#162335]"
                           : "border-slate-300"
-                      }`}>
+                        }`}>
                         {unsoldBVValue === false && <CheckCircle size={14} className="text-white" />}
                       </div>
                     </button>
@@ -863,7 +851,7 @@ export default function NewLeadView() {
                   {errors.unsoldFloor && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.unsoldFloor.message}</p>}
                 </div>
                 <div>
-                  <label className={labelClass}>Document List</label>
+                  <label className={labelClass}>Ownership list</label>
                   <input type="text" placeholder="Enter dastavej" {...register("unsoldDastavej")} className={getInputClass(errors.unsoldDastavej)} />
                   {errors.unsoldDastavej && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.unsoldDastavej.message}</p>}
                 </div>
@@ -903,7 +891,7 @@ export default function NewLeadView() {
                   {errors.lrdSchemeName && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lrdSchemeName.message}</p>}
                 </div>
                 <div>
-                  <label className={labelClass}>Document List</label>
+                  <label className={labelClass}>Ownership list</label>
                   <input type="text" placeholder="Enter dastavej" {...register("lrdDastavej")} className={getInputClass(errors.lrdDastavej)} />
                   {errors.lrdDastavej && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lrdDastavej.message}</p>}
                 </div>
@@ -926,7 +914,7 @@ export default function NewLeadView() {
                   <input type="checkbox" id="naPlotYesNo" {...register("naPlotYesNo")} />
                 </div>
                 <div>
-                  <label className={labelClass}>Document List</label>
+                  <label className={labelClass}>Ownership list</label>
                   <input type="text" placeholder="Enter dastavej" {...register("naPlotDastavej")} className={getInputClass(errors.naPlotDastavej)} />
                   {errors.naPlotDastavej && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.naPlotDastavej.message}</p>}
                 </div>
@@ -949,37 +937,33 @@ export default function NewLeadView() {
                     <button
                       type="button"
                       onClick={() => setValue("naPlotVacant", true, { shouldValidate: true })}
-                      className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
-                        naPlotVacantValue === true
+                      className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${naPlotVacantValue === true
                           ? "border-[#162335] bg-[#162335]/5 text-[#162335]"
                           : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                      }`}
+                        }`}
                     >
                       Yes
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                        naPlotVacantValue === true
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${naPlotVacantValue === true
                           ? "border-[#162335] bg-[#162335]"
                           : "border-slate-300"
-                      }`}>
+                        }`}>
                         {naPlotVacantValue === true && <CheckCircle size={14} className="text-white" />}
                       </div>
                     </button>
-                    
+
                     <button
                       type="button"
                       onClick={() => setValue("naPlotVacant", false, { shouldValidate: true })}
-                      className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
-                        naPlotVacantValue === false
+                      className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${naPlotVacantValue === false
                           ? "border-[#162335] bg-[#162335]/5 text-[#162335]"
                           : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                      }`}
+                        }`}
                     >
                       No
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                        naPlotVacantValue === false
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${naPlotVacantValue === false
                           ? "border-[#162335] bg-[#162335]"
                           : "border-slate-300"
-                      }`}>
+                        }`}>
                         {naPlotVacantValue === false && <CheckCircle size={14} className="text-white" />}
                       </div>
                     </button>
@@ -1012,16 +996,16 @@ export default function NewLeadView() {
                       <input type="number" placeholder="Enter market value" {...register("lapPropertyMarketValue", { min: { value: 0, message: "Value must be positive" } })} className={getInputClass(errors.lapPropertyMarketValue)} />
                       {errors.lapPropertyMarketValue && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lapPropertyMarketValue.message}</p>}
                     </div>
-                      <div>
-                        <label className={labelClass}>Work</label>
-                        <input type="text" placeholder="Enter work" {...register("lapPropertyWork")} className={getInputClass(errors.lapPropertyWork)} />
-                        {errors.lapPropertyWork && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lapPropertyWork.message}</p>}
-                      </div>
-                      <div>
-                        <label className={labelClass}>Document List</label>
-                        <input type="text" placeholder="Enter document list" {...register("lapPropertyDocumentList")} className={getInputClass(errors.lapPropertyDocumentList)} />
-                        {errors.lapPropertyDocumentList && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lapPropertyDocumentList.message}</p>}
-                      </div>
+                    <div>
+                      <label className={labelClass}>Work</label>
+                      <input type="text" placeholder="Enter work" {...register("lapPropertyWork")} className={getInputClass(errors.lapPropertyWork)} />
+                      {errors.lapPropertyWork && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lapPropertyWork.message}</p>}
+                    </div>
+                    <div>
+                      <label className={labelClass}>Ownership list</label>
+                      <input type="text" placeholder="Enter Ownership list" {...register("lapPropertyDocumentList")} className={getInputClass(errors.lapPropertyDocumentList)} />
+                      {errors.lapPropertyDocumentList && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lapPropertyDocumentList.message}</p>}
+                    </div>
                   </>
                 )}
               </>
@@ -1040,20 +1024,20 @@ export default function NewLeadView() {
               </div>
             )}
 
-              {loanTypeValue === "Business Loan" && businessLoanTypeValue === "Unsecured" && (
-                <>
-                  <div>
-                    <label className={labelClass}>Company Starting Year</label>
-                    <input type="text" placeholder="Enter starting year" {...register("businessStartingYear")} className={getInputClass(errors.businessStartingYear)} />
-                    {errors.businessStartingYear && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.businessStartingYear.message}</p>}
-                  </div>
-                  <div>
-                    <label className={labelClass}>Type of Work</label>
-                    <input type="text" placeholder="Enter type of work" {...register("businessTypeOfWork")} className={getInputClass(errors.businessTypeOfWork)} />
-                    {errors.businessTypeOfWork && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.businessTypeOfWork.message}</p>}
-                  </div>
-                </>
-              )}
+            {loanTypeValue === "Business Loan" && businessLoanTypeValue === "Unsecured" && (
+              <>
+                <div>
+                  <label className={labelClass}>Company Starting Year</label>
+                  <input type="text" placeholder="Enter starting year" {...register("businessStartingYear")} className={getInputClass(errors.businessStartingYear)} />
+                  {errors.businessStartingYear && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.businessStartingYear.message}</p>}
+                </div>
+                <div>
+                  <label className={labelClass}>Type of Work</label>
+                  <input type="text" placeholder="Enter type of work" {...register("businessTypeOfWork")} className={getInputClass(errors.businessTypeOfWork)} />
+                  {errors.businessTypeOfWork && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.businessTypeOfWork.message}</p>}
+                </div>
+              </>
+            )}
 
             {loanTypeValue === "Balance Transfer" && (
               <>
@@ -1087,7 +1071,7 @@ export default function NewLeadView() {
                   <input type="text" placeholder="Enter duration" {...register("btDuration")} className={getInputClass(errors.btDuration)} />
                   {errors.btDuration && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.btDuration.message}</p>}
                 </div>
-                
+
                 <div>
                   <label className={labelClass}>Outstanding</label>
                   <input type="number" placeholder="Enter outstanding" {...register("btOutstanding", { min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.btOutstanding)} />
@@ -1163,25 +1147,25 @@ export default function NewLeadView() {
 
           <div>
             <label className={labelClass}>Remarks</label>
-            <textarea 
-              placeholder="Enter remarks..." 
+            <textarea
+              placeholder="Enter remarks..."
               {...register("remarks", {
                 validate: value => !value || value.trim().split(/\s+/).length <= 200 || "Maximum 200 words allowed"
-              })} 
-              className={`${getInputClass(errors.remarks)} min-h-[100px] resize-y`} 
+              })}
+              className={`${getInputClass(errors.remarks)} min-h-[100px] resize-y`}
             />
             {errors.remarks && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.remarks.message}</p>}
           </div>
 
           <div>
             <label className={labelClass}>Address {isAllMandatory && "*"}</label>
-            <textarea 
-              placeholder="Address" 
+            <textarea
+              placeholder="Address"
               {...register("address", {
                 required: isAllMandatory ? "Address is required" : false,
                 validate: value => !value || value.trim().split(/\s+/).length <= 200 || "Maximum 200 words allowed"
-              })} 
-              className={`${getInputClass(errors.address)} min-h-[100px] resize-y`} 
+              })}
+              className={`${getInputClass(errors.address)} min-h-[100px] resize-y`}
             />
             {errors.address && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.address.message}</p>}
           </div>

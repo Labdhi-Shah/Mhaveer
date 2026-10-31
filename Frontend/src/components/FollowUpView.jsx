@@ -879,7 +879,7 @@ export default function FollowUpView() {
                         />
                       </div>
                       <div>
-                        <label className={labelClass}>Document List (Dastavej) Rate (₹) *</label>
+                        <label className={labelClass}>Ownership list (Dastavej) Rate (₹) *</label>
                         <input
                           type="number"
                           placeholder="Enter dastavej rate"
@@ -1014,8 +1014,8 @@ export default function FollowUpView() {
                           <input type="text" placeholder="Work" {...registerConvert("lapPropertyWork", { required: "Work is required" })} className={inputClass} />
                         </div>
                         <div className="sm:col-span-2">
-                          <label className={labelClass}>Document List *</label>
-                          <input type="text" placeholder="Document List" {...registerConvert("lapPropertyDocumentList", { required: "Document List is required" })} className={inputClass} />
+                          <label className={labelClass}>Ownership list *</label>
+                          <input type="text" placeholder="Ownership list" {...registerConvert("lapPropertyDocumentList", { required: "Ownership list is required" })} className={inputClass} />
                         </div>
                       </div>
                     )}
@@ -1044,7 +1044,7 @@ export default function FollowUpView() {
                           <input type="text" placeholder="Floor" {...registerConvert("unsoldFloor", { required: "Floor is required" })} className={inputClass} />
                         </div>
                         <div>
-                          <label className={labelClass}>Document List *</label>
+                          <label className={labelClass}>Ownership list *</label>
                           <input type="text" placeholder="Dastavej" {...registerConvert("unsoldDastavej", { required: "Dastavej is required" })} className={inputClass} />
                         </div>
                         <div className="sm:col-span-2">
@@ -1078,7 +1078,7 @@ export default function FollowUpView() {
                           <input type="text" placeholder="Scheme Name" {...registerConvert("lrdSchemeName", { required: "Scheme is required" })} className={inputClass} />
                         </div>
                         <div>
-                          <label className={labelClass}>Document List *</label>
+                          <label className={labelClass}>Ownership list *</label>
                           <input type="text" placeholder="Dastavej" {...registerConvert("lrdDastavej", { required: "Dastavej is required" })} className={inputClass} />
                         </div>
                       </div>
@@ -1096,7 +1096,7 @@ export default function FollowUpView() {
                           <input type="number" placeholder="Market Value" {...registerConvert("naPlotMV", { required: "Market value is required" })} className={inputClass} />
                         </div>
                         <div>
-                          <label className={labelClass}>Document List *</label>
+                          <label className={labelClass}>Ownership list *</label>
                           <input type="text" placeholder="Dastavej" {...registerConvert("naPlotDastavej", { required: "Dastavej is required" })} className={inputClass} />
                         </div>
                         <div>

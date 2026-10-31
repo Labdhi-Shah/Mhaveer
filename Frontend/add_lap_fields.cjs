@@ -10,13 +10,13 @@ function updateNewLeadView() {
         '<label className={labelClass}>Property of Location</label>'
     );
 
-    // 2. Dastavej -> Document List
+    // 2. Dastavej -> Ownership list
     content = content.replace(
         /<label className=\{labelClass\}>Dastavej<\/label>/g,
-        '<label className={labelClass}>Document List</label>'
+        '<label className={labelClass}>Ownership list</label>'
     );
 
-    // 3. Add Work and Document List inside LAP
+    // 3. Add Work and Ownership list inside LAP
     const lapBlockMatch = /<input type="number" placeholder="Enter market value"[^>]*>\s*\{errors\.lapPropertyMarketValue[^}]*\}<\/p>\}\s*<\/div>/;
     const lapFieldsToAdd = `
                       <div>
@@ -25,8 +25,8 @@ function updateNewLeadView() {
                         {errors.lapPropertyWork && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lapPropertyWork.message}</p>}
                       </div>
                       <div>
-                        <label className={labelClass}>Document List</label>
-                        <input type="text" placeholder="Enter document list" {...register("lapPropertyDocumentList", { required: "Document List is required" })} className={getInputClass(errors.lapPropertyDocumentList)} />
+                        <label className={labelClass}>Ownership list</label>
+                        <input type="text" placeholder="Enter Ownership list" {...register("lapPropertyDocumentList", { required: "Ownership list is required" })} className={getInputClass(errors.lapPropertyDocumentList)} />
                         {errors.lapPropertyDocumentList && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lapPropertyDocumentList.message}</p>}
                       </div>`;
     
@@ -62,13 +62,13 @@ function updateFillFormModal() {
         '<label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Property of Location</label>'
     );
 
-    // 2. Dastavej -> Document List
+    // 2. Dastavej -> Ownership list
     content = content.replace(
         /<label className="block text-\[13px\] font-semibold text-slate-700 mb-1\.5">Dastavej<\/label>/g,
-        '<label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Document List</label>'
+        '<label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Ownership list</label>'
     );
 
-    // 3. Add Work and Document List inside LAP
+    // 3. Add Work and Ownership list inside LAP
     const lapBlockMatch = /<input type="number" placeholder="Enter market value" value=\{lapPropertyMarketValue\}[^>]*>\s*<\/div>/;
     const lapFieldsToAdd = `
                                       <div>
@@ -76,8 +76,8 @@ function updateFillFormModal() {
                                         <input type="text" placeholder="Enter work" value={lapPropertyWork} onChange={(e) => setLapPropertyWork(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                       </div>
                                       <div>
-                                        <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Document List</label>
-                                        <input type="text" placeholder="Enter document list" value={lapPropertyDocumentList} onChange={(e) => setLapPropertyDocumentList(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
+                                        <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Ownership list</label>
+                                        <input type="text" placeholder="Enter Ownership list" value={lapPropertyDocumentList} onChange={(e) => setLapPropertyDocumentList(e.target.value)} required className="w-full bg-slate-50/50 border border-slate-200 text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#162335]/20 focus:bg-white transition-all" />
                                       </div>`;
     if (lapBlockMatch.test(content)) {
         content = content.replace(lapBlockMatch, match => match + lapFieldsToAdd);

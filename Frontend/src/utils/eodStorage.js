@@ -1,56 +1,29 @@
 /**
- * EOD (End of Day) Storage and State Utilities
- * Frontend-only mock storage using localStorage with sample team data
+ * EOD (End of Day) Storage and Privacy Utilities
+ * Frontend storage strictly isolated by employee ID and selected date.
+ * No sample, demo, or pre-filled data.
  */
 
-const STORAGE_KEY = "mhaveer_eod_reports";
+const STORAGE_KEY = "mhaveer_eod_records";
 
-// Predefined team members in the telecalling department
-export const DEFAULT_TEAM_MEMBERS = [
-  { id: "EMP-SHRUTI", name: "Shruti" },
-  { id: "EMP-PRIYA", name: "Priya Sharma" },
-  { id: "EMP-AMIT", name: "Amit Patel" },
-  { id: "EMP-NEHA", name: "Neha Gupta" },
-  { id: "EMP-RAHUL", name: "Rahul Verma" },
-  { id: "EMP-POOJA", name: "Pooja Joshi" }
-];
+// Clear any obsolete demo/mock keys from previous versions
+try {
+  localStorage.removeItem("mhaveer_eod_reports");
+  localStorage.removeItem("mhaveer_eod_data");
+} catch (e) {
+  // Ignore in case of storage disabled
+}
 
-// Format numbers: 0 as "00", 5 as "05", 106 as "106"
-export const formatCount = (val) => {
-  if (val === undefined || val === null || val === "" || val === "-") return "00";
-  const num = parseInt(val, 10);
-  if (isNaN(num)) return "00";
-  return num < 10 && num >= 0 ? `0${num}` : `${num}`;
-};
-
-// Generate today's date string YYYY-MM-DD
-export const getTodayDateKey = () => {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-// Generate date key for N days ago YYYY-MM-DD
-export const getDaysAgoDateKey = (daysAgo) => {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-export const getYesterdayDateKey = () => getDaysAgoDateKey(1);
-
-// Format date string to display format (e.g. "01 Nov 2026")
+// Format a date string (YYYY-MM-DD) into readable display
 export const formatDisplayDate = (dateStr) => {
   if (!dateStr) return "-";
   try {
     const parts = dateStr.split("-");
     if (parts.length === 3) {
-      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      const year = parseInt(parts[0], 10);
+      const monthIndex = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const d = new Date(year, monthIndex, day);
       return d.toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "short",
@@ -68,199 +41,51 @@ export const formatDisplayDate = (dateStr) => {
   }
 };
 
-// Initial default mock data across multiple dates
-const getInitialMockReports = () => {
-  const todayKey = getTodayDateKey();
-  const yesterdayKey = getDaysAgoDateKey(1);
-  const twoDaysAgoKey = getDaysAgoDateKey(2);
-
-  return [
-    // Today's Submissions (4 submitted, 2 not yet submitted today)
-    {
-      id: "eod-today-1",
-      employeeName: "Shruti",
-      employeeId: "EMP-SHRUTI",
-      date: todayKey,
-      displayDate: formatDisplayDate(todayKey),
-      received: 106,
-      appointment: 0,
-      login: 0,
-      submittedAt: "06:45 PM"
-    },
-    {
-      id: "eod-today-2",
-      employeeName: "Priya Sharma",
-      employeeId: "EMP-PRIYA",
-      date: todayKey,
-      displayDate: formatDisplayDate(todayKey),
-      received: 88,
-      appointment: 4,
-      login: 2,
-      submittedAt: "06:30 PM"
-    },
-    {
-      id: "eod-today-3",
-      employeeName: "Amit Patel",
-      employeeId: "EMP-AMIT",
-      date: todayKey,
-      displayDate: formatDisplayDate(todayKey),
-      received: 112,
-      appointment: 6,
-      login: 3,
-      submittedAt: "07:15 PM"
-    },
-    {
-      id: "eod-today-4",
-      employeeName: "Neha Gupta",
-      employeeId: "EMP-NEHA",
-      date: todayKey,
-      displayDate: formatDisplayDate(todayKey),
-      received: 94,
-      appointment: 3,
-      login: 1,
-      submittedAt: "06:20 PM"
-    },
-
-    // Yesterday's Submissions
-    {
-      id: "eod-yesterday-1",
-      employeeName: "Shruti",
-      employeeId: "EMP-SHRUTI",
-      date: yesterdayKey,
-      displayDate: formatDisplayDate(yesterdayKey),
-      received: 98,
-      appointment: 2,
-      login: 1,
-      submittedAt: "06:40 PM"
-    },
-    {
-      id: "eod-yesterday-2",
-      employeeName: "Rahul Verma",
-      employeeId: "EMP-RAHUL",
-      date: yesterdayKey,
-      displayDate: formatDisplayDate(yesterdayKey),
-      received: 75,
-      appointment: 2,
-      login: 1,
-      submittedAt: "07:00 PM"
-    },
-    {
-      id: "eod-yesterday-3",
-      employeeName: "Amit Patel",
-      employeeId: "EMP-AMIT",
-      date: yesterdayKey,
-      displayDate: formatDisplayDate(yesterdayKey),
-      received: 105,
-      appointment: 5,
-      login: 2,
-      submittedAt: "06:55 PM"
-    },
-    {
-      id: "eod-yesterday-4",
-      employeeName: "Priya Sharma",
-      employeeId: "EMP-PRIYA",
-      date: yesterdayKey,
-      displayDate: formatDisplayDate(yesterdayKey),
-      received: 82,
-      appointment: 3,
-      login: 1,
-      submittedAt: "06:15 PM"
-    },
-    {
-      id: "eod-yesterday-5",
-      employeeName: "Pooja Joshi",
-      employeeId: "EMP-POOJA",
-      date: yesterdayKey,
-      displayDate: formatDisplayDate(yesterdayKey),
-      received: 68,
-      appointment: 1,
-      login: 0,
-      submittedAt: "06:10 PM"
-    },
-
-    // Two days ago Submissions
-    {
-      id: "eod-2days-1",
-      employeeName: "Shruti",
-      employeeId: "EMP-SHRUTI",
-      date: twoDaysAgoKey,
-      displayDate: formatDisplayDate(twoDaysAgoKey),
-      received: 102,
-      appointment: 1,
-      login: 1,
-      submittedAt: "06:50 PM"
-    },
-    {
-      id: "eod-2days-2",
-      employeeName: "Priya Sharma",
-      employeeId: "EMP-PRIYA",
-      date: twoDaysAgoKey,
-      displayDate: formatDisplayDate(twoDaysAgoKey),
-      received: 90,
-      appointment: 3,
-      login: 2,
-      submittedAt: "06:25 PM"
-    },
-    {
-      id: "eod-2days-3",
-      employeeName: "Neha Gupta",
-      employeeId: "EMP-NEHA",
-      date: twoDaysAgoKey,
-      displayDate: formatDisplayDate(twoDaysAgoKey),
-      received: 85,
-      appointment: 2,
-      login: 1,
-      submittedAt: "06:35 PM"
-    }
-  ];
+// Today's date string YYYY-MM-DD in local timezone
+export const getTodayDateString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 };
 
-// Retrieve all stored reports from localStorage
+// Retrieve all stored EOD records (starts empty, only user-submitted records)
 export const getStoredEodReports = () => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      const initial = getInitialMockReports();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
-      return initial;
-    }
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      const initial = getInitialMockReports();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
-      return initial;
-    }
-    return parsed;
+    return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
-    console.error("Error reading EOD reports from localStorage:", err);
-    return getInitialMockReports();
+    console.error("Error reading EOD records from storage:", err);
+    return [];
   }
 };
 
-// Get the full list of team members, including current logged-in user if applicable
-export const getAllTeamMembers = (currentUser) => {
-  const members = [...DEFAULT_TEAM_MEMBERS];
-  if (currentUser) {
-    const currentName = currentUser.name || currentUser.fullName;
-    if (currentName) {
-      const exists = members.some((m) => m.name.toLowerCase() === currentName.toLowerCase());
-      if (!exists && currentUser.role !== "Manager") {
-        members.unshift({
-          id: currentUser.employeeId || currentUser._id || "EMP-CURRENT",
-          name: currentName
-        });
-      }
-    }
-  }
-  return members;
+// Get a unique identifier string for an employee
+const getEmployeeKey = (user) => {
+  if (!user) return "";
+  return String(user.employeeId || user._id || user.id || user.email || user.name || "").trim().toLowerCase();
 };
 
-// Save an EOD submission for a specific day
-export const saveEodReport = (reportData) => {
+/**
+ * Save an EOD submission strictly bound to employee and selected date
+ */
+export const saveEodReport = ({ user, date, received, appointment, login }) => {
   try {
-    const current = getStoredEodReports();
-    const todayKey = getTodayDateKey();
-    const targetDate = reportData.date || todayKey;
+    if (!user) {
+      return { success: false, error: "Authentication required to submit EOD." };
+    }
+    if (!date) {
+      return { success: false, error: "Please select a date for the EOD submission." };
+    }
+
+    const currentRecords = getStoredEodReports();
+    const empId = String(user.employeeId || user._id || user.id || "").trim();
+    const empEmail = String(user.email || "").trim().toLowerCase();
+    const empName = String(user.name || user.fullName || "Employee").trim();
+
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-US", {
       hour: "2-digit",
@@ -268,105 +93,112 @@ export const saveEodReport = (reportData) => {
       hour12: true
     });
 
-    const newReport = {
-      id: `eod-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-      employeeName: reportData.employeeName || "Shruti",
-      employeeId: reportData.employeeId || `EMP-${Date.now()}`,
-      date: targetDate,
-      displayDate: formatDisplayDate(targetDate),
-      received: Number(reportData.received) || 0,
-      appointment: Number(reportData.appointment) || 0,
-      login: Number(reportData.login) || 0,
-      submittedAt: timeStr
+    const newRecord = {
+      id: `eod-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      employeeId: empId || empEmail || empName,
+      employeeEmail: empEmail,
+      employeeName: empName,
+      date: date, // Manually selected date string (YYYY-MM-DD)
+      displayDate: formatDisplayDate(date),
+      received: Number(received) || 0,
+      appointment: Number(appointment) || 0,
+      login: Number(login) || 0,
+      submittedAt: timeStr,
+      timestamp: Date.now()
     };
 
-    // If an entry exists for this member on this date, update it (separate entry per day)
-    const existingIndex = current.findIndex(
-      (r) =>
-        r.employeeName?.toLowerCase() === newReport.employeeName.toLowerCase() &&
-        r.date === targetDate
-    );
+    // Check if a record already exists for this exact employee and exact date
+    const existingIndex = currentRecords.findIndex((r) => {
+      const matchEmp =
+        (empId && r.employeeId && r.employeeId.toLowerCase() === empId.toLowerCase()) ||
+        (empEmail && r.employeeEmail && r.employeeEmail.toLowerCase() === empEmail) ||
+        (empName && r.employeeName && r.employeeName.toLowerCase() === empName.toLowerCase());
+      return matchEmp && r.date === date;
+    });
 
     let updated;
     if (existingIndex >= 0) {
-      updated = [...current];
-      updated[existingIndex] = { ...updated[existingIndex], ...newReport };
+      // Update the submission for that date
+      updated = [...currentRecords];
+      updated[existingIndex] = { ...updated[existingIndex], ...newRecord };
     } else {
-      updated = [newReport, ...current];
+      // Prepend new record
+      updated = [newRecord, ...currentRecords];
     }
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
-    // Notify all listening components immediately
+    // Dispatch custom event for real-time local reactivity
     window.dispatchEvent(new CustomEvent("mhaveer-eod-updated", { detail: updated }));
 
-    return { success: true, report: newReport };
+    return { success: true, record: newRecord };
   } catch (err) {
     console.error("Failed to save EOD report:", err);
     return { success: false, error: err.message };
   }
 };
 
-// Format WhatsApp text reference string
-export const formatWhatsAppText = (report) => {
-  if (!report) return "";
-  const name = report.employeeName || "Team Member";
-  const received = report.received !== undefined && report.received !== null ? report.received : "0";
-  const appointment = formatCount(report.appointment);
-  const login = formatCount(report.login);
-
-  return `Team Member: ${name}\n- Received: ${received}\n- Appointment: ${appointment}\n- Login: ${login}`;
-};
-
-// Get a team member's full EOD history, sorted most recent first
-export const getEmployeeEodHistory = (employeeName) => {
+/**
+ * Get an employee's submitted EODs with strict privacy.
+ * Employee A only sees Employee A's records.
+ */
+export const getEmployeeSubmissions = (user, filterDate = "") => {
+  if (!user) return [];
   const all = getStoredEodReports();
-  if (!employeeName) return all;
+  const empId = String(user.employeeId || user._id || user.id || "").trim().toLowerCase();
+  const empEmail = String(user.email || "").trim().toLowerCase();
+  const empName = String(user.name || user.fullName || "").trim().toLowerCase();
+
   return all
-    .filter((r) => r.employeeName?.toLowerCase() === employeeName.toLowerCase())
-    .sort((a, b) => (b.date > a.date ? 1 : -1));
+    .filter((r) => {
+      const match =
+        (empId && r.employeeId && r.employeeId.toLowerCase() === empId) ||
+        (empEmail && r.employeeEmail && r.employeeEmail.toLowerCase() === empEmail) ||
+        (empName && r.employeeName && r.employeeName.toLowerCase() === empName);
+
+      if (!match) return false;
+      if (filterDate && r.date !== filterDate) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (b.date !== a.date) return b.date > a.date ? 1 : -1;
+      return b.timestamp - a.timestamp;
+    });
 };
 
-// Get today's submitted EOD for an employee (or null if not yet submitted)
-export const getEmployeeTodayEod = (employeeName) => {
+/**
+ * Get team submissions for Manager review.
+ * Only actual submitted data, no placeholder or dummy entries.
+ */
+export const getTeamSubmissionsForManager = (managerUser, filterDate = "", searchMember = "") => {
   const all = getStoredEodReports();
-  const todayKey = getTodayDateKey();
-  if (!employeeName) return null;
-  return all.find(
-    (r) =>
-      r.employeeName?.toLowerCase() === employeeName.toLowerCase() &&
-      r.date === todayKey
-  ) || null;
+
+  return all
+    .filter((r) => {
+      if (filterDate && r.date !== filterDate) return false;
+      if (searchMember && !r.employeeName.toLowerCase().includes(searchMember.toLowerCase())) {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (b.date !== a.date) return b.date > a.date ? 1 : -1;
+      return b.timestamp - a.timestamp;
+    });
 };
 
-// Get status breakdown for all team members for a given date
-// Returns: list of members with hasSubmitted: true/false, received, appointment, login
-export const getTeamEodStatusByDate = (dateKey, currentUser) => {
-  const allReports = getStoredEodReports();
-  const teamMembers = getAllTeamMembers(currentUser);
-
-  // Filter reports for the given date
-  const dateReports = allReports.filter((r) => r.date === dateKey);
-  const reportsByMember = new Map();
-  dateReports.forEach((r) => {
-    if (r.employeeName) {
-      reportsByMember.set(r.employeeName.toLowerCase(), r);
-    }
-  });
-
-  return teamMembers.map((member) => {
-    const report = reportsByMember.get(member.name.toLowerCase());
-    return {
-      id: member.id,
-      employeeName: member.name,
-      date: dateKey,
-      displayDate: formatDisplayDate(dateKey),
-      hasSubmitted: Boolean(report),
-      received: report ? report.received : "-",
-      appointment: report ? report.appointment : "-",
-      login: report ? report.login : "-",
-      submittedAt: report ? report.submittedAt : "-",
-      reportObject: report || null
-    };
-  });
+/**
+ * Delete an EOD submission by ID (only by the owner or manager)
+ */
+export const deleteEodRecord = (recordId) => {
+  try {
+    const all = getStoredEodReports();
+    const updated = all.filter((r) => r.id !== recordId);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    window.dispatchEvent(new CustomEvent("mhaveer-eod-updated", { detail: updated }));
+    return true;
+  } catch (err) {
+    console.error("Failed to delete record:", err);
+    return false;
+  }
 };

@@ -1,6 +1,4 @@
 import EmployeeDashboard from "../components/EmployeeDashboard";
-import ManagerEodSection from "../components/ManagerEodSection";
-import TeamMemberEodBanner from "../components/TeamMemberEodBanner";
 import { useAuth } from "../context/AuthContext";
 import { resolveDepartmentDashboard, getUserDepartment, getUserRole } from "../utils/hierarchy";
 
@@ -14,7 +12,6 @@ const panelHeader = (label, title) => (
 export const TelecallingManagerDashboard = () => (
   <>
     {panelHeader("Telecalling Portal", "Telecalling Manager Dashboard")}
-    <ManagerEodSection />
     <EmployeeDashboard />
   </>
 );
@@ -22,7 +19,6 @@ export const TelecallingManagerDashboard = () => (
 export const TelecallingEmployeeDashboard = () => (
   <>
     {panelHeader("Telecalling Portal", "Telecalling Employee Dashboard")}
-    <TeamMemberEodBanner />
     <EmployeeDashboard />
   </>
 );

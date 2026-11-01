@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, Menu, ChevronDown, Clock, Circle, User, Key, LogOut, PauseCircle, PlayCircle, CheckCircle, Check } from "lucide-react";
+import { Bell, Menu, ChevronDown, Clock, Circle, User, Key, LogOut, PauseCircle, PlayCircle, CheckCircle, Check, FileSpreadsheet } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import api from "./api";
@@ -103,6 +103,7 @@ export default function Header({ onToggleSidebar }) {
     if (path.includes("employees")) return "Employee Directory";
     if (path.includes("add-employee")) return "Register Employee";
     if (path.includes("attendance")) return "Attendance Logs";
+    if (path.includes("eod")) return "End of Day (EOD) Reports";
     return "Telecalling Portal";
   };
 
@@ -371,6 +372,12 @@ export default function Header({ onToggleSidebar }) {
                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-600 hover:bg-slate-100 hover:text-[#162335] font-bold transition text-left"
                   >
                     <Clock size={14} /> Attendance Logs
+                  </button>
+                  <button
+                    onClick={() => { navigate("/eod"); setDropdownOpen(false); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-600 hover:bg-slate-100 hover:text-[#162335] font-bold transition text-left"
+                  >
+                    <FileSpreadsheet size={14} /> EOD Reports
                   </button>
                 </>
 

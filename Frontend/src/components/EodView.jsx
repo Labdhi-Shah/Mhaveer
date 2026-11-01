@@ -9,20 +9,20 @@ import {
   PhoneCall,
   CalendarCheck,
   CheckCircle2,
+  AlertCircle,
   Copy,
   Check,
   Search,
-  Filter,
   Download,
   Clock,
-  AlertCircle,
-  RotateCcw,
-  Sparkles,
-  TrendingUp,
+  Users,
+  UserCheck,
+  UserX,
   MessageSquare,
-  ShieldCheck,
-  Eye,
-  CheckCheck
+  Sparkles,
+  ArrowRight,
+  TrendingUp,
+  RefreshCw
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from "xlsx";
@@ -31,71 +31,90 @@ import {
   getStoredEodReports,
   saveEodReport,
   getTodayDateKey,
+  getYesterdayDateKey,
+  getDaysAgoDateKey,
   formatDisplayDate,
   formatCount,
-  formatWhatsAppText
+  formatWhatsAppText,
+  getAllTeamMembers,
+  getTeamEodStatusByDate,
+  getEmployeeEodHistory,
+  getEmployeeTodayEod
 } from "../utils/eodStorage";
 
 export default function EodView() {
   const { user } = useAuth();
-  const actualRole = getUserRole(user);
-  const isManagerActual = actualRole === "Manager";
+  const role = getUserRole(user);
+  const isManagerRole = role === "Manager";
 
-  // For testing/demonstration, allow role toggle if needed
-  const [activeTab, setActiveTab] = useState(isManagerActual ? "manager" : "team");
-  
-  // EOD Form inputs
-  const [receivedCount, setReceivedCount] = useState("");
-  const [appointmentCount, setAppointmentCount] = useState("");
-  const [loginCount, setLoginCount] = useState("");
+  // Active view: either team member view or manager view
+  const [activeView, setActiveView] = useState(isManagerRole ? "manager" : "team");
+
+  // Team Member Form states
+  const [receivedInput, setReceivedInput] = useState("");
+  const [appointmentInput, setAppointmentInput] = useState("");
+  const [loginInput, setLoginInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [submittedToday, setSubmittedToday] = useState(null);
+  const [todayEod, setTodayEod] = useState(null);
+  const [myHistory, setMyHistory] = useState([]);
 
-  // Manager View states
-  const [allReports, setAllReports] = useState([]);
+  // Manager states
+  const [selectedDate, setSelectedDate] = useState(getTodayDateKey());
+  const [managerViewMode, setManagerViewMode] = useState("date-wise"); // "date-wise" | "member-wise"
+  const [selectedMember, setSelectedMember] = useState("Shruti");
+  const [managerStatusFilter, setManagerStatusFilter] = useState("all"); // "all" | "submitted" | "pending"
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateFilter, setDateFilter] = useState("all"); // "today" | "all"
-  const [copiedId, setCopiedId] = useState(null);
+  const [dateStatusList, setDateStatusList] = useState([]);
+  const [teamMembersList, setTeamMembersList] = useState([]);
+
+  // UI helpers
   const [toast, setToast] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
   const [exporting, setExporting] = useState(false);
 
   const todayKey = getTodayDateKey();
-  const todayDisplay = new Date().toLocaleDateString("en-GB", {
+  const yesterdayKey = getYesterdayDateKey();
+
+  const formattedCurrentDate = new Date().toLocaleDateString("en-GB", {
     weekday: "long",
     day: "2-digit",
     month: "long",
     year: "numeric"
   });
 
-  const employeeName = user?.name || user?.fullName || (isManagerActual ? "Manager Admin" : "Shruti");
+  const employeeName = user?.name || user?.fullName || (isManagerRole ? "Shruti" : "Shruti");
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
   };
 
-  const loadData = () => {
-    const data = getStoredEodReports();
-    setAllReports(data);
-
-    // Check if current user has already submitted for today
-    const currentName = employeeName.toLowerCase();
-    const todayRecord = data.find(
-      (r) => r.employeeName?.toLowerCase() === currentName && r.date === todayKey
-    );
+  const loadAllData = () => {
+    // Team member today's submission & history
+    const todayRecord = getEmployeeTodayEod(employeeName);
+    setTodayEod(todayRecord);
     if (todayRecord) {
-      setSubmittedToday(todayRecord);
-      setReceivedCount(String(todayRecord.received));
-      setAppointmentCount(String(todayRecord.appointment));
-      setLoginCount(String(todayRecord.login));
+      setReceivedInput(String(todayRecord.received));
+      setAppointmentInput(String(todayRecord.appointment));
+      setLoginInput(String(todayRecord.login));
     }
+
+    const history = getEmployeeEodHistory(employeeName);
+    setMyHistory(history);
+
+    // Manager status breakdown for selected date
+    const list = getTeamEodStatusByDate(selectedDate, user);
+    setDateStatusList(list);
+
+    const members = getAllTeamMembers(user);
+    setTeamMembersList(members);
   };
 
   useEffect(() => {
-    loadData();
+    loadAllData();
 
     const handleUpdate = () => {
-      loadData();
+      loadAllData();
     };
 
     window.addEventListener("mhaveer-eod-updated", handleUpdate);
@@ -104,28 +123,23 @@ export default function EodView() {
       window.removeEventListener("mhaveer-eod-updated", handleUpdate);
       window.removeEventListener("storage", handleUpdate);
     };
-  }, [user]);
+  }, [employeeName, selectedDate, user]);
 
-  // Handle Form Submit
-  const handleSubmitEod = (e) => {
+  // Handle Team Member EOD Submit
+  const handleFormSubmit = (e) => {
     e.preventDefault();
 
-    if (receivedCount === "" || appointmentCount === "" || loginCount === "") {
+    if (receivedInput === "" || appointmentInput === "" || loginInput === "") {
       showToast("Please enter values for Received, Appointment, and Login.", "error");
       return;
     }
 
-    const receivedNum = parseInt(receivedCount, 10);
-    const appointmentNum = parseInt(appointmentCount, 10);
-    const loginNum = parseInt(loginCount, 10);
+    const rec = parseInt(receivedInput, 10);
+    const app = parseInt(appointmentInput, 10);
+    const log = parseInt(loginInput, 10);
 
-    if (isNaN(receivedNum) || isNaN(appointmentNum) || isNaN(loginNum)) {
-      showToast("Please enter valid numeric counts.", "error");
-      return;
-    }
-
-    if (receivedNum < 0 || appointmentNum < 0 || loginNum < 0) {
-      showToast("Counts cannot be negative.", "error");
+    if (isNaN(rec) || isNaN(app) || isNaN(log) || rec < 0 || app < 0 || log < 0) {
+      showToast("Please enter valid, non-negative numbers.", "error");
       return;
     }
 
@@ -133,93 +147,99 @@ export default function EodView() {
 
     const result = saveEodReport({
       employeeName,
-      employeeId: user?.employeeId || user?._id || "EMP-CURRENT",
+      employeeId: user?.employeeId || user?._id || "EMP-SHRUTI",
       date: todayKey,
-      received: receivedNum,
-      appointment: appointmentNum,
-      login: loginNum,
-      notes: "Daily telecalling outreach submitted."
+      received: rec,
+      appointment: app,
+      login: log
     });
 
     setSubmitting(false);
 
     if (result.success) {
-      setSubmittedToday(result.report);
-      showToast("EOD report submitted successfully!", "success");
-      loadData();
+      setTodayEod(result.report);
+      showToast("EOD report submitted successfully! It is now visible to your Manager.", "success");
+      loadAllData();
     } else {
       showToast("Failed to save EOD report.", "error");
     }
   };
 
-  // Copy WhatsApp format
-  const handleCopyWhatsApp = (report) => {
+  // Copy WhatsApp Format
+  const handleCopy = (report) => {
+    if (!report) return;
     const text = formatWhatsAppText(report);
     navigator.clipboard.writeText(text);
-    setCopiedId(report.id || "current");
+    setCopiedId(report.id || report.employeeName || "current");
     showToast("Copied EOD report in WhatsApp format!", "success");
     setTimeout(() => setCopiedId(null), 2500);
   };
 
   // Export to Excel for Manager
   const handleExportExcel = () => {
-    if (!allReports || allReports.length === 0) {
-      showToast("No EOD records available to export.", "error");
-      return;
-    }
-
     try {
       setExporting(true);
-      const dataToExport = allReports.map((r) => ({
-        "Submission Date": r.displayDate || r.date,
-        "Team Member": r.employeeName,
-        "Leads Received": r.received,
-        "Appointments Completed": r.appointment,
-        "Loan Applications Logged In": r.login,
-        "Submitted Time": r.submittedAt || "N/A",
-        "Status": r.status || "Submitted"
+      const dataToExport = dateStatusList.map((item) => ({
+        "Team Member": item.employeeName,
+        "Date": item.displayDate,
+        "Received": item.hasSubmitted ? item.received : "-",
+        "Appointment": item.hasSubmitted ? item.appointment : "-",
+        "Login": item.hasSubmitted ? item.login : "-",
+        "Submission Status": item.hasSubmitted ? "Submitted" : "Not Submitted",
+        "Submitted Time": item.submittedAt || "-"
       }));
 
       const ws = XLSX.utils.json_to_sheet(dataToExport);
       const colWidths = Object.keys(dataToExport[0] || {}).map((key) => {
-        const maxContentLength = Math.max(
+        const maxLen = Math.max(
           key.length,
           ...dataToExport.map((row) => String(row[key] !== undefined ? row[key] : "").length).slice(0, 50)
         );
-        return { wch: Math.min(Math.max(maxContentLength + 4, 14), 40) };
+        return { wch: Math.min(Math.max(maxLen + 4, 14), 40) };
       });
       ws["!cols"] = colWidths;
 
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Team EOD Reports");
-      const dateStr = new Date().toISOString().slice(0, 10);
-      downloadXLSX(wb, `Team_EOD_Reports_${dateStr}.xlsx`);
-      showToast(`Exported ${dataToExport.length} EOD records to Excel!`, "success");
+      XLSX.utils.book_append_sheet(wb, ws, "Team Daily EOD");
+      downloadXLSX(wb, `Team_Daily_EOD_${selectedDate}.xlsx`);
+      showToast("Exported daily EOD data to Excel!", "success");
     } catch (err) {
       console.error("Export error:", err);
-      showToast("Failed to export EOD reports.", "error");
+      showToast("Failed to export Excel file.", "error");
     } finally {
       setExporting(false);
     }
   };
 
-  // Filtered reports for Manager
-  const filteredManagerReports = allReports.filter((r) => {
+  // Manager calculations
+  const filteredDateList = dateStatusList.filter((item) => {
     const matchesSearch =
-      !searchTerm || r.employeeName?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDate = dateFilter === "today" ? r.date === todayKey : true;
-    return matchesSearch && matchesDate;
+      !searchTerm || item.employeeName?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      managerStatusFilter === "all"
+        ? true
+        : managerStatusFilter === "submitted"
+        ? item.hasSubmitted
+        : !item.hasSubmitted;
+    return matchesSearch && matchesStatus;
   });
 
-  // User's own history
-  const myReports = allReports.filter(
-    (r) => r.employeeName?.toLowerCase() === employeeName.toLowerCase()
+  const submittedCount = dateStatusList.filter((i) => i.hasSubmitted).length;
+  const pendingCount = dateStatusList.filter((i) => !i.hasSubmitted).length;
+  const totalReceived = dateStatusList.reduce(
+    (acc, curr) => acc + (curr.hasSubmitted ? Number(curr.received) || 0 : 0),
+    0
+  );
+  const totalAppointment = dateStatusList.reduce(
+    (acc, curr) => acc + (curr.hasSubmitted ? Number(curr.appointment) || 0 : 0),
+    0
+  );
+  const totalLogin = dateStatusList.reduce(
+    (acc, curr) => acc + (curr.hasSubmitted ? Number(curr.login) || 0 : 0),
+    0
   );
 
-  // Aggregate stats for Manager
-  const totalReceived = filteredManagerReports.reduce((acc, curr) => acc + (Number(curr.received) || 0), 0);
-  const totalAppointment = filteredManagerReports.reduce((acc, curr) => acc + (Number(curr.appointment) || 0), 0);
-  const totalLogin = filteredManagerReports.reduce((acc, curr) => acc + (Number(curr.login) || 0), 0);
+  const selectedMemberHistory = getEmployeeEodHistory(selectedMember);
 
   return (
     <div className="space-y-6">
@@ -253,23 +273,23 @@ export default function EodView() {
             <span className="p-1.5 bg-slate-100 rounded-lg text-[#162335]">
               <FileSpreadsheet size={16} />
             </span>
-            <span>Mhaveer Telecalling Portal • EOD Module</span>
+            <span>Mhaveer Telecalling Portal • Daily EOD Tracking</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-[#162335]">
-            End of Day (EOD) Reports
+            End of Day (EOD)
           </h1>
           <p className="text-sm font-semibold text-slate-500 mt-1 flex items-center gap-2">
             <Calendar size={15} className="text-slate-400" />
-            <span>Today: <strong className="text-slate-700">{todayDisplay}</strong></span>
+            <span>Today&apos;s Date: <strong className="text-slate-700">{formattedCurrentDate}</strong></span>
           </p>
         </div>
 
-        {/* View Switcher: Allows previewing both Team Member submission & Manager review */}
+        {/* View Switcher: Team Member vs Manager View */}
         <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 self-start md:self-auto">
           <button
-            onClick={() => setActiveTab("team")}
+            onClick={() => setActiveView("team")}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition ${
-              activeTab === "team"
+              activeView === "team"
                 ? "bg-[#162335] text-white shadow-md"
                 : "text-slate-600 hover:text-slate-900"
             }`}
@@ -278,41 +298,41 @@ export default function EodView() {
             <span>Team Member Submission</span>
           </button>
           <button
-            onClick={() => setActiveTab("manager")}
+            onClick={() => setActiveView("manager")}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition ${
-              activeTab === "manager"
+              activeView === "manager"
                 ? "bg-[#162335] text-white shadow-md"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <ShieldCheck size={15} />
-            <span>Manager Team Review</span>
+            <Users size={15} />
+            <span>Manager Team View</span>
           </button>
         </div>
       </div>
 
       {/* ========================================================
-          1. TEAM MEMBER SUBMISSION SECTION
+          1. TEAM MEMBER – DAILY EOD SUBMISSION
           ======================================================== */}
-      {activeTab === "team" && (
+      {activeView === "team" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Form Column */}
+            {/* Left: EOD Submission Form with the 3 required fields */}
             <div className="lg:col-span-7">
               <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
                   <div>
                     <h2 className="text-lg md:text-xl font-black text-[#162335] flex items-center gap-2">
                       <Send size={18} className="text-emerald-600" />
-                      Daily EOD Submission Form
+                      Daily EOD Submission
                     </h2>
                     <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                      Enter your daily Received, Appointment, and Login numbers
+                      Enter your daily numbers for Received, Appointment, and Login
                     </p>
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                      Submitting As
+                      Team Member
                     </span>
                     <span className="text-xs font-black text-[#162335] bg-slate-100 px-2.5 py-1 rounded-lg inline-block mt-0.5">
                       {employeeName}
@@ -320,20 +340,22 @@ export default function EodView() {
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmitEod} className="space-y-5">
-                  {/* Current Date Display */}
+                <form onSubmit={handleFormSubmit} className="space-y-5">
+                  {/* Automatically Display Submission Date */}
                   <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between">
-                    <div className="flex items-center gap-2.5 text-xs text-slate-600">
+                    <div className="flex items-center gap-2 text-xs text-slate-600">
                       <Calendar size={16} className="text-[#162335]" />
                       <span className="font-bold">Submission Date:</span>
-                      <span className="font-mono font-black text-[#162335]">{formatDisplayDate(todayKey)}</span>
+                      <span className="font-mono font-black text-[#162335]">
+                        {formatDisplayDate(todayKey)}
+                      </span>
                     </div>
                     <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">
-                      Today
+                      Auto-detected Today
                     </span>
                   </div>
 
-                  {/* 3 Input Fields Following WhatsApp Reference Structure */}
+                  {/* Exactly 3 Numeric Fields: Received, Appointment, Login */}
                   <div className="space-y-4">
                     {/* 1. Received */}
                     <div>
@@ -344,28 +366,26 @@ export default function EodView() {
                           <span className="text-rose-500">*</span>
                         </label>
                         <span className="text-[11px] font-semibold text-slate-400">
-                          Number of leads received today
+                          Number of leads received
                         </span>
                       </div>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="e.g. 106"
-                          value={receivedCount}
-                          onChange={(e) => setReceivedCount(e.target.value)}
-                          required
-                          className="w-full bg-slate-50 border border-slate-200 text-base font-bold text-[#162335] rounded-2xl px-4 py-3 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#162335]/20 focus:border-[#162335] transition"
-                        />
-                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="e.g. 106"
+                        value={receivedInput}
+                        onChange={(e) => setReceivedInput(e.target.value)}
+                        required
+                        className="w-full bg-slate-50 border border-slate-200 text-base font-bold text-[#162335] rounded-2xl px-4 py-3 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#162335]/20 focus:border-[#162335] transition"
+                      />
                     </div>
 
                     {/* 2. Appointment */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="text-xs font-black text-slate-700 flex items-center gap-1.5">
-                          <CalendarCheck size={14} className="text-amber-600" />
+                          <CalendarCheck size={14} className="text-purple-600" />
                           <span>2. Appointment</span>
                           <span className="text-rose-500">*</span>
                         </label>
@@ -373,18 +393,16 @@ export default function EodView() {
                           Number of appointments completed
                         </span>
                       </div>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="e.g. 00"
-                          value={appointmentCount}
-                          onChange={(e) => setAppointmentCount(e.target.value)}
-                          required
-                          className="w-full bg-slate-50 border border-slate-200 text-base font-bold text-[#162335] rounded-2xl px-4 py-3 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#162335]/20 focus:border-[#162335] transition"
-                        />
-                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="e.g. 00"
+                        value={appointmentInput}
+                        onChange={(e) => setAppointmentInput(e.target.value)}
+                        required
+                        className="w-full bg-slate-50 border border-slate-200 text-base font-bold text-[#162335] rounded-2xl px-4 py-3 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#162335]/20 focus:border-[#162335] transition"
+                      />
                     </div>
 
                     {/* 3. Login */}
@@ -399,42 +417,39 @@ export default function EodView() {
                           Number of loan applications logged in
                         </span>
                       </div>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="e.g. 00"
-                          value={loginCount}
-                          onChange={(e) => setLoginCount(e.target.value)}
-                          required
-                          className="w-full bg-slate-50 border border-slate-200 text-base font-bold text-[#162335] rounded-2xl px-4 py-3 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#162335]/20 focus:border-[#162335] transition"
-                        />
-                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="e.g. 00"
+                        value={loginInput}
+                        onChange={(e) => setLoginInput(e.target.value)}
+                        required
+                        className="w-full bg-slate-50 border border-slate-200 text-base font-bold text-[#162335] rounded-2xl px-4 py-3 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#162335]/20 focus:border-[#162335] transition"
+                      />
                     </div>
                   </div>
 
-                  {/* Submit Button */}
+                  {/* Submit EOD Button */}
                   <div className="pt-2">
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="w-full bg-[#162335] hover:bg-slate-800 text-white font-black text-sm py-3.5 px-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                      className="w-full bg-[#162335] hover:bg-slate-800 text-white font-black text-sm py-3.5 px-6 rounded-2xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                     >
                       <Send size={16} />
-                      <span>{submittedToday ? "Update EOD Report" : "Submit EOD"}</span>
+                      <span>{todayEod ? "Update Today's EOD" : "Submit EOD"}</span>
                     </button>
                     <p className="text-[11px] text-center text-slate-400 font-semibold mt-2.5">
-                      Submissions are immediately viewable by Telecalling Managers.
+                      Submissions immediately appear on your Manager&apos;s daily monitoring dashboard.
                     </p>
                   </div>
                 </form>
               </div>
             </div>
 
-            {/* Preview & WhatsApp Format Summary Column */}
+            {/* Right: Display Today's Submitted EOD Clearly */}
             <div className="lg:col-span-5 space-y-6">
-              {/* WhatsApp Screenshot Reference Preview Card */}
               <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                   <div className="flex items-center gap-2">
@@ -443,34 +458,38 @@ export default function EodView() {
                     </span>
                     <div>
                       <h3 className="text-sm font-black text-[#162335]">
-                        WhatsApp Report Preview
+                        Today&apos;s Submitted EOD
                       </h3>
                       <p className="text-[11px] font-semibold text-slate-400">
-                        Exact reference format
+                        WhatsApp Reference Format
                       </p>
                     </div>
                   </div>
-                  {submittedToday && (
-                    <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-                      Submitted
+                  {todayEod ? (
+                    <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                      <CheckCircle2 size={11} /> Submitted
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                      <Clock size={11} /> Not Submitted
                     </span>
                   )}
                 </div>
 
-                {/* The WhatsApp Formatted Card */}
+                {/* WhatsApp Format Box */}
                 <div className="bg-[#e7f5ea] border border-emerald-200/80 rounded-2xl p-5 shadow-xs relative">
                   <div className="flex items-center justify-between text-xs text-emerald-800 font-semibold mb-3 border-b border-emerald-200 pb-2">
-                    <span>Mhaveer Telecalling Daily EOD</span>
+                    <span>EOD Daily Summary</span>
                     <span className="font-mono text-[11px]">{formatDisplayDate(todayKey)}</span>
                   </div>
 
-                  {/* Content formatted like reference:
+                  {/* Clean structure matching screenshot:
                       Team Member: Shruti
                       - Received: 106
                       - Appointment: 00
                       - Login: 00
                   */}
-                  <div className="font-sans space-y-2 text-[#162335]">
+                  <div className="space-y-2 text-[#162335]">
                     <p className="font-black text-sm">
                       Team Member: <span className="text-emerald-900 underline decoration-emerald-400 underline-offset-4">{employeeName}</span>
                     </p>
@@ -479,88 +498,87 @@ export default function EodView() {
                         <span className="text-slate-500 font-bold">•</span>
                         <span className="font-semibold text-slate-700">Received:</span>
                         <span className="font-black text-blue-800">
-                          {receivedCount !== "" ? receivedCount : "106"}
+                          {receivedInput !== "" ? receivedInput : (todayEod ? todayEod.received : "106")}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-slate-500 font-bold">•</span>
                         <span className="font-semibold text-slate-700">Appointment:</span>
-                        <span className="font-black text-amber-800">
-                          {formatCount(appointmentCount !== "" ? appointmentCount : 0)}
+                        <span className="font-black text-purple-800">
+                          {formatCount(appointmentInput !== "" ? appointmentInput : (todayEod ? todayEod.appointment : 0))}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-slate-500 font-bold">•</span>
                         <span className="font-semibold text-slate-700">Login:</span>
                         <span className="font-black text-emerald-800">
-                          {formatCount(loginCount !== "" ? loginCount : 0)}
+                          {formatCount(loginInput !== "" ? loginInput : (todayEod ? todayEod.login : 0))}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Copy Button */}
+                  {/* Copy WhatsApp Text Button */}
                   <div className="mt-4 pt-3 border-t border-emerald-200/70 flex items-center justify-between">
                     <span className="text-[10px] text-emerald-700 font-medium">
-                      Ready to paste into WhatsApp group
+                      {todayEod ? `Submitted at ${todayEod.submittedAt}` : "Ready to copy"}
                     </span>
                     <button
                       onClick={() =>
-                        handleCopyWhatsApp({
+                        handleCopy({
                           employeeName,
-                          received: receivedCount !== "" ? receivedCount : 106,
-                          appointment: appointmentCount !== "" ? appointmentCount : 0,
-                          login: loginCount !== "" ? loginCount : 0
+                          received: receivedInput !== "" ? receivedInput : (todayEod ? todayEod.received : 106),
+                          appointment: appointmentInput !== "" ? appointmentInput : (todayEod ? todayEod.appointment : 0),
+                          login: loginInput !== "" ? loginInput : (todayEod ? todayEod.login : 0)
                         })
                       }
                       className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-3 py-1.5 rounded-xl transition shadow-xs cursor-pointer"
                     >
-                      {copiedId === (submittedToday?.id || "current") ? (
+                      {copiedId === (todayEod?.id || "current") ? (
                         <>
                           <Check size={13} />
-                          <span>Copied!</span>
+                          <span>Copied</span>
                         </>
                       ) : (
                         <>
                           <Copy size={13} />
-                          <span>Copy Report</span>
+                          <span>Copy WhatsApp Text</span>
                         </>
                       )}
                     </button>
                   </div>
                 </div>
 
-                {/* Help tip */}
                 <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-[11px] text-slate-500 flex items-start gap-2">
                   <Sparkles size={15} className="text-amber-500 shrink-0 mt-0.5" />
                   <span>
-                    Your EOD report is instantly synchronized with the <strong>Manager Dashboard</strong> so supervisors can review today&apos;s team metrics.
+                    Your daily EOD counts are directly displayed in the <strong>Manager Dashboard</strong> with zero delay.
                   </span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Team Member's Own EOD Records History */}
+          {/* Previous EOD Submissions (History Section) */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
               <div>
                 <h3 className="text-base sm:text-lg font-black text-[#162335] flex items-center gap-2">
-                  <Calendar size={18} className="text-[#162335]" />
-                  My EOD Submission History
+                  <Clock size={18} className="text-[#162335]" />
+                  Previous EOD Submissions
                 </h3>
                 <p className="text-xs font-semibold text-slate-400 mt-0.5">
-                  View your past daily Received, Appointment, and Login records
+                  Your daily submitted Received, Appointment, and Login history
                 </p>
               </div>
               <span className="text-xs font-black text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl">
-                Total Submissions: {myReports.length}
+                {myHistory.length} Daily Records
               </span>
             </div>
 
-            {myReports.length === 0 ? (
+            {myHistory.length === 0 ? (
               <div className="text-center py-8 text-slate-400 text-xs">
-                No past EOD submissions found. Submit your first EOD above!
+                No previous submissions found. Submit today&apos;s EOD above!
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -571,13 +589,13 @@ export default function EodView() {
                         Date
                       </th>
                       <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                        Received (Leads)
+                        Received
                       </th>
                       <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                         Appointment
                       </th>
                       <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                        Login (Apps)
+                        Login
                       </th>
                       <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                         Submitted Time
@@ -588,7 +606,7 @@ export default function EodView() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {myReports.map((report) => (
+                    {myHistory.map((report) => (
                       <tr key={report.id} className="hover:bg-slate-50/60 transition">
                         <td className="py-3.5 px-4 text-xs font-black text-[#162335]">
                           {report.displayDate || report.date}
@@ -601,18 +619,18 @@ export default function EodView() {
                         <td className="py-3.5 px-4 text-xs font-black text-blue-700">
                           {report.received}
                         </td>
-                        <td className="py-3.5 px-4 text-xs font-black text-amber-700">
+                        <td className="py-3.5 px-4 text-xs font-black text-purple-700">
                           {formatCount(report.appointment)}
                         </td>
                         <td className="py-3.5 px-4 text-xs font-black text-emerald-700">
                           {formatCount(report.login)}
                         </td>
                         <td className="py-3.5 px-4 text-xs font-semibold text-slate-500">
-                          {report.submittedAt || "N/A"}
+                          {report.submittedAt || "-"}
                         </td>
                         <td className="py-3.5 px-4 text-xs text-right">
                           <button
-                            onClick={() => handleCopyWhatsApp(report)}
+                            onClick={() => handleCopy(report)}
                             className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg text-slate-600 font-bold transition"
                             title="Copy WhatsApp Format"
                           >
@@ -631,305 +649,436 @@ export default function EodView() {
       )}
 
       {/* ========================================================
-          2. MANAGER VIEW SECTION
+          2. MANAGER – DIRECT TEAM EOD MONITORING
           ======================================================== */}
-      {activeTab === "manager" && (
+      {activeView === "manager" && (
         <div className="space-y-6">
-          {/* Top Aggregate Metric Cards for Manager */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-[#162335]">
+          {/* Summary Metric Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+            <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-emerald-500">
               <div className="flex items-center justify-between text-slate-400">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
-                  Total Team Reports
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800">
+                  Submitted
                 </span>
-                <span className="p-2 bg-slate-100 text-slate-700 rounded-xl">
-                  <User size={18} />
-                </span>
+                <UserCheck size={18} className="text-emerald-600" />
               </div>
-              <h3 className="text-3xl font-black text-[#162335] mt-2">
-                {filteredManagerReports.length}
+              <h3 className="text-2xl sm:text-3xl font-black text-emerald-950 mt-1">
+                {submittedCount} <span className="text-xs font-bold text-emerald-600">/ {dateStatusList.length}</span>
               </h3>
-              <p className="text-[11px] font-semibold text-slate-400 mt-0.5">
-                Team member submissions
+              <p className="text-[11px] font-semibold text-emerald-700 mt-0.5">
+                Team members submitted
               </p>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-blue-600">
+            <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-amber-500">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-700">
-                  Total Leads Received
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-800">
+                  Not Submitted
                 </span>
-                <span className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-                  <PhoneCall size={18} />
-                </span>
+                <UserX size={18} className="text-amber-600" />
               </div>
-              <h3 className="text-3xl font-black text-blue-900 mt-2">
+              <h3 className="text-2xl sm:text-3xl font-black text-amber-950 mt-1">
+                {pendingCount}
+              </h3>
+              <p className="text-[11px] font-semibold text-amber-700 mt-0.5">
+                Pending daily EOD
+              </p>
+            </div>
+
+            <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-blue-600">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-800">
+                  Total Received
+                </span>
+                <PhoneCall size={18} className="text-blue-600" />
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-black text-blue-950 mt-1">
                 {totalReceived}
               </h3>
-              <p className="text-[11px] font-semibold text-blue-600/80 mt-0.5">
-                Aggregated leads handled
+              <p className="text-[11px] font-semibold text-blue-600 mt-0.5">
+                Total leads handled
               </p>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-amber-500">
+            <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-purple-600">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-700">
-                  Total Appointments
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-purple-800">
+                  Appointments
                 </span>
-                <span className="p-2 bg-amber-50 text-amber-600 rounded-xl">
-                  <CalendarCheck size={18} />
-                </span>
+                <CalendarCheck size={18} className="text-purple-600" />
               </div>
-              <h3 className="text-3xl font-black text-amber-900 mt-2">
+              <h3 className="text-2xl sm:text-3xl font-black text-purple-950 mt-1">
                 {formatCount(totalAppointment)}
               </h3>
-              <p className="text-[11px] font-semibold text-amber-600/80 mt-0.5">
-                Completed appointments
+              <p className="text-[11px] font-semibold text-purple-600 mt-0.5">
+                Completed meetings
               </p>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-emerald-500">
+            <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-[#162335] col-span-2 md:col-span-1">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">
-                  Total Loan Logins
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
+                  Loan Logins
                 </span>
-                <span className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
-                  <CheckCircle2 size={18} />
-                </span>
+                <CheckCircle2 size={18} className="text-slate-600" />
               </div>
-              <h3 className="text-3xl font-black text-emerald-900 mt-2">
+              <h3 className="text-2xl sm:text-3xl font-black text-[#162335] mt-1">
                 {formatCount(totalLogin)}
               </h3>
-              <p className="text-[11px] font-semibold text-emerald-600/80 mt-0.5">
-                Applications logged in
+              <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                Files logged in
               </p>
             </div>
           </div>
 
-          {/* Manager Controls: Search, Filters, Excel Export */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="relative w-full md:w-80">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search team member name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl pl-9 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#162335]/20"
-              />
-            </div>
-
-            <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-              <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
-                <button
-                  onClick={() => setDateFilter("all")}
-                  className={`px-3 py-1.5 rounded-lg transition ${
-                    dateFilter === "all"
-                      ? "bg-[#162335] text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
-                  }`}
-                >
-                  All Records
-                </button>
-                <button
-                  onClick={() => setDateFilter("today")}
-                  className={`px-3 py-1.5 rounded-lg transition ${
-                    dateFilter === "today"
-                      ? "bg-[#162335] text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
-                  }`}
-                >
-                  Today Only
-                </button>
+          {/* Mode Switcher: Date-wise vs Team-member-wise */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+                  Organize By:
+                </span>
+                <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold border border-slate-200">
+                  <button
+                    onClick={() => setManagerViewMode("date-wise")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${
+                      managerViewMode === "date-wise"
+                        ? "bg-[#162335] text-white shadow-xs font-black"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <Calendar size={13} />
+                    <span>Date-wise Reports</span>
+                  </button>
+                  <button
+                    onClick={() => setManagerViewMode("member-wise")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${
+                      managerViewMode === "member-wise"
+                        ? "bg-[#162335] text-white shadow-xs font-black"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <Users size={13} />
+                    <span>Team-member-wise Reports</span>
+                  </button>
+                </div>
               </div>
 
               <button
                 onClick={handleExportExcel}
-                disabled={exporting || filteredManagerReports.length === 0}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-xs whitespace-nowrap"
-                title="Export EOD table to Excel"
+                disabled={exporting || dateStatusList.length === 0}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-4 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs self-start sm:self-auto"
+                title="Export this EOD table to Excel (.xlsx)"
               >
                 <Download size={14} />
-                <span>Export Excel</span>
+                <span>Export to Excel</span>
               </button>
             </div>
-          </div>
 
-          {/* Grid of Team Member WhatsApp Cards */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8">
-            <div className="border-b border-slate-100 pb-4 mb-6">
-              <h3 className="text-base sm:text-lg font-black text-[#162335] flex items-center gap-2">
-                <MessageSquare size={18} className="text-emerald-600" />
-                Team EOD Cards (WhatsApp Format Presentation)
-              </h3>
-              <p className="text-xs font-semibold text-slate-400 mt-0.5">
-                Exact report layout matching WhatsApp daily reporting standards
-              </p>
-            </div>
+            {/* DATE-WISE MANAGER VIEW */}
+            {managerViewMode === "date-wise" && (
+              <div className="space-y-4">
+                {/* Date Controls & Search */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200/70">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1">
+                      <Calendar size={13} /> Date:
+                    </span>
+                    <button
+                      onClick={() => setSelectedDate(todayKey)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                        selectedDate === todayKey
+                          ? "bg-[#162335] text-white shadow-xs font-black"
+                          : "bg-white text-slate-700 hover:bg-slate-200 border border-slate-200"
+                      }`}
+                    >
+                      Today ({formatDisplayDate(todayKey)})
+                    </button>
+                    <button
+                      onClick={() => setSelectedDate(yesterdayKey)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                        selectedDate === yesterdayKey
+                          ? "bg-[#162335] text-white shadow-xs font-black"
+                          : "bg-white text-slate-700 hover:bg-slate-200 border border-slate-200"
+                      }`}
+                    >
+                      Yesterday
+                    </button>
+                    <button
+                      onClick={() => setSelectedDate(getDaysAgoDateKey(2))}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                        selectedDate === getDaysAgoDateKey(2)
+                          ? "bg-[#162335] text-white shadow-xs font-black"
+                          : "bg-white text-slate-700 hover:bg-slate-200 border border-slate-200"
+                      }`}
+                    >
+                      {formatDisplayDate(getDaysAgoDateKey(2))}
+                    </button>
+                  </div>
 
-            {filteredManagerReports.length === 0 ? (
-              <div className="text-center py-12 text-slate-400 text-xs">
-                No EOD reports match your current filter.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredManagerReports.map((report) => (
-                  <div
-                    key={report.id}
-                    className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs hover:shadow-md transition flex flex-col justify-between"
-                  >
-                    <div>
-                      {/* Member Title */}
-                      <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2 mb-3">
-                        <div>
-                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                            Team Member
-                          </span>
-                          <h4 className="text-sm font-black text-[#162335]">
-                            {report.employeeName}
-                          </h4>
-                        </div>
-                        <button
-                          onClick={() => handleCopyWhatsApp(report)}
-                          className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
-                          title="Copy WhatsApp Text"
-                        >
-                          {copiedId === report.id ? (
-                            <span className="text-emerald-600 text-[10px] font-black flex items-center gap-0.5">
-                              <Check size={12} /> Copied
-                            </span>
-                          ) : (
-                            <Copy size={14} />
-                          )}
-                        </button>
-                      </div>
-
-                      {/* WhatsApp Reference Formatted Box */}
-                      <div className="bg-[#f0f4f9]/80 border border-slate-200/80 rounded-xl p-3 font-mono text-xs text-slate-800 space-y-1.5">
-                        <div className="font-sans font-bold text-[10px] text-slate-500 mb-1 border-b border-slate-200 pb-1 flex items-center justify-between">
-                          <span>EOD Report</span>
-                          <span className="text-[9px] text-slate-400 font-normal">
-                            {report.displayDate || report.date}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs py-0.5">
-                          <span className="font-semibold text-slate-600">• Received:</span>
-                          <span className="font-black text-blue-700 font-mono text-sm">
-                            {report.received}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs py-0.5">
-                          <span className="font-semibold text-slate-600">• Appointment:</span>
-                          <span className="font-black text-amber-700 font-mono text-sm">
-                            {formatCount(report.appointment)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs py-0.5">
-                          <span className="font-semibold text-slate-600">• Login:</span>
-                          <span className="font-black text-emerald-700 font-mono text-sm">
-                            {formatCount(report.login)}
-                          </span>
-                        </div>
-                      </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex bg-white p-0.5 rounded-xl border border-slate-200 text-xs font-bold">
+                      <button
+                        onClick={() => setManagerStatusFilter("all")}
+                        className={`px-2.5 py-1 rounded-lg transition ${
+                          managerStatusFilter === "all" ? "bg-slate-200 text-[#162335]" : "text-slate-500"
+                        }`}
+                      >
+                        All ({dateStatusList.length})
+                      </button>
+                      <button
+                        onClick={() => setManagerStatusFilter("submitted")}
+                        className={`px-2.5 py-1 rounded-lg transition ${
+                          managerStatusFilter === "submitted" ? "bg-emerald-100 text-emerald-800" : "text-slate-500"
+                        }`}
+                      >
+                        Submitted ({submittedCount})
+                      </button>
+                      <button
+                        onClick={() => setManagerStatusFilter("pending")}
+                        className={`px-2.5 py-1 rounded-lg transition ${
+                          managerStatusFilter === "pending" ? "bg-amber-100 text-amber-800" : "text-slate-500"
+                        }`}
+                      >
+                        Not Submitted ({pendingCount})
+                      </button>
                     </div>
 
-                    <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
-                      <span className="flex items-center gap-1">
-                        <Clock size={11} /> {report.submittedAt || "Submitted"}
-                      </span>
-                      <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
-                        {report.status || "Submitted"}
-                      </span>
+                    <div className="relative">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="Search member..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-white border border-slate-200 text-xs font-semibold rounded-xl pl-8 pr-3 py-1.5 w-36 focus:w-48 transition-all focus:outline-none focus:ring-1 focus:ring-[#162335]"
+                      />
                     </div>
                   </div>
-                ))}
+                </div>
+
+                {/* Table displaying: Team Member Name, Date, Received, Appointment, Login, Status */}
+                <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+                  <table className="w-full text-left border-collapse whitespace-nowrap min-w-[700px]">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                          Team Member Name
+                        </th>
+                        <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                          Date
+                        </th>
+                        <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                          Received
+                        </th>
+                        <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                          Appointment
+                        </th>
+                        <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                          Login
+                        </th>
+                        <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                          Submission Status
+                        </th>
+                        <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">
+                          WhatsApp Format
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredDateList.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="py-8 text-center text-xs text-slate-400">
+                            No team members match this filter.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredDateList.map((item) => (
+                          <tr
+                            key={item.id}
+                            className={`hover:bg-slate-50/80 transition ${
+                              !item.hasSubmitted ? "bg-amber-50/20" : ""
+                            }`}
+                          >
+                            <td className="py-3.5 px-4 text-xs font-black text-[#162335] flex items-center gap-2">
+                              <span
+                                className={`w-2.5 h-2.5 rounded-full ${
+                                  item.hasSubmitted ? "bg-emerald-500" : "bg-amber-400"
+                                }`}
+                              />
+                              <span>{item.employeeName}</span>
+                            </td>
+                            <td className="py-3.5 px-4 text-xs font-semibold text-slate-600">
+                              {item.displayDate}
+                            </td>
+                            <td className="py-3.5 px-4 text-xs font-black">
+                              {item.hasSubmitted ? (
+                                <span className="text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md font-mono">
+                                  {item.received}
+                                </span>
+                              ) : (
+                                <span className="text-slate-300 font-mono">-</span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4 text-xs font-black">
+                              {item.hasSubmitted ? (
+                                <span className="text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md font-mono">
+                                  {formatCount(item.appointment)}
+                                </span>
+                              ) : (
+                                <span className="text-slate-300 font-mono">-</span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4 text-xs font-black">
+                              {item.hasSubmitted ? (
+                                <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-mono">
+                                  {formatCount(item.login)}
+                                </span>
+                              ) : (
+                                <span className="text-slate-300 font-mono">-</span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4 text-xs">
+                              {item.hasSubmitted ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">
+                                  <CheckCircle2 size={11} /> Submitted ({item.submittedAt})
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full">
+                                  <AlertCircle size={11} /> Not Submitted
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4 text-xs text-right">
+                              {item.hasSubmitted ? (
+                                <button
+                                  onClick={() => handleCopy(item.reportObject)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg text-slate-600 font-bold transition text-xs"
+                                  title="Copy WhatsApp text format"
+                                >
+                                  {copiedId === (item.reportObject?.id || item.employeeName) ? (
+                                    <>
+                                      <Check size={12} className="text-emerald-600" />
+                                      <span className="text-emerald-600">Copied</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Copy size={12} />
+                                      <span>Copy</span>
+                                    </>
+                                  )}
+                                </button>
+                              ) : (
+                                <span className="text-[11px] text-slate-400 italic">Pending</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
-          </div>
 
-          {/* Detailed Performance Table for Manager */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8">
-            <div className="border-b border-slate-100 pb-4 mb-4">
-              <h3 className="text-base sm:text-lg font-black text-[#162335]">
-                Complete Team EOD Log Table
-              </h3>
-              <p className="text-xs font-semibold text-slate-400 mt-0.5">
-                Tabular breakdown of daily employee metrics
-              </p>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse whitespace-nowrap min-w-[700px]">
-                <thead>
-                  <tr className="bg-slate-50/80 border-b border-slate-100">
-                    <th className="py-3.5 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                      Team Member
-                    </th>
-                    <th className="py-3.5 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                      Date
-                    </th>
-                    <th className="py-3.5 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                      Received
-                    </th>
-                    <th className="py-3.5 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                      Appointment
-                    </th>
-                    <th className="py-3.5 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                      Login
-                    </th>
-                    <th className="py-3.5 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                      Submitted Time
-                    </th>
-                    <th className="py-3.5 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">
-                      WhatsApp Text
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredManagerReports.map((report) => (
-                    <tr key={report.id} className="hover:bg-slate-50/60 transition">
-                      <td className="py-3.5 px-4 text-xs font-black text-[#162335]">
-                        {report.employeeName}
-                      </td>
-                      <td className="py-3.5 px-4 text-xs font-semibold text-slate-600">
-                        {report.displayDate || report.date}
-                        {report.date === todayKey && (
-                          <span className="ml-2 bg-emerald-100 text-emerald-800 text-[9px] font-black px-1.5 py-0.5 rounded-md">
-                            Today
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4 text-xs font-black text-blue-700">
-                        {report.received}
-                      </td>
-                      <td className="py-3.5 px-4 text-xs font-black text-amber-700">
-                        {formatCount(report.appointment)}
-                      </td>
-                      <td className="py-3.5 px-4 text-xs font-black text-emerald-700">
-                        {formatCount(report.login)}
-                      </td>
-                      <td className="py-3.5 px-4 text-xs font-semibold text-slate-500">
-                        {report.submittedAt || "N/A"}
-                      </td>
-                      <td className="py-3.5 px-4 text-xs text-right">
-                        <button
-                          onClick={() => handleCopyWhatsApp(report)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg text-slate-600 font-bold transition"
-                          title="Copy WhatsApp Format"
-                        >
-                          <Copy size={12} />
-                          <span>Copy</span>
-                        </button>
-                      </td>
-                    </tr>
+            {/* TEAM-MEMBER-WISE MANAGER VIEW */}
+            {managerViewMode === "member-wise" && (
+              <div className="space-y-4">
+                {/* Team member selection pills */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                  <span className="text-xs font-bold text-slate-500 whitespace-nowrap mr-1">
+                    Select Member:
+                  </span>
+                  {teamMembersList.map((member) => (
+                    <button
+                      key={member.id}
+                      onClick={() => setSelectedMember(member.name)}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+                        selectedMember.toLowerCase() === member.name.toLowerCase()
+                          ? "bg-[#162335] text-white shadow-xs font-black"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      }`}
+                    >
+                      {member.name}
+                    </button>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </div>
+
+                {/* Member Submissions List */}
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
+                  <div className="flex items-center justify-between mb-3 border-b border-slate-200 pb-2">
+                    <div>
+                      <h4 className="text-sm font-black text-[#162335]">
+                        Daily EOD Trend: {selectedMember}
+                      </h4>
+                      <p className="text-[11px] font-semibold text-slate-400">
+                        Chronological record of daily submissions
+                      </p>
+                    </div>
+                    <span className="text-xs font-black bg-white px-2.5 py-1 rounded-lg border border-slate-200 text-slate-700">
+                      {selectedMemberHistory.length} Days Recorded
+                    </span>
+                  </div>
+
+                  {selectedMemberHistory.length === 0 ? (
+                    <div className="text-center py-8 text-xs text-slate-400">
+                      No daily records found for {selectedMember}.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {selectedMemberHistory.map((report) => (
+                        <div
+                          key={report.id}
+                          className="bg-white rounded-xl p-3.5 border border-slate-200 shadow-xs hover:shadow-md transition"
+                        >
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
+                            <span className="text-xs font-black text-[#162335]">
+                              {report.displayDate || report.date}
+                            </span>
+                            <button
+                              onClick={() => handleCopy(report)}
+                              className="p-1 text-slate-400 hover:text-emerald-600 rounded transition"
+                              title="Copy WhatsApp Format"
+                            >
+                              {copiedId === report.id ? (
+                                <Check size={12} className="text-emerald-600" />
+                              ) : (
+                                <Copy size={12} />
+                              )}
+                            </button>
+                          </div>
+
+                          <div className="font-mono text-xs space-y-1 text-slate-700">
+                            <div className="flex items-center justify-between">
+                              <span className="font-sans font-semibold text-slate-500">• Received:</span>
+                              <span className="font-black text-blue-700 text-sm">{report.received}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="font-sans font-semibold text-slate-500">• Appointment:</span>
+                              <span className="font-black text-purple-700 text-sm">{formatCount(report.appointment)}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="font-sans font-semibold text-slate-500">• Login:</span>
+                              <span className="font-black text-emerald-700 text-sm">{formatCount(report.login)}</span>
+                            </div>
+                          </div>
+
+                          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
+                            <span>{report.submittedAt || "Submitted"}</span>
+                            <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">
+                              Submitted
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
     </div>
   );
 }
-

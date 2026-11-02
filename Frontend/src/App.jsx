@@ -9,6 +9,7 @@ import MyLeadsView from "./components/MyLeadsView";
 import FollowUpView from "./components/FollowUpView";
 import MeetingsView from "./components/MeetingsView";
 import AttendanceView from "./components/AttendanceView";
+import EodView from "./components/EodView";
 import ProfileView from "./components/ProfileView";
 import EmployeeManagementView from "./components/EmployeeManagementView";
 import DepartmentRoleDashboard from "./components/DepartmentRoleDashboard";
@@ -146,6 +147,7 @@ export default function App() {
             <Route path="follow-up" element={<FollowUpView />} />
             <Route path="meetings" element={<MeetingsView />} />
             <Route path="attendance" element={<AttendanceView />} />
+            <Route path="eod" element={<EodView />} />
             <Route path="profile" element={<ProfileView />} />
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -1,6 +1,5 @@
 const dotenv = require("dotenv");
 dotenv.config();
-// Models restored and verified - backend active
 
 const express = require("express");
 const cors = require("cors");
@@ -14,6 +13,7 @@ const attendanceRoutes = require("./routes/attendanceRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const meetingRoutes = require("./routes/meetingRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const eodRoutes = require("./routes/eodRoutes");
 const path = require("path");
 
 // Security Packages
@@ -40,6 +40,10 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
     "http://192.168.1.21:5173", // Temporary addition for local network testing
     "https://mhaveer.vercel.app"
   ];
+
+if (process.env.FRONTEND_URL && !allowedOrigins.includes(process.env.FRONTEND_URL)) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
 
 app.use(cors({
   origin: allowedOrigins,
@@ -98,6 +102,8 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/meetings", meetingRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/eod", eodRoutes);
+
 const adminRoutes = require("./routes/adminRoutes");
 const bankRoutes = require("./routes/bankRoutes");
 const leaveRoutes = require("./routes/leaveRoutes");
@@ -127,14 +133,15 @@ if (server) {
   initWebSocket(server);
 }
 
-
 // Handle unhandled promise rejections gracefully
 process.on("unhandledRejection", (err) => {
   console.log("❌ Unhandled Rejection! Shutting down gracefully...");
   console.log(err.name, err.message);
-  server.close(() => {
-    process.exit(1);
-  });
+  if (server) {
+    server.close(() => {
+      process.exit(1);
+    });
+  }
 });
 
 // Handle uncaught exceptions gracefully

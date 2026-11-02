@@ -210,6 +210,7 @@ const leadSchema = new mongoose.Schema(
     },
     remarks: {
       type: String,
+      trim: true,
     },
     employeeCode: {
       type: String,

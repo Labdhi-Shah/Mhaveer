@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getUserRole } from "../utils/hierarchy";
+import api from "../api";
+import socket from "../utils/socket";
 import {
   FileSpreadsheet,
   Send,
   Calendar,
-  User,
   PhoneCall,
   CalendarCheck,
   CheckCircle2,
@@ -14,21 +15,14 @@ import {
   Download,
   Clock,
   Users,
-  Filter,
-  Trash2
+  Trash2,
+  Loader2,
+  RefreshCw
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from "xlsx";
 import { downloadXLSX } from "../utils/fileDownloader";
-import {
-  getStoredEodReports,
-  saveEodReport,
-  getEmployeeSubmissions,
-  getTeamSubmissionsForManager,
-  deleteEodRecord,
-  formatDisplayDate,
-  getTodayDateString
-} from "../utils/eodStorage";
+import { formatDisplayDate, getTodayDateString } from "../utils/eodStorage";
 
 export default function EodView() {
   const { user } = useAuth();
@@ -45,11 +39,13 @@ export default function EodView() {
 
   // Employee history states
   const [myRecords, setMyRecords] = useState([]);
+  const [myLoading, setMyLoading] = useState(true);
   const [dateFilter, setDateFilter] = useState("");
 
   // Manager-only states (only used if logged-in user is a Manager)
   const [managerTab, setManagerTab] = useState("team-reports"); // "team-reports" | "submit-eod"
   const [teamRecords, setTeamRecords] = useState([]);
+  const [teamLoading, setTeamLoading] = useState(false);
   const [managerDateFilter, setManagerDateFilter] = useState("");
   const [managerSearchTerm, setManagerSearchTerm] = useState("");
   const [exporting, setExporting] = useState(false);
@@ -61,38 +57,89 @@ export default function EodView() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  // Load submissions based on role and active filters
-  const loadData = () => {
+  // Fetch logged-in employee's own EOD records from MongoDB backend
+  const fetchMyRecords = useCallback(async (showSpinner = true) => {
     if (!user) return;
+    if (showSpinner) setMyLoading(true);
+    try {
+      const params = {};
+      if (dateFilter) params.date = dateFilter;
 
-    // Load current employee's own records (strict privacy: Employee A only sees Employee A)
-    const empSubmissions = getEmployeeSubmissions(user, dateFilter);
-    setMyRecords(empSubmissions);
-
-    // If Manager, load team submissions
-    if (isManager) {
-      const allTeam = getTeamSubmissionsForManager(user, managerDateFilter, managerSearchTerm);
-      setTeamRecords(allTeam);
+      const res = await api.get("/eod/my", { params });
+      if (res.data?.success) {
+        setMyRecords(res.data.data || []);
+      }
+    } catch (err) {
+      console.error("Error fetching my EOD records from backend:", err);
+      // In case of error, show friendly message
+      if (showSpinner) {
+        showToast(err.response?.data?.message || "Could not load EOD records from server", "error");
+      }
+    } finally {
+      if (showSpinner) setMyLoading(false);
     }
-  };
+  }, [user, dateFilter]);
+
+  // Fetch team EOD records from MongoDB backend (Manager only)
+  const fetchTeamRecords = useCallback(async (showSpinner = true) => {
+    if (!user || !isManager) return;
+    if (showSpinner) setTeamLoading(true);
+    try {
+      const params = {};
+      if (managerDateFilter) params.date = managerDateFilter;
+      if (managerSearchTerm && managerSearchTerm.trim()) params.search = managerSearchTerm.trim();
+
+      const res = await api.get("/eod/team", { params });
+      if (res.data?.success) {
+        setTeamRecords(res.data.data || []);
+      }
+    } catch (err) {
+      console.error("Error fetching team EOD records from backend:", err);
+      if (showSpinner) {
+        showToast(err.response?.data?.message || "Could not load team EOD records", "error");
+      }
+    } finally {
+      if (showSpinner) setTeamLoading(false);
+    }
+  }, [user, isManager, managerDateFilter, managerSearchTerm]);
+
+  // Initial load and filter reaction
+  useEffect(() => {
+    fetchMyRecords();
+  }, [fetchMyRecords]);
 
   useEffect(() => {
-    loadData();
+    if (isManager && managerTab === "team-reports") {
+      fetchTeamRecords();
+    }
+  }, [isManager, managerTab, fetchTeamRecords]);
 
-    const handleUpdate = () => {
-      loadData();
+  // Real-time synchronization via WebSocket
+  useEffect(() => {
+    const handleSocketUpdate = (payload) => {
+      if (!payload || payload.entity === "eod" || payload.entity === "all") {
+        fetchMyRecords(false);
+        if (isManager) {
+          fetchTeamRecords(false);
+        }
+      }
     };
 
-    window.addEventListener("mhaveer-eod-updated", handleUpdate);
-    window.addEventListener("storage", handleUpdate);
+    socket.on("eod:created", handleSocketUpdate);
+    socket.on("eod:updated", handleSocketUpdate);
+    socket.on("eod:deleted", handleSocketUpdate);
+    socket.on("data-updated", handleSocketUpdate);
+
     return () => {
-      window.removeEventListener("mhaveer-eod-updated", handleUpdate);
-      window.removeEventListener("storage", handleUpdate);
+      socket.off("eod:created", handleSocketUpdate);
+      socket.off("eod:updated", handleSocketUpdate);
+      socket.off("eod:deleted", handleSocketUpdate);
+      socket.off("data-updated", handleSocketUpdate);
     };
-  }, [user, dateFilter, managerDateFilter, managerSearchTerm, isManager]);
+  }, [fetchMyRecords, fetchTeamRecords, isManager]);
 
-  // Handle EOD Form Submission
-  const handleSubmitEod = (e) => {
+  // Handle EOD Form Submission to Backend (POST /api/eod)
+  const handleSubmitEod = async (e) => {
     e.preventDefault();
 
     if (!submissionDate) {
@@ -110,42 +157,56 @@ export default function EodView() {
     const log = parseInt(loginCount, 10);
 
     if (isNaN(rec) || isNaN(app) || isNaN(log) || rec < 0 || app < 0 || log < 0) {
-      showToast("Please enter valid, non-negative numbers.", "error");
+      showToast("Please enter valid, non-negative whole numbers.", "error");
       return;
     }
 
     setSubmitting(true);
 
-    const result = saveEodReport({
-      user,
-      date: submissionDate, // Manually selected date
-      received: rec,
-      appointment: app,
-      login: log
-    });
+    try {
+      const res = await api.post("/eod", {
+        submissionDate,
+        received: rec,
+        appointment: app,
+        login: log,
+        allowUpdate: true // allows updating if a report was already submitted for this date
+      });
 
-    setSubmitting(false);
-
-    if (result.success) {
-      showToast(`EOD report for ${formatDisplayDate(submissionDate)} saved successfully!`, "success");
-      // Clear inputs for clean next entry
-      setReceivedCount("");
-      setAppointmentCount("");
-      setLoginCount("");
-      loadData();
-    } else {
-      showToast(result.error || "Failed to save EOD report.", "error");
+      if (res.data?.success) {
+        showToast(res.data.message || `EOD report for ${formatDisplayDate(submissionDate)} saved successfully!`, "success");
+        // Clear inputs for clean next entry
+        setReceivedCount("");
+        setAppointmentCount("");
+        setLoginCount("");
+        fetchMyRecords(false);
+        if (isManager) fetchTeamRecords(false);
+      } else {
+        showToast(res.data?.message || "Failed to save EOD report.", "error");
+      }
+    } catch (err) {
+      console.error("Submit EOD error:", err);
+      showToast(err.response?.data?.message || "Server Error: Could not save EOD report.", "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  // Handle Record Deletion
-  const handleDelete = (recordId) => {
-    if (window.confirm("Are you sure you want to delete this EOD submission?")) {
-      const ok = deleteEodRecord(recordId);
-      if (ok) {
-        showToast("EOD record deleted.", "success");
-        loadData();
+  // Handle Record Deletion via Backend (DELETE /api/eod/my/:id)
+  const handleDelete = async (recordId) => {
+    if (!window.confirm("Are you sure you want to delete this EOD submission?")) {
+      return;
+    }
+
+    try {
+      const res = await api.delete(`/eod/my/${recordId}`);
+      if (res.data?.success) {
+        showToast("EOD record deleted successfully.", "success");
+        fetchMyRecords(false);
+        if (isManager) fetchTeamRecords(false);
       }
+    } catch (err) {
+      console.error("Delete EOD error:", err);
+      showToast(err.response?.data?.message || "Failed to delete record.", "error");
     }
   };
 
@@ -160,12 +221,12 @@ export default function EodView() {
       setExporting(true);
       const dataToExport = teamRecords.map((r) => ({
         "Team Member": r.employeeName,
-        "Employee ID": r.employeeId || "-",
-        "Date": r.displayDate || r.date,
+        "Employee ID": r.employeeCode || "-",
+        "Date": r.submissionDate || "-",
         "Received (Leads)": r.received,
         "Appointments Completed": r.appointment,
         "Applications Logged In": r.login,
-        "Submitted Time": r.submittedAt || "-"
+        "Submitted Time": r.createdAt ? new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "-"
       }));
 
       const ws = XLSX.utils.json_to_sheet(dataToExport);
@@ -200,11 +261,10 @@ export default function EodView() {
             initial={{ opacity: 0, y: -40, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className={`fixed top-20 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border ${
-              toast.type === "success"
+            className={`fixed top-20 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border ${toast.type === "success"
                 ? "bg-emerald-50 text-emerald-800 border-emerald-200"
                 : "bg-rose-50 text-rose-800 border-rose-200"
-            }`}
+              }`}
           >
             {toast.type === "success" ? (
               <CheckCircle2 className="text-emerald-600 shrink-0" size={20} />
@@ -240,22 +300,20 @@ export default function EodView() {
           <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 self-start md:self-auto">
             <button
               onClick={() => setManagerTab("team-reports")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition ${
-                managerTab === "team-reports"
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition ${managerTab === "team-reports"
                   ? "bg-[#162335] text-white shadow-md"
                   : "text-slate-600 hover:text-slate-900"
-              }`}
+                }`}
             >
               <Users size={15} />
               <span>Team Submissions</span>
             </button>
             <button
               onClick={() => setManagerTab("submit-eod")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition ${
-                managerTab === "submit-eod"
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition ${managerTab === "submit-eod"
                   ? "bg-[#162335] text-white shadow-md"
                   : "text-slate-600 hover:text-slate-900"
-              }`}
+                }`}
             >
               <Send size={15} />
               <span>Submit EOD</span>
@@ -266,7 +324,7 @@ export default function EodView() {
 
       {/* =========================================================
           VIEW 1: EMPLOYEE EOD SUBMISSION & PERSONAL HISTORY
-          (Shown to all employees, or to managers on "submit-eod" tab)
+          (Shown to employees, or to managers on "submit-eod" tab)
           ========================================================= */}
       {(!isManager || managerTab === "submit-eod") && (
         <div className="space-y-6">
@@ -293,7 +351,7 @@ export default function EodView() {
             </div>
 
             <form onSubmit={handleSubmitEod} className="space-y-5">
-              {/* Date Selection: Employees can select and enter the date manually */}
+              {/* Date Selection: Employees manually select the date */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-black text-slate-700 flex items-center gap-1.5 mb-1.5">
@@ -396,8 +454,8 @@ export default function EodView() {
                   disabled={submitting}
                   className="w-full sm:w-auto bg-[#162335] hover:bg-slate-800 text-white font-black text-sm py-3 px-8 rounded-2xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
-                  <Send size={16} />
-                  <span>Submit EOD</span>
+                  {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                  <span>{submitting ? "Submitting..." : "Submit EOD"}</span>
                 </button>
               </div>
             </form>
@@ -430,16 +488,28 @@ export default function EodView() {
                 {dateFilter && (
                   <button
                     onClick={() => setDateFilter("")}
-                    className="text-xs font-bold text-slate-500 hover:text-slate-800 underline transition"
+                    className="text-xs font-bold text-slate-500 hover:text-slate-800 underline transition cursor-pointer"
                   >
                     Clear Filter
                   </button>
                 )}
+                <button
+                  onClick={() => fetchMyRecords(true)}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
+                  title="Refresh records"
+                >
+                  <RefreshCw size={14} className={myLoading ? "animate-spin" : ""} />
+                </button>
               </div>
             </div>
 
-            {/* Empty State / Table */}
-            {myRecords.length === 0 ? (
+            {/* Loading Indicator */}
+            {myLoading ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-400">
+                <Loader2 size={24} className="animate-spin text-[#162335]" />
+                <span className="text-xs font-bold">Loading your EOD records...</span>
+              </div>
+            ) : myRecords.length === 0 ? (
               <div className="text-center py-12 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
                 <FileSpreadsheet size={32} className="mx-auto text-slate-300 mb-2" />
                 <p className="text-sm font-bold text-slate-600">No EOD records found</p>
@@ -476,9 +546,9 @@ export default function EodView() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {myRecords.map((record) => (
-                      <tr key={record.id} className="hover:bg-slate-50/70 transition">
+                      <tr key={record._id} className="hover:bg-slate-50/70 transition">
                         <td className="py-3.5 px-4 text-xs font-black text-[#162335]">
-                          {record.displayDate || record.date}
+                          {formatDisplayDate(record.submissionDate)}
                         </td>
                         <td className="py-3.5 px-4 text-xs font-bold text-blue-700">
                           {record.received}
@@ -490,12 +560,12 @@ export default function EodView() {
                           {record.login}
                         </td>
                         <td className="py-3.5 px-4 text-xs font-semibold text-slate-500">
-                          {record.submittedAt || "-"}
+                          {record.createdAt ? new Date(record.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "-"}
                         </td>
                         <td className="py-3.5 px-4 text-xs text-right">
                           <button
-                            onClick={() => handleDelete(record.id)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                            onClick={() => handleDelete(record._id)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                             title="Delete this record"
                           >
                             <Trash2 size={14} />
@@ -525,7 +595,7 @@ export default function EodView() {
                   Team EOD Submissions
                 </h2>
                 <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                  Daily EOD records submitted by your team members
+                  Daily EOD records submitted by your assigned team members
                 </p>
               </div>
 
@@ -557,27 +627,41 @@ export default function EodView() {
                 {managerDateFilter && (
                   <button
                     onClick={() => setManagerDateFilter("")}
-                    className="text-xs font-bold text-slate-500 hover:text-slate-800 underline transition"
+                    className="text-xs font-bold text-slate-500 hover:text-slate-800 underline transition cursor-pointer"
                   >
                     All Dates
                   </button>
                 )}
               </div>
 
-              <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search team member name..."
-                  value={managerSearchTerm}
-                  onChange={(e) => setManagerSearchTerm(e.target.value)}
-                  className="bg-white border border-slate-200 text-xs font-semibold rounded-xl pl-8 pr-3 py-1.5 w-56 focus:outline-none focus:ring-1 focus:ring-[#162335]"
-                />
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search team member name..."
+                    value={managerSearchTerm}
+                    onChange={(e) => setManagerSearchTerm(e.target.value)}
+                    className="bg-white border border-slate-200 text-xs font-semibold rounded-xl pl-8 pr-3 py-1.5 w-56 focus:outline-none focus:ring-1 focus:ring-[#162335]"
+                  />
+                </div>
+                <button
+                  onClick={() => fetchTeamRecords(true)}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
+                  title="Refresh team records"
+                >
+                  <RefreshCw size={14} className={teamLoading ? "animate-spin" : ""} />
+                </button>
               </div>
             </div>
 
-            {/* Empty State / Table */}
-            {teamRecords.length === 0 ? (
+            {/* Loading Indicator */}
+            {teamLoading ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-400">
+                <Loader2 size={24} className="animate-spin text-[#162335]" />
+                <span className="text-xs font-bold">Loading team submissions...</span>
+              </div>
+            ) : teamRecords.length === 0 ? (
               <div className="text-center py-12 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
                 <Users size={32} className="mx-auto text-slate-300 mb-2" />
                 <p className="text-sm font-bold text-slate-600">No team EOD reports submitted yet</p>
@@ -614,12 +698,12 @@ export default function EodView() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {teamRecords.map((record) => (
-                      <tr key={record.id} className="hover:bg-slate-50/70 transition">
+                      <tr key={record._id} className="hover:bg-slate-50/70 transition">
                         <td className="py-3.5 px-4 text-xs font-black text-[#162335]">
                           {record.employeeName}
                         </td>
                         <td className="py-3.5 px-4 text-xs font-semibold text-slate-600">
-                          {record.displayDate || record.date}
+                          {formatDisplayDate(record.submissionDate)}
                         </td>
                         <td className="py-3.5 px-4 text-xs font-bold text-blue-700">
                           {record.received}
@@ -631,7 +715,7 @@ export default function EodView() {
                           {record.login}
                         </td>
                         <td className="py-3.5 px-4 text-xs font-semibold text-slate-500">
-                          {record.submittedAt || "-"}
+                          {record.createdAt ? new Date(record.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "-"}
                         </td>
                       </tr>
                     ))}

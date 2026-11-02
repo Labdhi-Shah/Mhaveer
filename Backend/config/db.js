@@ -9,6 +9,11 @@ try {
 }
 
 const connectDB = async () => {
+  const mongoURI = process.env.MONGODB_URI || process.env.MONGO_URI;
+  if (!mongoURI) {
+    console.warn("⚠️ Warning: MONGODB_URI or MONGO_URI is not set in environment.");
+  }
+
   try {
     mongoose.connection.on("disconnected", () => {
       console.log("⚠️ MongoDB Disconnected! Attempting to reconnect...");
@@ -18,7 +23,7 @@ const connectDB = async () => {
       console.log("✅ MongoDB Reconnected!");
     });
 
-    await mongoose.connect(process.env.MONGO_URI, {
+    await mongoose.connect(mongoURI, {
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
@@ -27,7 +32,9 @@ const connectDB = async () => {
     console.log("✅ MongoDB Connected Successfully");
   } catch (error) {
     console.log("❌ MongoDB Connection Error:", error.message);
-    process.exit(1);
+    if (process.env.NODE_ENV !== "test") {
+      process.exit(1);
+    }
   }
 };
 

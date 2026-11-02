@@ -3,17 +3,21 @@ const bcrypt = require("bcryptjs");
 const Employee = require("../models/Employee");
 const Attendance = require("../models/Attendance");
 
-// Helper to extract real client IP across direct connections, local network, and reverse proxies (e.g. Render)
+// Helper to extract real client IP across direct connections, local network, and reverse proxies (e.g. Render, Cloudflare)
 const getClientIp = (req) => {
-  let ip = "";
-  const forwarded = req.headers["x-forwarded-for"];
-  if (forwarded) {
-    ip = forwarded.split(",")[0].trim();
-  } else {
-    ip = req.socket?.remoteAddress || req.ip || "";
-  }
-  if (ip.startsWith("::ffff:")) {
-    ip = ip.replace("::ffff:", "");
+  let ip =
+    req.headers["cf-connecting-ip"] ||
+    (req.headers["x-forwarded-for"] ? req.headers["x-forwarded-for"].split(",")[0].trim() : null) ||
+    req.headers["x-real-ip"] ||
+    req.socket?.remoteAddress ||
+    req.ip ||
+    "";
+
+  if (typeof ip === "string") {
+    ip = ip.trim();
+    if (ip.startsWith("::ffff:")) {
+      ip = ip.replace("::ffff:", "");
+    }
   }
   return ip;
 };
@@ -148,16 +152,24 @@ exports.login = async (req, res) => {
     }
 
     // 3. Office IP Restriction Check (Option A: Regular employees restricted to office Wi-Fi)
-    const ipRestrictionEnabled = process.env.ENABLE_IP_RESTRICTION === "true";
-    if (ipRestrictionEnabled && !isExemptFromIpRestriction(employee.role)) {
-      const clientIp = getClientIp(req);
-      if (!isAllowedOfficeIp(clientIp)) {
+    // Enabled by default unless explicitly set to "false"
+    const ipRestrictionEnabled = process.env.ENABLE_IP_RESTRICTION !== "false";
+    const clientIp = getClientIp(req);
+    const isExempt = isExemptFromIpRestriction(employee.role);
+    const isAllowed = isAllowedOfficeIp(clientIp);
+
+    console.log(
+      `[AUTH IP CHECK] User: ${employee.officialEmail} | Role: ${employee.role} | Detected IP: "${clientIp}" | Exempt: ${isExempt} | IP Allowed: ${isAllowed} | Enforced: ${ipRestrictionEnabled}`
+    );
+
+    if (ipRestrictionEnabled && !isExempt) {
+      if (!isAllowed) {
         console.warn(
-          `⚠️ [IP RESTRICTION BLOCKED] Employee: ${employee.employeeId} (${employee.name}, Role: ${employee.role}) tried logging in from unauthorized IP: ${clientIp}`
+          `⚠️ [IP RESTRICTION BLOCKED] Login denied for ${employee.employeeId} (${employee.name}, Role: ${employee.role}) from unauthorized IP: "${clientIp}"`
         );
         return res.status(403).json({
           success: false,
-          message: "Access Denied: Logins are only permitted from the office Wi-Fi network.",
+          message: `Access Denied: Logins are only permitted from the office Wi-Fi network. (Detected IP: ${clientIp || "Unknown"})`,
         });
       }
     }

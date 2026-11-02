@@ -3,6 +3,58 @@ const bcrypt = require("bcryptjs");
 const Employee = require("../models/Employee");
 const Attendance = require("../models/Attendance");
 
+// Helper to extract real client IP across direct connections, local network, and reverse proxies (e.g. Render)
+const getClientIp = (req) => {
+  let ip = "";
+  const forwarded = req.headers["x-forwarded-for"];
+  if (forwarded) {
+    ip = forwarded.split(",")[0].trim();
+  } else {
+    ip = req.socket?.remoteAddress || req.ip || "";
+  }
+  if (ip.startsWith("::ffff:")) {
+    ip = ip.replace("::ffff:", "");
+  }
+  return ip;
+};
+
+// Helper to check if the detected IP matches allowed office IP addresses
+const isAllowedOfficeIp = (clientIp) => {
+  if (!clientIp) return false;
+
+  // Always allow local development and testing
+  if (clientIp === "127.0.0.1" || clientIp === "::1" || clientIp === "localhost") {
+    return true;
+  }
+
+  const rawAllowed = process.env.ALLOWED_OFFICE_IPS || "103.86.19.253,2402:a00:403:3847";
+  const allowedList = rawAllowed
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return allowedList.some((allowed) => {
+    return clientIp === allowed || clientIp.startsWith(allowed);
+  });
+};
+
+// Roles exempt from IP restriction (Option A: Admins and Managers can log in from anywhere)
+const isExemptFromIpRestriction = (role) => {
+  if (!role) return false;
+  const normalized = role.toLowerCase().trim();
+  const exemptRoles = [
+    "superadmin",
+    "admin",
+    "administration (admin)",
+    "manager",
+    "management",
+    "branch manager",
+    "regional manager",
+    "director / ceo",
+  ];
+  return exemptRoles.includes(normalized);
+};
+
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -93,6 +145,21 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(trimmedPassword, employee.password);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: "Invalid Email, ID, or Password" });
+    }
+
+    // 3. Office IP Restriction Check (Option A: Regular employees restricted to office Wi-Fi)
+    const ipRestrictionEnabled = process.env.ENABLE_IP_RESTRICTION === "true";
+    if (ipRestrictionEnabled && !isExemptFromIpRestriction(employee.role)) {
+      const clientIp = getClientIp(req);
+      if (!isAllowedOfficeIp(clientIp)) {
+        console.warn(
+          `⚠️ [IP RESTRICTION BLOCKED] Employee: ${employee.employeeId} (${employee.name}, Role: ${employee.role}) tried logging in from unauthorized IP: ${clientIp}`
+        );
+        return res.status(403).json({
+          success: false,
+          message: "Access Denied: Logins are only permitted from the office Wi-Fi network.",
+        });
+      }
     }
 
     const token = jwt.sign(

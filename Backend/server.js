@@ -24,6 +24,9 @@ const xss = require("xss-clean");
 
 const app = express();
 
+// Trust reverse proxy (Render, Cloudflare, etc.) to accurately detect client IP
+app.set("trust proxy", true);
+
 // Database Connection
 connectDB();
 

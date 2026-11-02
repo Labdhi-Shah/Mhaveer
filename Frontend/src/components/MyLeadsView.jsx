@@ -299,7 +299,8 @@ export default function MyLeadsView() {
             ...updated,
             phone: updated.phoneNumber || updated.phone || l.phone,
             companyTurnover: updated.companyTurnover !== undefined ? updated.companyTurnover : l.companyTurnover,
-            address: updated.address !== undefined ? updated.address : l.address
+            address: updated.address !== undefined ? updated.address : l.address,
+            remarks: updated.remarks !== undefined ? updated.remarks : l.remarks
           } : l));
         } else if (payload.action === "create" && payload.data) {
           const lead = payload.data;
@@ -307,7 +308,8 @@ export default function MyLeadsView() {
             ...lead,
             phone: lead.phoneNumber || lead.phone,
             companyTurnover: lead.companyTurnover !== undefined ? lead.companyTurnover : lead.yearlyIncome,
-            address: lead.address !== undefined ? lead.address : lead.remarks
+            address: lead.address || "",
+            remarks: lead.remarks || ""
           };
           setLeads((prev) => [formatted, ...prev.filter((l) => l._id !== formatted._id)]);
         }
@@ -344,9 +346,20 @@ export default function MyLeadsView() {
       .map((p) => p.trim())
       .filter(Boolean);
 
+    const parseDateInput = (val) => {
+      if (!val) return "";
+      if (typeof val === "string") return val.split("T")[0];
+      try {
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? "" : d.toISOString().split("T")[0];
+      } catch {
+        return "";
+      }
+    };
+
     reset({
-      companyName: lead.companyName,
-      contactPerson: lead.contactPerson,
+      companyName: lead.companyName || "",
+      contactPerson: lead.contactPerson || "",
       phone0: rawPhones[0] || "",
       phone1: rawPhones[1] || "",
       phone2: rawPhones[2] || "",
@@ -355,15 +368,16 @@ export default function MyLeadsView() {
       city: lead.city || "",
       state: lead.state || "",
       companyTurnover: lead.companyTurnover !== undefined ? lead.companyTurnover : lead.yearlyIncome,
-      loanAmount: lead.loanAmount,
-      loanType: lead.loanType,
+      loanAmount: lead.loanAmount || "",
+      loanType: lead.loanType || "",
       propertyLoanCategory: lead.propertyLoanCategory || "",
-      interested: lead.interested,
-      callStatus: lead.callStatus,
-      meetingDate: lead.meetingDate || "",
+      interested: lead.interested || "Yes",
+      callStatus: lead.callStatus || "Connected",
+      meetingDate: parseDateInput(lead.meetingDate),
       meetingTime: lead.meetingTime || "",
-      address: lead.address !== undefined ? lead.address : (lead.remarks || ""),
-      followUpDate: lead.followUpDate || "",
+      remarks: lead.remarks || "",
+      address: lead.address || "",
+      followUpDate: parseDateInput(lead.followUpDate),
       followUpTime: lead.followUpTime || ""
     });
   };
@@ -396,6 +410,8 @@ export default function MyLeadsView() {
 
       const payload = {
         ...data,
+        remarks: data.remarks !== undefined ? String(data.remarks).trim() : "",
+        address: data.address !== undefined ? String(data.address).trim() : "",
         phoneNumber: isWrongNum ? (phoneNumbers || "Wrong Number") : (phoneNumbers || primaryPhone),
         phone: isWrongNum ? (phoneNumbers || "Wrong Number") : (phoneNumbers || primaryPhone),
         companyTurnover: data.companyTurnover && !isNaN(parseFloat(data.companyTurnover)) ? parseFloat(data.companyTurnover) : undefined,
@@ -429,11 +445,35 @@ export default function MyLeadsView() {
       const res = await api.put(`/leads/${editLead._id}`, payload);
       if (res.data.success) {
         showToast("Lead updated successfully!", "success");
-        setEditLead(null);
+        const updatedLead = res.data.data;
+
+        // Immediately update leads list in state so UI updates without page refresh
+        setLeads((prev) =>
+          prev.map((l) =>
+            l._id === updatedLead._id
+              ? {
+                  ...l,
+                  ...updatedLead,
+                  phone: updatedLead.phoneNumber || updatedLead.phone || l.phone,
+                  remarks: updatedLead.remarks !== undefined ? updatedLead.remarks : l.remarks,
+                  address: updatedLead.address !== undefined ? updatedLead.address : l.address,
+                }
+              : l
+          )
+        );
+
+        // Immediately update viewLead if Lead Details modal is open
         if (viewLead && viewLead._id === editLead._id) {
-          setViewLead((prev) => ({ ...prev, ...res.data.data }));
+          setViewLead((prev) => ({
+            ...prev,
+            ...updatedLead,
+            remarks: updatedLead.remarks !== undefined ? updatedLead.remarks : prev.remarks,
+            address: updatedLead.address !== undefined ? updatedLead.address : prev.address,
+          }));
         }
-        fetchLeads();
+
+        setEditLead(null);
+        fetchLeads(false);
       }
     } catch (err) {
       console.error(err);
@@ -585,6 +625,7 @@ export default function MyLeadsView() {
                     <th className="py-3.5 px-4 text-center">CALL STATUS</th>
                     <th className="py-3.5 px-4 text-center">MEETING</th>
                     <th className="py-3.5 px-4 text-center">FOLLOW-UP</th>
+                    <th className="py-3.5 px-4">REMARKS</th>
                     <th className="py-3.5 px-4 text-center rounded-r-xl">ACTIONS</th>
                   </tr>
                 </thead>
@@ -611,6 +652,15 @@ export default function MyLeadsView() {
                       </td>
                       <td className="py-3.5 px-4 text-center text-slate-500">
                         {lead.followUpDate ? `${lead.followUpDate} ${lead.followUpTime || ""}` : "N/A"}
+                      </td>
+                      <td className="py-3.5 px-4 max-w-[200px] text-slate-600" title={lead.remarks || ""}>
+                        {lead.remarks ? (
+                          <span className="truncate block max-w-[190px] font-medium text-slate-700">
+                            {lead.remarks}
+                          </span>
+                        ) : (
+                          <span className="text-slate-300 italic">-</span>
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         <div className="flex items-center justify-center gap-1.5">
@@ -1619,11 +1669,37 @@ export default function MyLeadsView() {
                 </div>
               )}
 
-              {/* Address */}
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Address {isEditAllMandatory && "*"}</label>
-                <textarea rows="3" {...register("address", { required: isEditAllMandatory ? "Address is required" : false })} className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#162335] ${errors.address ? "border-rose-455" : "border-slate-200"}`}></textarea>
-                {errors.address && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.address.message}</p>}
+              {/* Remarks & Address */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Remarks */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Remarks</label>
+                  <textarea
+                    rows="3"
+                    placeholder="Enter remarks..."
+                    {...register("remarks", {
+                      validate: (value) => !value || value.trim().split(/\s+/).length <= 200 || "Maximum 200 words allowed"
+                    })}
+                    className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#162335] ${
+                      errors.remarks ? "border-rose-455" : "border-slate-200"
+                    } resize-y bg-white`}
+                  ></textarea>
+                  {errors.remarks && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.remarks.message}</p>}
+                </div>
+
+                {/* Address */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Address {isEditAllMandatory && "*"}</label>
+                  <textarea
+                    rows="3"
+                    placeholder="Enter complete office/residential address..."
+                    {...register("address", { required: isEditAllMandatory ? "Address is required" : false })}
+                    className={`w-full px-4 py-2 border rounded-xl text-xs outline-none focus:border-[#162335] ${
+                      errors.address ? "border-rose-455" : "border-slate-200"
+                    } resize-y bg-white`}
+                  ></textarea>
+                  {errors.address && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.address.message}</p>}
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">

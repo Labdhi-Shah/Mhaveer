@@ -233,6 +233,33 @@ exports.getLeads = async (req, res) => {
   }
 };
 
+function isLeadAuthorized(lead, user) {
+  if (!lead || !user) return false;
+  const role = user.role;
+  if (role === "SuperAdmin" || role === "Admin" || role === "Manager" || role === "Administration (Admin)") {
+    return true;
+  }
+  const userIdStr = user.id ? user.id.toString() : "";
+  const userEmpId = user.employeeId ? user.employeeId.toString() : "";
+  const userEmail = user.email ? user.email.toLowerCase() : "";
+
+  const isOwner =
+    (lead.employeeId && (lead.employeeId.toString() === userIdStr || (userEmpId && lead.employeeId.toString() === userEmpId))) ||
+    (lead.employeeCode && userEmpId && lead.employeeCode.toString() === userEmpId) ||
+    (lead.createdBy && (lead.createdBy.toString() === userIdStr || (userEmpId && lead.createdBy.toString() === userEmpId))) ||
+    (lead.officialEmail && userEmail && lead.officialEmail.toLowerCase() === userEmail);
+
+  if (isOwner) return true;
+
+  if (role === "Team Leader") {
+    if (lead.teamLeaderId && (lead.teamLeaderId.toString() === userIdStr || (userEmpId && lead.teamLeaderId.toString() === userEmpId))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 // @desc    Get single lead
 // @route   GET /api/leads/:id
 exports.getLeadById = async (req, res) => {
@@ -242,20 +269,7 @@ exports.getLeadById = async (req, res) => {
       return res.status(404).json({ success: false, message: "Lead not found" });
     }
 
-    let isAuthorized = false;
-    if (req.user.role === "SuperAdmin" || req.user.role === "Admin" || req.user.role === "Manager" || req.user.role === "Administration (Admin)") isAuthorized = true;
-    else if (lead.employeeId === req.user.id) isAuthorized = true;
-    else if (req.user.role === "Manager") {
-      if (lead.managerId === req.user.id) isAuthorized = true;
-      else if (lead.teamLeaderId) {
-        const tl = await Employee.findById(lead.teamLeaderId);
-        if (tl && tl.managerId === req.user.id) isAuthorized = true;
-      }
-    } else if (req.user.role === "Team Leader" && lead.teamLeaderId === req.user.id) {
-      isAuthorized = true;
-    }
-
-    if (!isAuthorized) {
+    if (!isLeadAuthorized(lead, req.user)) {
       return res.status(403).json({ success: false, message: "Not authorized to access this lead" });
     }
 
@@ -299,33 +313,31 @@ exports.updateLead = async (req, res) => {
       return res.status(404).json({ success: false, message: "Lead not found" });
     }
 
-    let isAuthorized = false;
-    if (req.user.role === "SuperAdmin" || req.user.role === "Admin" || req.user.role === "Manager" || req.user.role === "Administration (Admin)") isAuthorized = true;
-    else if (lead.employeeId === req.user.id) isAuthorized = true;
-    else if (req.user.role === "Manager") {
-      if (lead.managerId === req.user.id) isAuthorized = true;
-      else if (lead.teamLeaderId) {
-        const tl = await Employee.findById(lead.teamLeaderId);
-        if (tl && tl.managerId === req.user.id) isAuthorized = true;
-      }
-    } else if (req.user.role === "Team Leader" && lead.teamLeaderId === req.user.id) {
-      isAuthorized = true;
-    }
-
-    if (!isAuthorized) {
+    if (!isLeadAuthorized(lead, req.user)) {
       return res.status(403).json({ success: false, message: "Not authorized to update this lead" });
     }
 
-    if (req.body.phoneNumber) {
-      req.body.phone = req.body.phoneNumber;
-    } else if (req.body.phone) {
-      req.body.phoneNumber = req.body.phone;
+    const updateData = { ...req.body };
+
+    if (updateData.phoneNumber) {
+      updateData.phone = updateData.phoneNumber;
+    } else if (updateData.phone) {
+      updateData.phoneNumber = updateData.phone;
     }
 
-    lead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    // Explicitly handle remarks: allow empty string or trimmed string
+    if (updateData.remarks !== undefined) {
+      updateData.remarks = typeof updateData.remarks === "string" ? updateData.remarks.trim() : updateData.remarks;
+    }
+
+    lead = await Lead.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     let meeting = await Meeting.findOne({ leadId: lead._id });
     if (meeting) {
@@ -397,20 +409,7 @@ exports.deleteLead = async (req, res) => {
       return res.status(404).json({ success: false, message: "Lead not found" });
     }
 
-    let isAuthorized = false;
-    if (req.user.role === "SuperAdmin" || req.user.role === "Admin" || req.user.role === "Manager" || req.user.role === "Administration (Admin)") isAuthorized = true;
-    else if (lead.employeeId === req.user.id) isAuthorized = true;
-    else if (req.user.role === "Manager") {
-      if (lead.managerId === req.user.id) isAuthorized = true;
-      else if (lead.teamLeaderId) {
-        const tl = await Employee.findById(lead.teamLeaderId);
-        if (tl && tl.managerId === req.user.id) isAuthorized = true;
-      }
-    } else if (req.user.role === "Team Leader" && lead.teamLeaderId === req.user.id) {
-      isAuthorized = true;
-    }
-
-    if (!isAuthorized) {
+    if (!isLeadAuthorized(lead, req.user)) {
       return res.status(403).json({ success: false, message: "Not authorized to delete this lead" });
     }
 

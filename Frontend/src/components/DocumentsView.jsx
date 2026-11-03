@@ -25,7 +25,7 @@ const resolveImageUrl = (url) => {
   if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:") || url.startsWith("blob:")) {
     return url;
   }
-  const rawBaseURL = import.meta.env.VITE_API_URL || "";
+  const rawBaseURL = import.meta.env.VITE_API_URL || "https://mhaveer.onrender.com";
   const cleanBaseURL = rawBaseURL.endsWith("/") ? rawBaseURL.slice(0, -1) : rawBaseURL;
   return cleanBaseURL ? `${cleanBaseURL}${url}` : url;
 };

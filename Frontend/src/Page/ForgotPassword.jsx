@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-const rawAPI = import.meta.env.VITE_API_URL;
-const API = rawAPI && rawAPI.endsWith("/") ? rawAPI.slice(0, -1) : (rawAPI || "");
+const rawAPI = import.meta.env.VITE_API_URL || "https://mhaveer.onrender.com";
+const API = rawAPI && rawAPI.endsWith("/") ? rawAPI.slice(0, -1) : rawAPI;
 
 function ForgotPassword() {
   const navigate = useNavigate();
@@ -43,7 +43,11 @@ function ForgotPassword() {
       setTimeout(() => navigate("/login"), 1200);
     } catch (error) {
       console.error(error);
-      setMessage("Server Error");
+      if (error && error.name === "TypeError" && String(error.message).includes("fetch")) {
+        setMessage("Server connection failed. Please check network/CORS.");
+      } else {
+        setMessage(error?.message || "Server Error");
+      }
     } finally {
       setLoading(false);
     }

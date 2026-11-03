@@ -33,7 +33,7 @@ const authMiddleware = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "supersecretkey");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "mahaveer123456");
     req.user = decoded;
     req.user.department = normalizeDepartment(decoded.department || decoded.dept || "");
     req.user.role = normalizeRole(decoded.role || decoded.userRole || "");

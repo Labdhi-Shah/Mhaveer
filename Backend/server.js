@@ -31,24 +31,90 @@ app.set("trust proxy", true);
 connectDB();
 
 // Middleware
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(",")
-  : [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://192.168.29.244:5173",
-    "http://192.168.1.21:5173", // Temporary addition for local network testing
-    "https://mhaveer.vercel.app"
-  ];
+// Production & Development CORS Configuration
+const defaultAllowedOrigins = [
+  "https://nobalfinance.com",
+  "https://www.nobalfinance.com",
+  "http://nobalfinance.com",
+  "http://www.nobalfinance.com",
+  "https://mhaveer.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+  "http://192.168.29.244:5173",
+  "http://192.168.1.21:5173",
+];
 
-if (process.env.FRONTEND_URL && !allowedOrigins.includes(process.env.FRONTEND_URL)) {
-  allowedOrigins.push(process.env.FRONTEND_URL);
-}
+const isOriginAllowed = (origin) => {
+  // Allow non-browser clients (curl, mobile apps, Postman, server-to-server)
+  if (!origin) return true;
 
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-}));
+  // Custom environment variables
+  const envOrigins = (process.env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
+  if (process.env.FRONTEND_URL) {
+    envOrigins.push(process.env.FRONTEND_URL.trim());
+  }
+
+  const allExactOrigins = [...defaultAllowedOrigins, ...envOrigins];
+  if (allExactOrigins.includes(origin)) return true;
+
+  // Wildcard and pattern matching for domains/subdomains
+  try {
+    const parsed = new URL(origin);
+    const host = parsed.hostname;
+    if (
+      host === "nobalfinance.com" ||
+      host === "www.nobalfinance.com" ||
+      host.endsWith(".nobalfinance.com") ||
+      host === "mhaveer.vercel.app" ||
+      host.endsWith(".vercel.app") ||
+      host.endsWith(".onrender.com") ||
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host.startsWith("192.168.") ||
+      host.startsWith("10.") ||
+      host.startsWith("172.")
+    ) {
+      return true;
+    }
+  } catch (e) {
+    // Malformed origin
+  }
+
+  return false;
+};
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (isOriginAllowed(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`⚠️ [CORS REJECTED] Origin not permitted: ${origin}`);
+        callback(null, false);
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Origin",
+      "X-Requested-With",
+      "Content-Type",
+      "Accept",
+      "Authorization",
+      "x-access-token",
+    ],
+    exposedHeaders: ["Authorization"],
+    maxAge: 86400,
+  })
+);
+
+// Preflight support across all routes
+app.options("*", cors());
 
 // 1. Set Security HTTP Headers (Helmet)
 app.use(helmet());

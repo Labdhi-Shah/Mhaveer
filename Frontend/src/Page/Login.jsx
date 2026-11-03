@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-const rawAPI = import.meta.env.VITE_API_URL;
-const API = rawAPI && rawAPI.endsWith("/") ? rawAPI.slice(0, -1) : (rawAPI || "");
+const rawAPI = import.meta.env.VITE_API_URL || "https://mhaveer.onrender.com";
+const API = rawAPI && rawAPI.endsWith("/") ? rawAPI.slice(0, -1) : rawAPI;
 
 function Login() {
   const navigate = useNavigate();
@@ -71,8 +71,12 @@ function Login() {
       }
 
     } catch (error) {
-      console.log(error);
-      setMessage("Server Error");
+      console.error("Login request error:", error);
+      if (error && error.name === "TypeError" && String(error.message).includes("fetch")) {
+        setMessage("Server connection failed. Please check network/CORS.");
+      } else {
+        setMessage(error?.message || "Server Error");
+      }
     }
 
     setLoading(false);

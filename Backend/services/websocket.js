@@ -20,7 +20,7 @@ const isManagerRole = (role = "") => {
   );
 };
 
-// Origin validator: permits local development, network LAN, Vercel, Render, and explicit env origins
+// Origin validator: permits local development, network LAN, custom domain, Vercel, Render, and explicit env origins
 const isOriginAllowed = (origin) => {
   if (!origin) return true; // Non-browser clients, same-origin, curl, server-to-server
 
@@ -34,13 +34,17 @@ const isOriginAllowed = (origin) => {
     const parsed = new URL(origin);
     const host = parsed.hostname;
     if (
+      host === "nobalfinance.com" ||
+      host === "www.nobalfinance.com" ||
+      host.endsWith(".nobalfinance.com") ||
+      host === "mhaveer.vercel.app" ||
+      host.endsWith(".vercel.app") ||
+      host.endsWith(".onrender.com") ||
       host === "localhost" ||
       host === "127.0.0.1" ||
       host.startsWith("192.168.") ||
       host.startsWith("10.") ||
-      host.startsWith("172.") ||
-      host.endsWith(".vercel.app") ||
-      host.endsWith(".onrender.com")
+      host.startsWith("172.")
     ) {
       return true;
     }

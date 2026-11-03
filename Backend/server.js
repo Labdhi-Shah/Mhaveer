@@ -113,8 +113,6 @@ app.use(
   })
 );
 
-// Preflight support across all routes
-app.options("*", cors());
 
 // 1. Set Security HTTP Headers (Helmet)
 app.use(helmet());

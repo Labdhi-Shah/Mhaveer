@@ -9,6 +9,7 @@ const {
   MAX_MEETINGS_PER_EMPLOYEE,
 } = require("../services/salesAssignmentService");
 const { getIO, emitDataChange } = require("../services/websocket");
+const { archiveAndDelete } = require("../services/archiveService");
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Helper: normalise department string (mirrors authMiddleware)
@@ -197,7 +198,18 @@ exports.deleteMeeting = async (req, res) => {
       return res.status(403).json({ success: false, message: "Unauthorized to delete this meeting" });
     }
 
-    await meeting.deleteOne();
+    // Safely archive to deleted_records and delete from meetings
+    const archiveResult = await archiveAndDelete({
+      model: Meeting,
+      id: req.params.id,
+      reqUser: req.user,
+      deletionReason: req.body?.reason || `Deleted by ${req.user.role || "user"}`,
+      recordType: "meeting",
+    });
+
+    if (!archiveResult.success) {
+      return res.status(500).json({ success: false, message: "Failed to archive and delete meeting." });
+    }
     
     emitDataChange({
       entity: "meeting",

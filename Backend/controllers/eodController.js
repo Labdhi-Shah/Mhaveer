@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Eod = require("../models/Eod");
 const Employee = require("../models/Employee");
 const { emitDataChange } = require("../services/websocket");
+const { archiveAndDelete } = require("../services/archiveService");
 
 // Helper to safely execute model.find with projection
 const safeFind = async (model, criteria, projection) => {
@@ -397,10 +398,24 @@ exports.deleteMyEod = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid EOD record ID." });
     }
 
-    const record = await Eod.findOneAndDelete({ _id: id, employeeId: employee._id });
-    if (!record) {
-      return res.status(404).json({ success: false, message: "EOD record not found or access denied." });
+    // Safely archive to deleted_records and delete from eods
+    const archiveResult = await archiveAndDelete({
+      model: Eod,
+      id,
+      query: { employeeId: employee._id },
+      reqUser: req.user,
+      deletionReason: req.body?.reason || "Employee deleted own EOD record",
+      recordType: "eod",
+    });
+
+    if (!archiveResult.success) {
+      if (archiveResult.notFound) {
+        return res.status(404).json({ success: false, message: "EOD record not found or access denied." });
+      }
+      return res.status(500).json({ success: false, message: "Failed to archive and delete EOD record." });
     }
+
+    const record = archiveResult.originalDoc;
 
     emitDataChange({
       entity: "eod",

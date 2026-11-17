@@ -3,6 +3,7 @@ const Employee = require("../models/Employee");
 const generateEmployeeId = require("../utils/generateId");
 const generatePassword = require("../utils/generatePassword");
 const { emitDataChange } = require("../services/websocket");
+const { archiveAndDelete } = require("../services/archiveService");
 
 // @desc    Create new employee
 // @route   POST /api/employees
@@ -379,7 +380,18 @@ exports.deleteEmployee = async (req, res) => {
       return res.status(404).json({ success: false, message: "Employee not found" });
     }
 
-    await employee.deleteOne();
+    // Safely archive to deleted_records and delete from employees
+    const archiveResult = await archiveAndDelete({
+      model: Employee,
+      id: req.params.id,
+      reqUser: req.user,
+      deletionReason: req.body?.reason || `Deleted by ${req.user?.role || "user"}`,
+      recordType: "employee",
+    });
+
+    if (!archiveResult.success) {
+      return res.status(500).json({ success: false, message: "Failed to archive and delete employee." });
+    }
 
     emitDataChange({
       entity: "employee",

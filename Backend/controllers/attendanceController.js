@@ -1,6 +1,7 @@
 const Attendance = require("../models/Attendance");
 const Employee = require("../models/Employee"); // Assume Employee model exists
 const { emitDataChange } = require("../services/websocket");
+const { archiveAndDelete } = require("../services/archiveService");
 
 // Utility to get start of day
 const getStartOfDay = (date = new Date()) => {
@@ -441,6 +442,47 @@ exports.getAdminAttendance = async (req, res) => {
     });
   } catch (error) {
     console.error("Admin Attendance Error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error.", error: error.message });
+  }
+};
+
+// 8. Delete Attendance Record (Admin/Manager only)
+exports.deleteAttendance = async (req, res) => {
+  try {
+    const isManager = req.user.role === "Admin" || req.user.role === "SuperAdmin" || req.user.role === "Manager";
+    if (!isManager) {
+      return res.status(403).json({ success: false, message: "Unauthorized: only managers can delete attendance records" });
+    }
+
+    const { id } = req.params;
+    const record = await Attendance.findById(id);
+    if (!record) {
+      return res.status(404).json({ success: false, message: "Attendance record not found" });
+    }
+
+    const archiveResult = await archiveAndDelete({
+      model: Attendance,
+      id,
+      reqUser: req.user,
+      deletionReason: req.body?.reason || `Deleted by ${req.user.role || "manager"}`,
+      recordType: "attendance",
+    });
+
+    if (!archiveResult.success) {
+      return res.status(500).json({ success: false, message: "Failed to archive and delete attendance record." });
+    }
+
+    emitDataChange({
+      entity: "attendance",
+      action: "delete",
+      id,
+      userId: req.user.id,
+      role: req.user.role,
+    });
+
+    return res.status(200).json({ success: true, message: "Attendance record deleted and archived successfully" });
+  } catch (error) {
+    console.error("Delete Attendance Error:", error);
     return res.status(500).json({ success: false, message: "Internal server error.", error: error.message });
   }
 };

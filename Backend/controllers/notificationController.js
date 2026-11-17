@@ -1,6 +1,7 @@
 const Notification = require("../models/Notification");
 const Lead = require("../models/Lead");
 const Meeting = require("../models/Meeting");
+const { archiveAndDelete } = require("../services/archiveService");
 
 exports.getNotifications = async (req, res) => {
   try {
@@ -107,5 +108,39 @@ exports.markAllAsRead = async (req, res) => {
   } catch (error) {
     console.error("Error marking all notifications as read:", error);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+exports.deleteNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const notification = await Notification.findById(id);
+    if (!notification) {
+      return res.status(404).json({ success: false, message: "Notification not found" });
+    }
+
+    const isManager = req.user.role === "Admin" || req.user.role === "Manager";
+    const isRecipient = notification.recipient?.toString() === req.user.id;
+
+    if (!isManager && !isRecipient) {
+      return res.status(403).json({ success: false, message: "Unauthorized to delete this notification" });
+    }
+
+    const archiveResult = await archiveAndDelete({
+      model: Notification,
+      id,
+      reqUser: req.user,
+      deletionReason: req.body?.reason || `Deleted by ${req.user.role || "user"}`,
+      recordType: "notification",
+    });
+
+    if (!archiveResult.success) {
+      return res.status(500).json({ success: false, message: "Failed to archive and delete notification." });
+    }
+
+    return res.status(200).json({ success: true, message: "Notification deleted and archived successfully" });
+  } catch (error) {
+    console.error("Delete Notification Error:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };

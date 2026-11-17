@@ -4,6 +4,7 @@ const multer = require("multer");
 const CompanyDocument = require("../models/CompanyDocument");
 const Employee = require("../models/Employee");
 const { emitDataChange } = require("../services/websocket");
+const { archiveAndDelete } = require("../services/archiveService");
 
 // ── Multer Storage for Document Images ─────────────────────────────────────
 const storage = multer.diskStorage({
@@ -187,7 +188,18 @@ exports.deleteDocument = async (req, res) => {
       }
     }
 
-    await CompanyDocument.findByIdAndDelete(req.params.id);
+    // Safely archive to deleted_records and delete from companydocuments
+    const archiveResult = await archiveAndDelete({
+      model: CompanyDocument,
+      id: req.params.id,
+      reqUser: req.user,
+      deletionReason: req.body?.reason || `Deleted by ${req.user?.role || "user"}`,
+      recordType: "company_document",
+    });
+
+    if (!archiveResult.success) {
+      return res.status(500).json({ success: false, message: "Failed to archive and delete document" });
+    }
 
     emitDataChange({
       entity: "document",

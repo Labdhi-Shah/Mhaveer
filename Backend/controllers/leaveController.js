@@ -1,6 +1,7 @@
 const Leave = require("../models/Leave");
 const Employee = require("../models/Employee");
 const { emitDataChange } = require("../services/websocket");
+const { archiveAndDelete } = require("../services/archiveService");
 
 // Apply for leave
 exports.applyLeave = async (req, res) => {
@@ -107,6 +108,49 @@ exports.updateLeaveStatus = async (req, res) => {
     return res.status(200).json({ success: true, message: `Leave ${status.toLowerCase()} successfully`, data: leave });
   } catch (error) {
     console.error("Update Leave Status Error:", error);
+    return res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+// Delete leave (Employee can delete own pending leave, Manager can delete any)
+exports.deleteLeave = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const leave = await Leave.findById(id);
+    if (!leave) {
+      return res.status(404).json({ success: false, message: "Leave request not found" });
+    }
+
+    const isManager = req.user.role === "Admin" || req.user.role === "SuperAdmin" || req.user.role === "Manager";
+    const isOwner = leave.employeeId?.toString() === req.user.id;
+
+    if (!isManager && !isOwner) {
+      return res.status(403).json({ success: false, message: "Unauthorized to delete this leave" });
+    }
+
+    const archiveResult = await archiveAndDelete({
+      model: Leave,
+      id,
+      reqUser: req.user,
+      deletionReason: req.body?.reason || `Deleted by ${req.user.role || "user"}`,
+      recordType: "leave",
+    });
+
+    if (!archiveResult.success) {
+      return res.status(500).json({ success: false, message: "Failed to archive and delete leave." });
+    }
+
+    emitDataChange({
+      entity: "leave",
+      action: "delete",
+      id,
+      userId: req.user.id,
+      role: req.user.role,
+    });
+
+    return res.status(200).json({ success: true, message: "Leave deleted successfully" });
+  } catch (error) {
+    console.error("Delete Leave Error:", error);
     return res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };

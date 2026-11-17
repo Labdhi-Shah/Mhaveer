@@ -4,6 +4,7 @@ const Meeting = require("../models/Meeting");
 const { assignMeetingToSalesEmployee } = require("../services/salesAssignmentService");
 const { getIO, emitDataChange } = require("../services/websocket");
 const { createNotification } = require("../utils/notificationHelper");
+const { archiveAndDelete } = require("../services/archiveService");
 
 // @desc    Create a new lead
 // @route   POST /api/leads
@@ -413,7 +414,22 @@ exports.deleteLead = async (req, res) => {
       return res.status(403).json({ success: false, message: "Not authorized to delete this lead" });
     }
 
-    await lead.deleteOne();
+    // Safely archive to deleted_records and delete from leads
+    // Also cascades archiving to any attached meetings
+    const archiveResult = await archiveAndDelete({
+      model: Lead,
+      id: req.params.id,
+      reqUser: req.user,
+      deletionReason: req.body?.reason || `Deleted by ${req.user.role || "user"}`,
+      recordType: "lead",
+      cascade: [
+        { model: Meeting, query: { leadId: req.params.id }, recordType: "meeting" }
+      ]
+    });
+
+    if (!archiveResult.success) {
+      return res.status(500).json({ success: false, message: "Failed to archive and delete lead." });
+    }
 
     emitDataChange({
       entity: "lead",

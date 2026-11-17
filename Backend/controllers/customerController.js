@@ -4,6 +4,7 @@ const multer = require("multer");
 const mongoose = require("mongoose");
 const Customer = require("../models/Customer");
 const { emitDataChange } = require("../services/websocket");
+const { archiveAndDelete } = require("../services/archiveService");
 
 // ── Multer Storage ────────────────────────────────────────────────────────────
 const storage = multer.diskStorage({
@@ -337,7 +338,18 @@ exports.deleteCustomer = async (req, res) => {
       }
     });
 
-    await Customer.findByIdAndDelete(req.params.id);
+    // Safely archive to deleted_records and delete from customers
+    const archiveResult = await archiveAndDelete({
+      model: Customer,
+      id: req.params.id,
+      reqUser: req.user,
+      deletionReason: req.body?.reason || `Deleted by ${req.user.role || "user"}`,
+      recordType: "customer",
+    });
+
+    if (!archiveResult.success) {
+      return res.status(500).json({ success: false, message: "Failed to archive and delete customer." });
+    }
 
     emitDataChange({
       entity: "customer",

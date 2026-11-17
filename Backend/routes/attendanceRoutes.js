@@ -8,7 +8,8 @@ const {
   stopAttendance,
   getTodayAttendance,
   getAttendanceHistory,
-  getAdminAttendance
+  getAdminAttendance,
+  deleteAttendance
 } = require("../controllers/attendanceController");
 
 router.use(authMiddleware);
@@ -20,5 +21,6 @@ router.post("/stop", stopAttendance);
 router.get("/today", getTodayAttendance);
 router.get("/", getAttendanceHistory);
 router.get("/admin", getAdminAttendance);
+router.delete("/:id", deleteAttendance);
 
 module.exports = router;

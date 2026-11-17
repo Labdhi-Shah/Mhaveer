@@ -8,6 +8,36 @@ import socket from "./utils/socket";
 const DEPARTMENTS = ["Sales Department", "Telecalling", "Admin", "Account & Fianc", "Marketing", "Manegement", "Human Resorece(HR)", "Collection & Records", "KYC Compliation", "Operations Department", "Customer Support", "Credit"];
 const ROLES = ["Manager", "Employee"];
 
+const formatDisplayDate = (val) => {
+  if (!val) return "-";
+  try {
+    if (typeof val === "string") {
+      const trimmed = val.trim();
+      if (!trimmed) return "-";
+      if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+        const parts = trimmed.split("T")[0].split("-");
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const day = parseInt(parts[2], 10);
+        if (!isNaN(year) && !isNaN(month) && !isNaN(day) && month >= 1 && month <= 12) {
+          const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+          return `${String(day).padStart(2, "0")}-${months[month - 1]}-${year}`;
+        }
+      }
+    }
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return "-";
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
+  } catch {
+    return "-";
+  }
+};
+
+
 export default function EmployeeList() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -287,11 +317,11 @@ export default function EmployeeList() {
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="font-bold text-slate-400">DOB (Date of Birth)</span>
-                <span>{viewEmp.dateOfBirth ? new Date(viewEmp.dateOfBirth).toLocaleDateString() : "-"}</span>
+                <span>{formatDisplayDate(viewEmp.dateOfBirth || viewEmp.dob)}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="font-bold text-slate-400">Joining Date</span>
-                <span>{viewEmp.joiningDate ? new Date(viewEmp.joiningDate).toLocaleDateString() : "-"}</span>
+                <span>{formatDisplayDate(viewEmp.joiningDate)}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="font-bold text-slate-400">Status</span>

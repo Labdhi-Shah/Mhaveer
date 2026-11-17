@@ -6,6 +6,35 @@ import { Loader2, CheckCircle, Copy, X, Users, Building2, User, Phone, MapPin, B
 const DEPARTMENTS = ["Telecalling"];
 const ROLES = ["Employee", "Manager"];
 
+const formatDateForInput = (val) => {
+  if (!val) return "";
+  if (typeof val === "string") {
+    const trimmed = val.trim();
+    if (!trimmed) return "";
+    if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+      return trimmed.split("T")[0];
+    }
+    try {
+      const d = new Date(trimmed);
+      if (isNaN(d.getTime())) return "";
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    } catch {
+      return "";
+    }
+  }
+  if (val instanceof Date && !isNaN(val.getTime())) {
+    const year = val.getFullYear();
+    const month = String(val.getMonth() + 1).padStart(2, "0");
+    const day = String(val.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+  return "";
+};
+
+
 export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -89,11 +118,11 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
           if (res.data.success) {
             const data = res.data.data;
             setForm({
-              fullName: data.fullName || "",
+              fullName: data.fullName || data.name || "",
               personalEmail: data.personalEmail || "",
               phone: data.phone || "",
-              dob: data.dateOfBirth ? new Date(data.dateOfBirth).toISOString().split('T')[0] : "",
-              joiningDate: data.joiningDate ? new Date(data.joiningDate).toISOString().split('T')[0] : "",
+              dob: formatDateForInput(data.dateOfBirth || data.dob),
+              joiningDate: formatDateForInput(data.joiningDate),
               role: data.role || "",
               department: data.department || "",
               address: data.address || "",
@@ -170,7 +199,9 @@ export default function AddEmployee({ modalEditEmpId, onSuccess, onCancel }) {
     try {
       const payload = { 
         ...form, 
-        dateOfBirth: form.dob,
+        dob: form.dob || undefined,
+        dateOfBirth: form.dob || undefined,
+        joiningDate: form.joiningDate || undefined,
         phone: form.phone.trim(),
         aadhaarNumber: form.aadhaarNumber.trim(),
         panNumber: form.panNumber.trim().toUpperCase(),

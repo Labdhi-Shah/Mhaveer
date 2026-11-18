@@ -739,7 +739,7 @@ export default function NewLeadView() {
                       {errors.ppMarketRate && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.ppMarketRate.message}</p>}
                     </div>
                     <div>
-                      <label className={labelClass}>Ownership list Rate</label>
+                      <label className={labelClass}>Ownership status Rate</label>
                       <input type="number" placeholder="Enter dastavej rate" {...register("ppDastavejRate", { min: { value: 0, message: "Value must be non-negative" } })} className={getInputClass(errors.ppDastavejRate)} />
                       {errors.ppDastavejRate && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.ppDastavejRate.message}</p>}
                     </div>
@@ -851,7 +851,7 @@ export default function NewLeadView() {
                   {errors.unsoldFloor && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.unsoldFloor.message}</p>}
                 </div>
                 <div>
-                  <label className={labelClass}>Ownership list</label>
+                  <label className={labelClass}>Ownership status</label>
                   <input type="text" placeholder="Enter dastavej" {...register("unsoldDastavej")} className={getInputClass(errors.unsoldDastavej)} />
                   {errors.unsoldDastavej && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.unsoldDastavej.message}</p>}
                 </div>
@@ -891,7 +891,7 @@ export default function NewLeadView() {
                   {errors.lrdSchemeName && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lrdSchemeName.message}</p>}
                 </div>
                 <div>
-                  <label className={labelClass}>Ownership list</label>
+                  <label className={labelClass}>Ownership status</label>
                   <input type="text" placeholder="Enter dastavej" {...register("lrdDastavej")} className={getInputClass(errors.lrdDastavej)} />
                   {errors.lrdDastavej && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lrdDastavej.message}</p>}
                 </div>
@@ -914,7 +914,7 @@ export default function NewLeadView() {
                   <input type="checkbox" id="naPlotYesNo" {...register("naPlotYesNo")} />
                 </div>
                 <div>
-                  <label className={labelClass}>Ownership list</label>
+                  <label className={labelClass}>Ownership status</label>
                   <input type="text" placeholder="Enter dastavej" {...register("naPlotDastavej")} className={getInputClass(errors.naPlotDastavej)} />
                   {errors.naPlotDastavej && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.naPlotDastavej.message}</p>}
                 </div>
@@ -1002,8 +1002,8 @@ export default function NewLeadView() {
                       {errors.lapPropertyWork && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lapPropertyWork.message}</p>}
                     </div>
                     <div>
-                      <label className={labelClass}>Ownership list</label>
-                      <input type="text" placeholder="Enter Ownership list" {...register("lapPropertyDocumentList")} className={getInputClass(errors.lapPropertyDocumentList)} />
+                      <label className={labelClass}>Ownership status</label>
+                      <input type="text" placeholder="Enter Ownership status" {...register("lapPropertyDocumentList")} className={getInputClass(errors.lapPropertyDocumentList)} />
                       {errors.lapPropertyDocumentList && <p className="text-xs text-rose-500 mt-1.5 font-medium">{errors.lapPropertyDocumentList.message}</p>}
                     </div>
                   </>

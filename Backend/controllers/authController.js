@@ -69,45 +69,41 @@ exports.login = async (req, res) => {
     return res.status(400).json({ success: false, message: "Please provide both ID/Email and Password" });
   }
 
-  // 1. Temporary Fallback Manager Login (Recovery Solution)
-  const recoveryEnabled = process.env.RECOVERY_MANAGER_ENABLED !== "false";
-  const configuredRecoveryId = (process.env.RECOVERY_MANAGER_ID || "Pallavi@nobalfinance.com").trim().toLowerCase();
-  const configuredRecoveryPassword = (process.env.RECOVERY_MANAGER_PASSWORD || "Pallavi@nobalfina").trim();
+  // 1. Manager Login
+  const managerEmail = (process.env.MANAGER_EMAIL || process.env.RECOVERY_MANAGER_ID || "Pallavi@nobalfinance.com").trim().toLowerCase();
+  const managerPassword = (process.env.MANAGER_PASSWORD || process.env.RECOVERY_MANAGER_PASSWORD || "Pallavi@nobalfina").trim();
 
-  const isRecoveryIdMatch = (
-    trimmedEmail.toLowerCase() === configuredRecoveryId ||
-    trimmedEmail.toLowerCase() === "Pallavi@nobalfinance.com"
-  );
-
-  const isRecoveryPasswordMatch = (
-    trimmedPassword === configuredRecoveryPassword ||
-    trimmedPassword === "Pallavi@nobalfina"
-  );
-
-  if (recoveryEnabled && isRecoveryIdMatch) {
-    if (!isRecoveryPasswordMatch) {
+  if (trimmedEmail.toLowerCase() === managerEmail) {
+    if (trimmedPassword !== managerPassword) {
       return res.status(401).json({ success: false, message: "Invalid Email, ID, or Password" });
     }
 
-    const recoveryUser = {
-      id: "recovery-manager-001",
-      employeeId: "MGR-RECOVERY",
-      fullName: "Recovery Manager",
-      name: "Recovery Manager",
-      email: configuredRecoveryId,
-      officialEmail: configuredRecoveryId,
+    const dbManager = await Employee.findOne({
+      $or: [
+        { officialEmail: managerEmail },
+        { role: "Manager" }
+      ]
+    });
+
+    const managerUser = {
+      id: dbManager ? dbManager._id : "6ad9da42cb554888ce71a320",
+      employeeId: dbManager?.employeeId || "MGR0001",
+      fullName: "Pallavi",
+      name: "Pallavi",
+      email: managerEmail,
+      officialEmail: managerEmail,
       role: "Manager",
-      department: "Telecalling",
+      department: dbManager?.department || "Telecalling",
     };
 
     const token = jwt.sign(
       {
-        id: recoveryUser.id,
-        email: recoveryUser.officialEmail,
+        id: managerUser.id,
+        email: managerUser.officialEmail,
         role: "Manager",
-        department: "Telecalling",
-        name: recoveryUser.name,
-        employeeId: recoveryUser.employeeId,
+        department: managerUser.department,
+        name: managerUser.name,
+        employeeId: managerUser.employeeId,
       },
       process.env.JWT_SECRET || "mahaveer123456",
       { expiresIn: "1d" }
@@ -116,8 +112,8 @@ exports.login = async (req, res) => {
     return res.json({
       success: true,
       token,
-      message: "Login Success (Recovery Manager)",
-      employee: recoveryUser,
+      message: "Login Success",
+      employee: managerUser,
     });
   }
 

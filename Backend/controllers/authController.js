@@ -71,23 +71,17 @@ exports.login = async (req, res) => {
 
   // 1. Temporary Fallback Manager Login (Recovery Solution)
   const recoveryEnabled = process.env.RECOVERY_MANAGER_ENABLED !== "false";
-  const configuredRecoveryId = (process.env.RECOVERY_MANAGER_ID || "manager@mhaveer.com").trim().toLowerCase();
-  const configuredRecoveryPassword = (process.env.RECOVERY_MANAGER_PASSWORD || "manager123456").trim();
+  const configuredRecoveryId = (process.env.RECOVERY_MANAGER_ID || "Pallavi@nobalfinance.com").trim().toLowerCase();
+  const configuredRecoveryPassword = (process.env.RECOVERY_MANAGER_PASSWORD || "Pallavi@nobalfina").trim();
 
   const isRecoveryIdMatch = (
     trimmedEmail.toLowerCase() === configuredRecoveryId ||
-    trimmedEmail.toLowerCase() === "manager@mhaveer.com" ||
-    trimmedEmail.toLowerCase() === "manager@nobalfinance.com" ||
-    trimmedEmail.toLowerCase() === "admin@mhaveerfincap.com" ||
-    trimmedEmail.toLowerCase() === "manager" ||
-    trimmedEmail.toUpperCase() === "MGR-RECOVERY"
+    trimmedEmail.toLowerCase() === "Pallavi@nobalfinance.com"
   );
 
   const isRecoveryPasswordMatch = (
     trimmedPassword === configuredRecoveryPassword ||
-    trimmedPassword === "manager123456" ||
-    trimmedPassword === "123456" ||
-    trimmedPassword === "mahaveer123456"
+    trimmedPassword === "Pallavi@nobalfina"
   );
 
   if (recoveryEnabled && isRecoveryIdMatch) {

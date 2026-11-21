@@ -40,6 +40,8 @@ function Login() {
       if (response.ok && data.success) {
         localStorage.setItem("token", data.token);
         const userData = {
+          id: data.employee.id || data.employee._id,
+          _id: data.employee.id || data.employee._id,
           fullName: data.employee.name || data.employee.fullName,
           name: data.employee.name || data.employee.fullName,
           role: data.employee.role,

@@ -28,10 +28,21 @@ exports.startAttendance = async (req, res) => {
     });
 
     if (existingRecord) {
-      if (existingRecord.status !== "Completed") {
-        return res.status(400).json({ success: false, message: "Attendance already started for today." });
+      if (existingRecord.logoutTime || existingRecord.status === "Completed") {
+        existingRecord.logoutTime = null;
+        existingRecord.status = "Working";
+        await existingRecord.save();
+        return res.status(200).json({
+          success: true,
+          message: "Attendance resumed successfully.",
+          data: existingRecord
+        });
       }
-      return res.status(400).json({ success: false, message: "Attendance already completed for today." });
+      return res.status(200).json({
+        success: true,
+        message: "Attendance already active for today.",
+        data: existingRecord
+      });
     }
 
     const newAttendance = new Attendance({
@@ -178,11 +189,17 @@ exports.stopAttendance = async (req, res) => {
     }
 
     if (record.logoutTime) {
-      return res.status(400).json({ success: false, message: "Attendance already completed for today." });
+      return res.status(200).json({
+        success: true,
+        message: "Attendance was already stopped for today.",
+        data: record
+      });
     }
 
     const endTime = new Date();
-    record.logoutTime = endTime; // Setting logoutTime as per your schema
+    record.logoutTime = endTime;
+    record.endTime = endTime;
+    record.status = "Completed";
 
     // Calculate working time
     let diffMs = 0;
@@ -249,8 +266,9 @@ exports.getTodayAttendance = async (req, res) => {
       message: "Today's attendance fetched.",
       data: {
         attendanceStarted: true,
-        loginTime: record.loginTime,
+        loginTime: record.loginTime || record.startTime,
         logoutTime: record.logoutTime,
+        status: record.status || (record.logoutTime ? "Completed" : "Working"),
       }
     });
   } catch (error) {

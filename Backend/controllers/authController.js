@@ -142,8 +142,8 @@ exports.login = async (req, res) => {
     }
 
     // 3. Office IP Restriction Check (Option A: Regular employees restricted to office Wi-Fi)
-    // Enabled by default unless explicitly set to "false"
-    const ipRestrictionEnabled = process.env.ENABLE_IP_RESTRICTION !== "false";
+    // Only enforced if explicitly set to "true" in environment variables
+    const ipRestrictionEnabled = process.env.ENABLE_IP_RESTRICTION === "true";
     const clientIp = getClientIp(req);
     const isExempt = isExemptFromIpRestriction(employee.role);
     const isAllowed = isAllowedOfficeIp(clientIp);
@@ -177,11 +177,12 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    // Auto-create or update attendance on login (safely wrapped)
+    // Auto-create or reactivate attendance on login (safely wrapped)
+    let attendance = null;
     try {
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
-      let attendance = await Attendance.findOne({ employeeId: employee._id, date: { $gte: startOfDay } });
+      attendance = await Attendance.findOne({ employeeId: employee._id, date: { $gte: startOfDay } });
       if (!attendance) {
         attendance = new Attendance({
           employeeId: employee._id,
@@ -192,10 +193,28 @@ exports.login = async (req, res) => {
           managerName: employee.managerName || "",
           teamLeaderId: employee.teamLeaderId || "",
           teamLeaderName: employee.teamLeaderName || "",
-          date: new Date(),
+          date: startOfDay,
           loginTime: new Date(),
+          startTime: new Date(),
+          status: "Working",
+          logoutTime: null,
         });
         await attendance.save();
+      } else {
+        // If employee is logging in for the second time today after logging out,
+        // clear logoutTime so the session is active again
+        let needsSave = false;
+        if (attendance.logoutTime) {
+          attendance.logoutTime = null;
+          needsSave = true;
+        }
+        if (!attendance.status || attendance.status === "Completed") {
+          attendance.status = "Working";
+          needsSave = true;
+        }
+        if (needsSave) {
+          await attendance.save();
+        }
       }
     } catch (attErr) {
       console.warn("Could not log attendance during login:", attErr.message);
@@ -207,6 +226,7 @@ exports.login = async (req, res) => {
       message: "Login Success",
       employee: {
         id: employee._id,
+        _id: employee._id,
         fullName: employee.name,
         name: employee.name,
         email: employee.officialEmail,
@@ -215,6 +235,8 @@ exports.login = async (req, res) => {
         department: employee.department || "",
         employeeId: employee.employeeId,
       },
+      loginTime: attendance?.loginTime || new Date(),
+      attendanceId: attendance?._id,
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -275,10 +297,11 @@ exports.logout = async (req, res) => {
     });
 
     if (!attendance) {
-      return res.status(404).json({ success: false, message: "Attendance record not found for today" });
+      return res.status(200).json({ success: true, message: "No active attendance record found for today" });
     }
 
     attendance.logoutTime = new Date();
+    attendance.status = "Completed";
     await attendance.save();
 
     return res.json({ success: true, message: "Logout tracked successfully" });

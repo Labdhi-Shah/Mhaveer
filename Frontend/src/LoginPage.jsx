@@ -45,7 +45,10 @@ function Login() {
         if (data.employee) {
           // Employee / Manager Login
           const employeeData = {
-            fullName: data.employee.fullName,
+            id: data.employee.id || data.employee._id,
+            _id: data.employee.id || data.employee._id,
+            fullName: data.employee.fullName || data.employee.name,
+            name: data.employee.name || data.employee.fullName,
             role: data.employee.role,
             email: email, // use logged in email as official email fallback
             employeeId: data.employee.employeeId || ("EMP-" + Math.floor(100000 + Math.random() * 900000))
@@ -53,7 +56,9 @@ function Login() {
           localStorage.setItem("user", JSON.stringify(employeeData));
 
           // Start the working timer
-          if (!localStorage.getItem("loginTime")) {
+          if (data.loginTime) {
+            localStorage.setItem("loginTime", data.loginTime);
+          } else if (!localStorage.getItem("loginTime")) {
             localStorage.setItem("loginTime", new Date().toISOString());
           }
 

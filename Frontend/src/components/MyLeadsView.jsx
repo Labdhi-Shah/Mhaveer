@@ -231,7 +231,7 @@ export default function MyLeadsView() {
   const fetchLeads = async (showLoading = true) => {
     if (showLoading) setLoading(true);
     try {
-      const res = await api.get("/leads?limit=100");
+      const res = await api.get("/leads?limit=100000");
       if (res.data.success) {
         const ownLeads = res.data.data.map(lead => ({
           ...lead,
@@ -262,14 +262,7 @@ export default function MyLeadsView() {
           filtered = filtered.filter(lead => lead.interested === filterInterested);
         }
 
-        const limit = 10;
-        const pages = Math.ceil(filtered.length / limit) || 1;
-        setTotalPages(pages);
-
-        const startIndex = (page - 1) * limit;
-        const paginatedLeads = filtered.slice(startIndex, startIndex + limit);
-
-        setLeads(paginatedLeads);
+        setLeads(filtered);
       }
     } catch (err) {
       console.error(err);
@@ -281,7 +274,7 @@ export default function MyLeadsView() {
 
   useEffect(() => {
     fetchLeads();
-  }, [page, search, filterType, filterInterested]);
+  }, [search, filterType, filterInterested]);
 
   useEffect(() => {
     if (!socket.connected) {
@@ -699,31 +692,6 @@ export default function MyLeadsView() {
                 </tbody>
               </table>
             </div>
-
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between border-t border-slate-100 pt-4">
-                <p className="text-[10px] text-slate-400 font-extrabold uppercase">
-                  Page {page} of {totalPages}
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    disabled={page === 1}
-                    onClick={() => setPage(page - 1)}
-                    className="px-3.5 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 disabled:opacity-40 hover:bg-slate-50 transition"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    disabled={page === totalPages}
-                    onClick={() => setPage(page + 1)}
-                    className="px-3.5 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 disabled:opacity-40 hover:bg-slate-50 transition"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>

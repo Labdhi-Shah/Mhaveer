@@ -167,12 +167,17 @@ exports.getLeads = async (req, res) => {
       }
     }
 
-    // Pagination
+    // Pagination / Fetch All
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    const isAll = req.query.limit === "all" || req.query.limit === "0" || parseInt(req.query.limit) >= 10000;
+    const limit = isAll ? 0 : (parseInt(req.query.limit) || 10);
+    const skip = isAll ? 0 : (page - 1) * limit;
 
-    let leads = await Lead.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
+    let queryBuilder = Lead.find(query).sort({ createdAt: -1 });
+    if (!isAll && limit > 0) {
+      queryBuilder = queryBuilder.skip(skip).limit(limit);
+    }
+    let leads = await queryBuilder.lean();
 
     // Enrich any lead that might be missing employeeName or officialEmail
     const missingEmpIds = [
@@ -219,7 +224,7 @@ exports.getLeads = async (req, res) => {
     }
 
     const total = await Lead.countDocuments(query);
-    const pages = Math.ceil(total / limit);
+    const pages = limit > 0 ? Math.ceil(total / limit) : 1;
     
     res.status(200).json({
       success: true,

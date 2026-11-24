@@ -112,6 +112,7 @@ export default function EmployeeDashboard() {
   // Card Details Popup Modal State
   const [cardModal, setCardModal] = useState(null); // null | "todaysCalls" | "interestedLeads" | "pendingFollowUps" | "todaysMeetings"
   const [modalSearch, setModalSearch] = useState("");
+  const [modalDate, setModalDate] = useState("");
   const [modalPage, setModalPage] = useState(1);
   const [modalPageSize, setModalPageSize] = useState(10);
   const [modalExporting, setModalExporting] = useState(false);
@@ -150,6 +151,26 @@ export default function EmployeeDashboard() {
     } catch (e) {
       return false;
     }
+  };
+
+  const matchesDate = (val, targetDateStr) => {
+    if (!targetDateStr) return true;
+    if (!val) return false;
+    if (typeof val === "string" && val.startsWith(targetDateStr)) return true;
+    try {
+      const d = new Date(val);
+      if (isNaN(d.getTime())) return false;
+      const utcStr = d.toISOString().split("T")[0];
+      if (utcStr === targetDateStr) return true;
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      const localStr = `${year}-${month}-${day}`;
+      if (localStr === targetDateStr) return true;
+    } catch {
+      return false;
+    }
+    return false;
   };
 
   // Filter allLeads for specific card category
@@ -223,6 +244,7 @@ export default function EmployeeDashboard() {
   const handleOpenCardModal = (cardId) => {
     setCardModal(cardId);
     setModalSearch("");
+    setModalDate("");
     setModalPage(1);
     setModalPageSize(10);
   };
@@ -401,6 +423,10 @@ export default function EmployeeDashboard() {
   // Card Modal Derived Filtered Leads
   const cardLeadsRaw = cardModal ? getCardLeads(cardModal) : [];
   const cardLeadsFiltered = cardLeadsRaw.filter((lead) => {
+    if (modalDate) {
+      if (cardModal === "pendingFollowUps" && !matchesDate(lead.followUpDate, modalDate)) return false;
+      if (cardModal === "todaysMeetings" && !matchesDate(lead.meetingDate, modalDate)) return false;
+    }
     if (!modalSearch.trim()) return true;
     const q = modalSearch.toLowerCase().trim();
     return (
@@ -955,25 +981,56 @@ export default function EmployeeDashboard() {
 
               {/* Search & Filter Toolbar */}
               <div className="bg-slate-50 border-b border-slate-200 px-6 py-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
-                <div className="relative flex-1 max-w-md">
-                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    value={modalSearch}
-                    onChange={(e) => {
-                      setModalSearch(e.target.value);
-                      setModalPage(1);
-                    }}
-                    placeholder="Search by client name, company, phone, loan type, caller..."
-                    className="w-full pl-10 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-[#162335] focus:ring-1 focus:ring-[#162335] transition"
-                  />
-                  {modalSearch && (
-                    <button
-                      onClick={() => setModalSearch("")}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
-                    >
-                      <X size={14} />
-                    </button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1 max-w-xl">
+                  <div className="relative flex-1 min-w-[220px]">
+                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={modalSearch}
+                      onChange={(e) => {
+                        setModalSearch(e.target.value);
+                        setModalPage(1);
+                      }}
+                      placeholder="Search by client name, company, phone, loan type, caller..."
+                      className="w-full pl-10 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-[#162335] focus:ring-1 focus:ring-[#162335] transition"
+                    />
+                    {modalSearch && (
+                      <button
+                        onClick={() => setModalSearch("")}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  {(cardModal === "pendingFollowUps" || cardModal === "todaysMeetings") && (
+                    <div className="relative flex items-center min-w-[155px]">
+                      <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      <input
+                        type="date"
+                        value={modalDate}
+                        onChange={(e) => {
+                          setModalDate(e.target.value);
+                          setModalPage(1);
+                        }}
+                        title={cardModal === "pendingFollowUps" ? "Filter by Follow-up Date" : "Filter by Meeting Date"}
+                        className="w-full pl-10 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-[#162335] focus:ring-1 focus:ring-[#162335] transition cursor-pointer"
+                      />
+                      {modalDate && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModalDate("");
+                            setModalPage(1);
+                          }}
+                          title="Clear date filter"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
 

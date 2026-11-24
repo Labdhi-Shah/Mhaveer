@@ -50,6 +50,44 @@ const getTurnoverInINR = (amount, unit) => {
   return Math.round(inr);
 };
 
+const parseDateToYYYYMMDD = (val) => {
+  if (!val) return "";
+  if (typeof val === "string") {
+    const s = val.trim();
+    const isoMatch = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (isoMatch) {
+      return `${isoMatch[1]}-${isoMatch[2].padStart(2, "0")}-${isoMatch[3].padStart(2, "0")}`;
+    }
+    const dmyMatch = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+    if (dmyMatch) {
+      return `${dmyMatch[3]}-${dmyMatch[2].padStart(2, "0")}-${dmyMatch[1].padStart(2, "0")}`;
+    }
+  }
+  try {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+  } catch {}
+  return "";
+};
+
+const matchesFollowUpDate = (val, targetDateStr) => {
+  if (!targetDateStr) return true;
+  if (!val) return false;
+  const parsed = parseDateToYYYYMMDD(val);
+  if (parsed && parsed === targetDateStr) return true;
+  if (typeof val === "string" && val.startsWith(targetDateStr)) return true;
+  try {
+    const d = new Date(val);
+    if (!isNaN(d.getTime()) && d.toISOString().split("T")[0] === targetDateStr) return true;
+  } catch {}
+  return false;
+};
+
 export default function FollowUpView() {
   const { user } = useAuth();
   const role = getUserRole(user);
@@ -59,6 +97,7 @@ export default function FollowUpView() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState("All");
+  const [selectedDate, setSelectedDate] = useState("");
   const [toast, setToast] = useState(null);
 
   // Modals state
@@ -106,10 +145,22 @@ export default function FollowUpView() {
         const ownStats = { todaysCalls: 0, interestedLeads: 0, pendingFollowUps: 0, todaysMeetings: 0 };
         const { leads: mergedLeads } = await getMergedLeadsAndStats(user, ownLeads, ownStats);
 
-        // Filter only leads pending follow-up (Call Back Later or Busy) that haven't been completed
-        const followUpLeads = mergedLeads.filter(
-          lead => (lead.interested === "Call Back Later" || lead.callStatus === "Busy") && lead.interested !== "Yes" && lead.interested !== "No"
-        );
+        // Filter all pending follow-up leads (scheduled follow-up date, call back later, or busy)
+        const followUpLeads = mergedLeads.filter(lead => {
+          if (!lead) return false;
+          // Exclude explicitly dropped leads with no follow-up scheduled
+          if (lead.interested === "No" && !lead.followUpDate) return false;
+          // Any lead with a follow-up scheduled or marked call back / busy
+          if (Boolean(lead.followUpDate)) return true;
+          const intStatus = String(lead.interested || "").toLowerCase();
+          const callStat = String(lead.callStatus || "").toLowerCase();
+          return (
+            intStatus.includes("call back") ||
+            intStatus.includes("callback") ||
+            intStatus.includes("follow") ||
+            callStat === "busy"
+          );
+        });
         setLeads(followUpLeads);
       }
     } catch (err) {
@@ -429,6 +480,9 @@ export default function FollowUpView() {
     if (selectedEmployee !== "All" && emp.name !== selectedEmployee) {
       return false;
     }
+    if (selectedDate && !matchesFollowUpDate(lead.followUpDate, selectedDate)) {
+      return false;
+    }
     if (!search) return true;
     const s = search.toLowerCase();
     return (
@@ -487,8 +541,8 @@ export default function FollowUpView() {
           </p>
         </div>
 
-        {/* Search & Employee Filter */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 min-w-[280px]">
+        {/* Search, Date & Employee Filter Controls */}
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 min-w-[280px]">
           {/* Employee Filter */}
           {employeeOptions.length > 0 && (
             <div className="relative">
@@ -511,8 +565,30 @@ export default function FollowUpView() {
             </div>
           )}
 
+          {/* Date Filter Box */}
+          <div className="relative flex items-center min-w-[155px]">
+            <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              title="Filter by Follow-up Date"
+              className="w-full sm:w-auto pl-10 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 outline-none focus:border-[#162335] focus:bg-white transition cursor-pointer"
+            />
+            {selectedDate && (
+              <button
+                type="button"
+                onClick={() => setSelectedDate("")}
+                title="Clear date filter"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
           {/* Search */}
-          <div className="relative flex-1 min-w-[220px]">
+          <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input
               type="text"
@@ -527,6 +603,23 @@ export default function FollowUpView() {
               </button>
             )}
           </div>
+
+          {/* Reset Filters Button */}
+          {(search || selectedDate || (employeeOptions.length > 0 && selectedEmployee !== "All")) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setSelectedDate("");
+                setSelectedEmployee("All");
+              }}
+              className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/80 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              title="Reset all filters"
+            >
+              <X size={14} />
+              <span>Reset</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -541,8 +634,23 @@ export default function FollowUpView() {
           <Clock className="mx-auto text-slate-300" size={40} />
           <p className="font-bold text-slate-600 text-sm">No pending follow-ups found</p>
           <p className="text-slate-400">
-            {search ? "No follow-up leads matched your search query." : "All follow-ups have been completed. Excellent work!"}
+            {search || selectedDate || selectedEmployee !== "All"
+              ? "No follow-up leads matched your filters."
+              : "All follow-ups have been completed. Excellent work!"}
           </p>
+          {(search || selectedDate || selectedEmployee !== "All") && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setSelectedDate("");
+                setSelectedEmployee("All");
+              }}
+              className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer"
+            >
+              Reset Filters
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

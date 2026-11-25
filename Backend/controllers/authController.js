@@ -141,10 +141,8 @@ exports.login = async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid Email, ID, or Password" });
     }
 
-    /*
-    // 3. Office IP Restriction Check (Option A: Regular employees restricted to office Wi-Fi)
-    // TEMPORARILY DISABLED: Allow employees to log in from any network temporarily
-    const ipRestrictionEnabled = process.env.ENABLE_IP_RESTRICTION === "true";
+    // 3. Office IP Restriction Check (Enforced for Employee Panel login only; Managers and Admins are exempt)
+    const ipRestrictionEnabled = process.env.ENABLE_IP_RESTRICTION !== "false";
     const clientIp = getClientIp(req);
     const isExempt = isExemptFromIpRestriction(employee.role);
     const isAllowed = isAllowedOfficeIp(clientIp);
@@ -164,7 +162,6 @@ exports.login = async (req, res) => {
         });
       }
     }
-    */
 
     const token = jwt.sign(
       {

@@ -5,7 +5,7 @@ import {
   Phone, Calendar, Clock, DollarSign, Award, Briefcase, User,
   MapPin, CheckCircle, AlertCircle, Loader2, ArrowRight, ArrowLeft, Eye, Edit2, Trash2, X,
   Building2, Home, Landmark, RefreshCw, FileText, Check, ShieldCheck, FileSpreadsheet,
-  Search, ChevronLeft, ChevronRight
+  Search, ChevronLeft, ChevronRight, ThumbsDown
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { downloadXLSX } from "../utils/fileDownloader";
@@ -90,6 +90,7 @@ export default function EmployeeDashboard() {
   const [stats, setStats] = useState({
     todaysCalls: 0,
     interestedLeads: 0,
+    notInterestedLeads: 0,
     pendingFollowUps: 0,
     todaysMeetings: 0
   });
@@ -181,6 +182,9 @@ export default function EmployeeDashboard() {
         return allLeads.filter(l => isSameDayOrToday(l.updatedAt) || isSameDayOrToday(l.createdAt));
       case "interestedLeads":
         return allLeads.filter(l => l.interested === "Yes" || l.status === "Interested");
+      case "notInterested":
+      case "notInterestedLeads":
+        return allLeads.filter(l => l.interested === "No" || l.interested === "Not Interested" || l.status === "Not Interested");
       case "pendingFollowUps":
         return allLeads.filter(l => l.interested === "Call Back Later" || l.callStatus === "Busy" || Boolean(l.followUpDate));
       case "todaysMeetings":
@@ -213,6 +217,18 @@ export default function EmployeeDashboard() {
           badgeBg: "bg-emerald-100 text-emerald-800 border-emerald-200",
           icon: <Award size={22} />,
           filename: "Interested_Leads"
+        };
+      case "notInterested":
+      case "notInterestedLeads":
+        return {
+          id: "notInterested",
+          title: "Not Interested Leads",
+          subtitle: "All clients and leads marked as not interested in loan services",
+          color: "text-rose-600",
+          iconBg: "bg-rose-500/20 text-rose-300",
+          badgeBg: "bg-rose-100 text-rose-800 border-rose-200",
+          icon: <ThumbsDown size={22} />,
+          filename: "Not_Interested_Leads"
         };
       case "pendingFollowUps":
         return {
@@ -256,6 +272,9 @@ export default function EmployeeDashboard() {
         return allLeads.filter(l => isSameDayOrToday(l.updatedAt) || isSameDayOrToday(l.createdAt));
       case "interestedLeads":
         return allLeads.filter(l => l.interested === "Yes" || l.status === "Interested");
+      case "notInterested":
+      case "notInterestedLeads":
+        return allLeads.filter(l => l.interested === "No" || l.interested === "Not Interested" || l.status === "Not Interested");
       case "pendingFollowUps":
         return allLeads.filter(l => l.interested === "Call Back Later" || l.callStatus === "Busy" || Boolean(l.followUpDate));
       case "todaysMeetings":
@@ -281,6 +300,14 @@ export default function EmployeeDashboard() {
           badge: "Interested Leads",
           badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200",
           filename: "Interested_Leads"
+        };
+      case "notInterested":
+      case "notInterestedLeads":
+        return {
+          title: "Not Interested Leads Details",
+          badge: "Not Interested",
+          badgeColor: "bg-rose-100 text-rose-800 border-rose-200",
+          filename: "Not_Interested_Leads"
         };
       case "pendingFollowUps":
         return {
@@ -549,7 +576,7 @@ export default function EmployeeDashboard() {
         api.get("/leads?limit=2000")
       ]);
 
-      const ownStats = statsRes.data.success ? statsRes.data.data : { todaysCalls: 0, interestedLeads: 0, pendingFollowUps: 0, todaysMeetings: 0 };
+      const ownStats = statsRes.data.success ? statsRes.data.data : { todaysCalls: 0, interestedLeads: 0, notInterestedLeads: 0, pendingFollowUps: 0, todaysMeetings: 0 };
       const ownLeadsRaw = leadsRes.data.success ? leadsRes.data.data : [];
       const ownLeads = ownLeadsRaw.map(lead => ({
         ...lead,
@@ -598,7 +625,8 @@ export default function EmployeeDashboard() {
           setStats((prev) => ({
             ...prev,
             todaysCalls: (prev.todaysCalls || 0) + 1,
-            interestedLeads: (lead.status === "Interested" || lead.interested) ? (prev.interestedLeads || 0) + 1 : prev.interestedLeads
+            interestedLeads: (lead.status === "Interested" || lead.interested === "Yes") ? (prev.interestedLeads || 0) + 1 : prev.interestedLeads,
+            notInterestedLeads: (lead.status === "Not Interested" || lead.interested === "No" || lead.interested === "Not Interested") ? (prev.notInterestedLeads || 0) + 1 : prev.notInterestedLeads
           }));
         } else if (payload.action === "delete" && payload.id) {
           setAllLeads((prev) => prev.filter((l) => l._id !== payload.id));
@@ -690,7 +718,7 @@ export default function EmployeeDashboard() {
 
       {/* Top Welcome Card removed as requested */}
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-6">
         {[
           {
             id: "todaysCalls",
@@ -709,6 +737,15 @@ export default function EmployeeDashboard() {
             iconBg: "bg-emerald-50 text-emerald-600",
             icon: <Award size={22} />,
             subtitle: "Click to view interested leads"
+          },
+          {
+            id: "notInterested",
+            title: "Not Interested",
+            value: stats.notInterestedLeads !== undefined ? stats.notInterestedLeads : getCardLeads("notInterested").length,
+            color: "border-t-rose-500",
+            iconBg: "bg-rose-50 text-rose-600",
+            icon: <ThumbsDown size={22} />,
+            subtitle: "Click to view not interested leads"
           },
           {
             id: "pendingFollowUps",
@@ -1086,6 +1123,7 @@ export default function EmployeeDashboard() {
                             {cardModal === "todaysMeetings" ? "MEETING TIME" :
                              cardModal === "pendingFollowUps" ? "FOLLOW-UP" :
                              cardModal === "interestedLeads" ? "INTERESTED" :
+                             cardModal === "notInterested" ? "NOT INTERESTED" :
                              "CALL STATUS"}
                           </th>
                           <th className="py-3 px-4">EMPLOYEE (CALLER)</th>
@@ -1141,6 +1179,10 @@ export default function EmployeeDashboard() {
                                 ) : cardModal === "interestedLeads" ? (
                                   <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-black">
                                     {lead.interested || "Yes"}
+                                  </span>
+                                ) : cardModal === "notInterested" ? (
+                                  <span className="px-2.5 py-1 bg-rose-100 text-rose-800 rounded-full text-[10px] font-black">
+                                    {lead.interested || "No"}
                                   </span>
                                 ) : (
                                   <span className={`px-2.5 py-1 rounded-full text-[10px] font-black ${

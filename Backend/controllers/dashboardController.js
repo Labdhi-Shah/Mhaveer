@@ -68,11 +68,21 @@ exports.getDashboardStats = async (req, res) => {
         }
       });
 
+      const notInterestedLeads = await Lead.countDocuments({
+        ...filter,
+        $or: [
+          { interested: "No" },
+          { interested: "Not Interested" },
+          { status: "Not Interested" }
+        ]
+      });
+
       return res.json({
         success: true,
         data: {
           todaysCalls,
           interestedLeads,
+          notInterestedLeads,
           pendingFollowUps,
           todaysMeetings,
           totalLeads

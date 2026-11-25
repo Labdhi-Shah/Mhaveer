@@ -25,21 +25,16 @@ const normalizeIp = (rawIp) => {
 
   clean = clean.toLowerCase();
 
-  // Use ipaddr.js to canonicalize standard representation (e.g. leading zero elimination in IPv6)
-  try {
-    const ipaddr = require("ipaddr.js");
-    if (ipaddr.isValid(clean)) {
-      const parsed = ipaddr.parse(clean);
-      if (parsed.kind() === "ipv6") {
-        if (parsed.isIPv4MappedAddress()) {
-          return parsed.toIPv4Address().toString();
-        }
-        return parsed.toNormalizedString();
-      }
-      return parsed.toString();
-    }
-  } catch (e) {
-    // Continue with basic normalized clean string if ipaddr.js not available
+  // Canonicalize IPv6 hex blocks by removing leading zeros in each block (e.g. 0a00 -> a00, 0403 -> 403)
+  if (clean.includes(":")) {
+    clean = clean
+      .split(":")
+      .map((block) => {
+        if (!block) return "";
+        const num = parseInt(block, 16);
+        return isNaN(num) ? block : num.toString(16);
+      })
+      .join(":");
   }
 
   return clean;
@@ -52,8 +47,23 @@ const getClientIp = (req) => {
     return normalizeIp(cfIp);
   }
 
-  // 2. Verified client IP from Express trusted proxy configuration (e.g. Render load balancer)
-  // Express trusted proxy resolves the real client IP without trusting arbitrary forwarded headers
+  // 2. Real-IP header from edge reverse proxy (e.g. Render / Nginx)
+  const realIp = req.headers["x-real-ip"];
+  if (realIp && typeof realIp === "string" && realIp.trim()) {
+    return normalizeIp(realIp);
+  }
+
+  // 3. Reverse proxy X-Forwarded-For (client public IP is the first entry in proxy chain)
+  const forwarded = req.headers["x-forwarded-for"];
+  if (forwarded) {
+    if (typeof forwarded === "string" && forwarded.trim()) {
+      return normalizeIp(forwarded.split(",")[0].trim());
+    } else if (Array.isArray(forwarded) && forwarded.length > 0) {
+      return normalizeIp(String(forwarded[0]).split(",")[0].trim());
+    }
+  }
+
+  // 4. Express req.ip or socket remote address (for direct local connections)
   const rawIp = req.ip || req.socket?.remoteAddress || "";
   return normalizeIp(rawIp);
 };

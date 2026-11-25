@@ -3,43 +3,114 @@ const bcrypt = require("bcryptjs");
 const Employee = require("../models/Employee");
 const Attendance = require("../models/Attendance");
 
-// Helper to extract real client IP across direct connections, local network, and reverse proxies (e.g. Render, Cloudflare)
-const getClientIp = (req) => {
-  let ip =
-    req.headers["cf-connecting-ip"] ||
-    (req.headers["x-forwarded-for"] ? req.headers["x-forwarded-for"].split(",")[0].trim() : null) ||
-    req.headers["x-real-ip"] ||
-    req.socket?.remoteAddress ||
-    req.ip ||
-    "";
+// Helper to extract and normalize real client IP across direct connections, local network, and reverse proxies
+const normalizeIp = (rawIp) => {
+  if (!rawIp || typeof rawIp !== "string") return "";
+  let clean = rawIp.trim();
+  // Strip bracketed IPv6 notation e.g. [2409:40c1:...]:port or [2409:40c1:...]
+  if (clean.startsWith("[") && clean.includes("]")) {
+    clean = clean.slice(1, clean.indexOf("]"));
+  }
+  // Strip IPv4-mapped IPv6 prefix
+  if (clean.toLowerCase().startsWith("::ffff:")) {
+    clean = clean.slice(7);
+  }
+  // Strip IPv4 port if present (e.g. 103.86.19.253:49152)
+  if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+$/.test(clean)) {
+    clean = clean.split(":")[0];
+  }
+  return clean.toLowerCase();
+};
 
-  if (typeof ip === "string") {
-    ip = ip.trim();
-    if (ip.startsWith("::ffff:")) {
-      ip = ip.replace("::ffff:", "");
+const getClientIp = (req) => {
+  const forwardedHeader = req.headers["x-forwarded-for"];
+  let forwardedFirst = null;
+  if (forwardedHeader) {
+    if (Array.isArray(forwardedHeader)) {
+      forwardedFirst = forwardedHeader[0]?.split(",")[0]?.trim();
+    } else if (typeof forwardedHeader === "string") {
+      forwardedFirst = forwardedHeader.split(",")[0]?.trim();
     }
   }
-  return ip;
+
+  const rawIp =
+    req.headers["cf-connecting-ip"] ||
+    req.headers["true-client-ip"] ||
+    forwardedFirst ||
+    req.headers["x-real-ip"] ||
+    req.headers["x-client-ip"] ||
+    (Array.isArray(req.ips) && req.ips.length > 0 ? req.ips[0] : null) ||
+    req.ip ||
+    req.socket?.remoteAddress ||
+    "";
+
+  return normalizeIp(rawIp);
 };
 
 // Helper to check if the detected IP matches allowed office IP addresses
-const isAllowedOfficeIp = (clientIp) => {
-  if (!clientIp) return false;
+const isAllowedOfficeIp = (clientIp, req = null) => {
+  if (!clientIp && !req) return false;
 
-  // Always allow local development and testing
-  if (clientIp === "127.0.0.1" || clientIp === "::1" || clientIp === "localhost") {
+  const rawAllowed =
+    process.env.ALLOWED_OFFICE_IPS ||
+    "103.86.19.253,103.86.19,2409:40c1:57:3aba,2409:40c1,2402:a00:403:3847,2402:a00,10.145,192.168.1,192.168.29";
+  const allowedList = rawAllowed
+    .split(",")
+    .map((item) => normalizeIp(item))
+    .filter(Boolean);
+
+  const matchesCandidate = (ip) => {
+    if (!ip) return false;
+    const normalized = normalizeIp(ip);
+    if (!normalized) return false;
+
+    // Always allow local development and testing
+    if (normalized === "127.0.0.1" || normalized === "::1" || normalized === "localhost") {
+      return true;
+    }
+
+    return allowedList.some((allowed) => {
+      return normalized === allowed || normalized.startsWith(allowed);
+    });
+  };
+
+  // Test primary clientIp first
+  if (clientIp && matchesCandidate(clientIp)) {
     return true;
   }
 
-  const rawAllowed = process.env.ALLOWED_OFFICE_IPS || "103.86.19.253,2402:a00:403:3847";
-  const allowedList = rawAllowed
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
+  // If request object is passed, also check all candidate headers in case of proxy chaining
+  if (req) {
+    const candidateHeaders = [
+      req.headers["cf-connecting-ip"],
+      req.headers["true-client-ip"],
+      req.headers["x-real-ip"],
+      req.headers["x-client-ip"],
+      req.ip,
+      req.socket?.remoteAddress,
+    ];
 
-  return allowedList.some((allowed) => {
-    return clientIp === allowed || clientIp.startsWith(allowed);
-  });
+    const forwarded = req.headers["x-forwarded-for"];
+    if (typeof forwarded === "string") {
+      forwarded.split(",").forEach((p) => candidateHeaders.push(p.trim()));
+    } else if (Array.isArray(forwarded)) {
+      forwarded.forEach((f) => {
+        if (typeof f === "string") f.split(",").forEach((p) => candidateHeaders.push(p.trim()));
+      });
+    }
+
+    if (Array.isArray(req.ips)) {
+      req.ips.forEach((ip) => candidateHeaders.push(ip));
+    }
+
+    for (const cand of candidateHeaders) {
+      if (matchesCandidate(cand)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 };
 
 // Roles exempt from IP restriction (Option A: Admins and Managers can log in from anywhere)
@@ -145,7 +216,7 @@ exports.login = async (req, res) => {
     const ipRestrictionEnabled = process.env.ENABLE_IP_RESTRICTION !== "false";
     const clientIp = getClientIp(req);
     const isExempt = isExemptFromIpRestriction(employee.role);
-    const isAllowed = isAllowedOfficeIp(clientIp);
+    const isAllowed = isAllowedOfficeIp(clientIp, req);
 
     console.log(
       `[AUTH IP CHECK] User: ${employee.officialEmail} | Role: ${employee.role} | Detected IP: "${clientIp}" | Exempt: ${isExempt} | IP Allowed: ${isAllowed} | Enforced: ${ipRestrictionEnabled}`

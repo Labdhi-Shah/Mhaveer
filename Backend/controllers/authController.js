@@ -71,13 +71,15 @@ const getClientIp = (req) => {
 // Hardcoded authorized Office public IP addresses and subnets (guarantees both office networks are accepted even if .env is missing or not reloaded)
 const AUTHORIZED_OFFICE_IPS = [
   "103.86.19.253",       // Authorized Office IP 1 (Office Static IPv4)
-  "43.250.158.118",      // Authorized Office IP 2 (Active Office Wi-Fi IPv4 from screenshot)
-  "103.249.233.144",     // Authorized Office IP (Office Wi-Fi IPv4)
-  "43.242.116.119",      // Authorized Office IP (Office Gateway IPv4)
-  "43.250.158",          // Office GTPL /24 Subnet prefix
+  "43.242.116.119",      // Authorized Office IP 2 (Office Wi-Fi Gateway IPv4)
+  "103.240.204.78",      // Active Office Wi-Fi IPv4 (from screenshot)
+  "43.250.158.118",      // Office Wi-Fi IPv4 (from desktop)
+  "103.249.233.144",     // Office Wi-Fi IPv4 (from mobile)
   "103.86.19",           // Office GTPL /24 Subnet prefix
-  "103.249.233",         // Office GTPL /24 Subnet prefix
   "43.242.116",          // Office GTPL /24 Subnet prefix
+  "103.240.204",         // Office GTPL /24 Subnet prefix
+  "43.250.158",          // Office GTPL /24 Subnet prefix
+  "103.249.233",         // Office GTPL /24 Subnet prefix
   "2402:a00:403:3847",   // Office IPv6 primary subnet prefix
   "2409:40c1:57:3aba",   // Office IPv6 secondary subnet prefix
 ];

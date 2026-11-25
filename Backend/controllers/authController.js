@@ -68,11 +68,16 @@ const getClientIp = (req) => {
   return normalizeIp(rawIp);
 };
 
-// Hardcoded authorized Office public IP addresses (guarantees both office networks are accepted even if .env is missing or not reloaded)
+// Hardcoded authorized Office public IP addresses and subnets (guarantees both office networks are accepted even if .env is missing or not reloaded)
 const AUTHORIZED_OFFICE_IPS = [
   "103.86.19.253",       // Authorized Office IP 1 (Office Static IPv4)
-  "103.249.233.144",     // Authorized Office IP 2 (Active Office Wi-Fi IPv4)
+  "43.250.158.118",      // Authorized Office IP 2 (Active Office Wi-Fi IPv4 from screenshot)
+  "103.249.233.144",     // Authorized Office IP (Office Wi-Fi IPv4)
   "43.242.116.119",      // Authorized Office IP (Office Gateway IPv4)
+  "43.250.158",          // Office GTPL /24 Subnet prefix
+  "103.86.19",           // Office GTPL /24 Subnet prefix
+  "103.249.233",         // Office GTPL /24 Subnet prefix
+  "43.242.116",          // Office GTPL /24 Subnet prefix
   "2402:a00:403:3847",   // Office IPv6 primary subnet prefix
   "2409:40c1:57:3aba",   // Office IPv6 secondary subnet prefix
 ];
@@ -105,12 +110,20 @@ const isAllowedOfficeIp = (clientIp) => {
   );
 
   return allowedList.some((allowed) => {
-    // 1. Exact match (for IPv4 e.g. "103.86.19.253", "43.242.116.119" or full IPv6)
+    // 1. Exact match (for IPv4 e.g. "103.86.19.253", "43.250.158.118" or full IPv6)
     if (normalized === allowed) {
       return true;
     }
 
-    // 2. IPv6 subnet prefix match (for IPv6 subnet e.g. "2402:a00:403:3847")
+    // 2. IPv4 /24 subnet prefix match (e.g. "43.250.158", "103.86.19", "103.249.233", "43.242.116")
+    if (!allowed.includes(":") && !normalized.includes(":")) {
+      const allowedOctets = allowed.split(".");
+      if (allowedOctets.length === 3 && normalized.startsWith(allowed + ".")) {
+        return true;
+      }
+    }
+
+    // 3. IPv6 subnet prefix match (for IPv6 subnet e.g. "2402:a00:403:3847")
     // Ensures allowed prefix has at least 4 segments (64-bit prefix) and colon boundary
     if (allowed.includes(":") && normalized.includes(":")) {
       const allowedSegments = allowed.split(":").filter(Boolean);

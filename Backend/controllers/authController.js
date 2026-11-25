@@ -7,45 +7,54 @@ const Attendance = require("../models/Attendance");
 const normalizeIp = (rawIp) => {
   if (!rawIp || typeof rawIp !== "string") return "";
   let clean = rawIp.trim();
-  // Strip bracketed IPv6 notation e.g. [2409:40c1:...]:port or [2409:40c1:...]
+
+  // Strip bracketed IPv6 notation e.g. [2402:a00:403:3847:...]:port or [2402:a00:403:3847:...]
   if (clean.startsWith("[") && clean.includes("]")) {
     clean = clean.slice(1, clean.indexOf("]"));
   }
-  // Strip IPv4-mapped IPv6 prefix (e.g. ::ffff:103.86.19.253)
-  if (clean.toLowerCase().startsWith("::ffff:")) {
-    clean = clean.slice(7);
-  }
+
   // Strip IPv4 port if present (e.g. 103.86.19.253:49152)
   if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+$/.test(clean)) {
     clean = clean.split(":")[0];
   }
-  return clean.toLowerCase();
+
+  // Strip IPv4-mapped IPv6 prefix (e.g. ::ffff:103.86.19.253)
+  if (clean.toLowerCase().startsWith("::ffff:")) {
+    clean = clean.slice(7);
+  }
+
+  clean = clean.toLowerCase();
+
+  // Use ipaddr.js to canonicalize standard representation (e.g. leading zero elimination in IPv6)
+  try {
+    const ipaddr = require("ipaddr.js");
+    if (ipaddr.isValid(clean)) {
+      const parsed = ipaddr.parse(clean);
+      if (parsed.kind() === "ipv6") {
+        if (parsed.isIPv4MappedAddress()) {
+          return parsed.toIPv4Address().toString();
+        }
+        return parsed.toNormalizedString();
+      }
+      return parsed.toString();
+    }
+  } catch (e) {
+    // Continue with basic normalized clean string if ipaddr.js not available
+  }
+
+  return clean;
 };
 
 const getClientIp = (req) => {
   // 1. Cloudflare Edge header (tamper-proof when traffic routes through Cloudflare)
-  let rawIp = req.headers["cf-connecting-ip"];
-
-  // 2. Edge reverse proxy header (Render / Nginx overwrite x-real-ip with client's TCP address)
-  if (!rawIp) {
-    rawIp = req.headers["x-real-ip"];
+  const cfIp = req.headers["cf-connecting-ip"];
+  if (cfIp && typeof cfIp === "string" && cfIp.trim()) {
+    return normalizeIp(cfIp);
   }
 
-  // 3. Reverse proxy X-Forwarded-For
-  if (!rawIp) {
-    const forwarded = req.headers["x-forwarded-for"];
-    if (typeof forwarded === "string" && forwarded.trim()) {
-      rawIp = forwarded.split(",")[0].trim();
-    } else if (Array.isArray(forwarded) && forwarded.length > 0) {
-      rawIp = String(forwarded[0]).split(",")[0].trim();
-    }
-  }
-
-  // 4. Fallback to Express req.ip or socket remote address (for direct local development)
-  if (!rawIp) {
-    rawIp = req.ip || req.socket?.remoteAddress || "";
-  }
-
+  // 2. Verified client IP from Express trusted proxy configuration (e.g. Render load balancer)
+  // Express trusted proxy resolves the real client IP without trusting arbitrary forwarded headers
+  const rawIp = req.ip || req.socket?.remoteAddress || "";
   return normalizeIp(rawIp);
 };
 
@@ -56,14 +65,19 @@ const isAllowedOfficeIp = (clientIp) => {
   const normalized = normalizeIp(clientIp);
   if (!normalized) return false;
 
-  // Always allow local development and testing on localhost
-  if (normalized === "127.0.0.1" || normalized === "::1" || normalized === "localhost") {
+  // Always allow local development and testing on localhost / loopback
+  if (
+    normalized === "127.0.0.1" ||
+    normalized === "::1" ||
+    normalized === "0:0:0:0:0:0:0:1" ||
+    normalized === "localhost"
+  ) {
     return true;
   }
 
   const rawAllowed =
     process.env.ALLOWED_OFFICE_IPS ||
-    "103.86.19.253,2409:40c1:57:3aba,2402:a00:403:3847";
+    "103.86.19.253,2402:a00:403:3847";
 
   const allowedList = rawAllowed
     .split(",")
@@ -71,14 +85,13 @@ const isAllowedOfficeIp = (clientIp) => {
     .filter(Boolean);
 
   return allowedList.some((allowed) => {
-    // Exact match (e.g. IPv4 "103.86.19.253" or full IPv6)
+    // 1. Exact match (for IPv4 e.g. "103.86.19.253" or full IPv6)
     if (normalized === allowed) {
       return true;
     }
 
-    // IPv6 subnet prefix matching:
-    // Requires both to be IPv6 and allowed prefix to have at least 4 segments (/64 prefix)
-    // with colon delimiter to prevent matching broad ISP mobile data subnets
+    // 2. IPv6 subnet prefix match (for IPv6 subnet e.g. "2402:a00:403:3847")
+    // Ensures allowed prefix has at least 4 segments (64-bit prefix) and colon boundary
     if (allowed.includes(":") && normalized.includes(":")) {
       const allowedSegments = allowed.split(":").filter(Boolean);
       if (allowedSegments.length >= 4) {

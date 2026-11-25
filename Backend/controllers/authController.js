@@ -68,6 +68,13 @@ const getClientIp = (req) => {
   return normalizeIp(rawIp);
 };
 
+// Hardcoded authorized Office public IP addresses (guarantees both office networks are accepted even if .env is missing or not reloaded)
+const AUTHORIZED_OFFICE_IPS = [
+  "103.86.19.253",      // Office Static IPv4
+  "43.242.116.119",     // Office Wi-Fi Public IPv4
+  "2402:a00:403:3847",  // Office IPv6 prefix
+];
+
 // Helper to check if the detected IP matches allowed office IP addresses
 const isAllowedOfficeIp = (clientIp) => {
   if (!clientIp || typeof clientIp !== "string") return false;
@@ -85,17 +92,18 @@ const isAllowedOfficeIp = (clientIp) => {
     return true;
   }
 
-  const rawAllowed =
-    process.env.ALLOWED_OFFICE_IPS ||
-    "103.86.19.253,2402:a00:403:3847";
-
-  const allowedList = rawAllowed
+  const envAllowed = (process.env.ALLOWED_OFFICE_IPS || "")
     .split(",")
     .map((item) => normalizeIp(item))
     .filter(Boolean);
 
+  // Combine default authorized office IPs with any environment-configured IPs
+  const allowedList = Array.from(
+    new Set([...AUTHORIZED_OFFICE_IPS.map(normalizeIp), ...envAllowed])
+  );
+
   return allowedList.some((allowed) => {
-    // 1. Exact match (for IPv4 e.g. "103.86.19.253" or full IPv6)
+    // 1. Exact match (for IPv4 e.g. "103.86.19.253", "43.242.116.119" or full IPv6)
     if (normalized === allowed) {
       return true;
     }

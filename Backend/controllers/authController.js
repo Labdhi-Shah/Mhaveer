@@ -6,7 +6,7 @@ const Attendance = require("../models/Attendance");
 // Helper to extract and normalize real client IP across direct connections, local network, and reverse proxies
 const normalizeIp = (rawIp) => {
   if (!rawIp || typeof rawIp !== "string") return "";
-  let clean = rawIp.trim();
+  let clean = rawIp.trim().replace(/^['"]+|['"]+$/g, "");
 
   // Strip bracketed IPv6 notation e.g. [2402:a00:403:3847:...]:port or [2402:a00:403:3847:...]
   if (clean.startsWith("[") && clean.includes("]")) {
@@ -105,7 +105,11 @@ const isAllowedOfficeIp = (clientIp) => {
     if (allowed.includes(":") && normalized.includes(":")) {
       const allowedSegments = allowed.split(":").filter(Boolean);
       if (allowedSegments.length >= 4) {
-        return normalized.startsWith(allowed + ":") || normalized === allowed;
+        return (
+          normalized.startsWith(allowed + ":") ||
+          normalized.startsWith(allowed) ||
+          normalized === allowed
+        );
       }
     }
 

@@ -11,7 +11,7 @@ const normalizeIp = (rawIp) => {
   if (clean.startsWith("[") && clean.includes("]")) {
     clean = clean.slice(1, clean.indexOf("]"));
   }
-  // Strip IPv4-mapped IPv6 prefix
+  // Strip IPv4-mapped IPv6 prefix (e.g. ::ffff:103.86.19.253)
   if (clean.toLowerCase().startsWith("::ffff:")) {
     clean = clean.slice(7);
   }
@@ -23,94 +23,71 @@ const normalizeIp = (rawIp) => {
 };
 
 const getClientIp = (req) => {
-  const forwardedHeader = req.headers["x-forwarded-for"];
-  let forwardedFirst = null;
-  if (forwardedHeader) {
-    if (Array.isArray(forwardedHeader)) {
-      forwardedFirst = forwardedHeader[0]?.split(",")[0]?.trim();
-    } else if (typeof forwardedHeader === "string") {
-      forwardedFirst = forwardedHeader.split(",")[0]?.trim();
+  // 1. Cloudflare Edge header (tamper-proof when traffic routes through Cloudflare)
+  let rawIp = req.headers["cf-connecting-ip"];
+
+  // 2. Edge reverse proxy header (Render / Nginx overwrite x-real-ip with client's TCP address)
+  if (!rawIp) {
+    rawIp = req.headers["x-real-ip"];
+  }
+
+  // 3. Reverse proxy X-Forwarded-For
+  if (!rawIp) {
+    const forwarded = req.headers["x-forwarded-for"];
+    if (typeof forwarded === "string" && forwarded.trim()) {
+      rawIp = forwarded.split(",")[0].trim();
+    } else if (Array.isArray(forwarded) && forwarded.length > 0) {
+      rawIp = String(forwarded[0]).split(",")[0].trim();
     }
   }
 
-  const rawIp =
-    req.headers["cf-connecting-ip"] ||
-    req.headers["true-client-ip"] ||
-    forwardedFirst ||
-    req.headers["x-real-ip"] ||
-    req.headers["x-client-ip"] ||
-    (Array.isArray(req.ips) && req.ips.length > 0 ? req.ips[0] : null) ||
-    req.ip ||
-    req.socket?.remoteAddress ||
-    "";
+  // 4. Fallback to Express req.ip or socket remote address (for direct local development)
+  if (!rawIp) {
+    rawIp = req.ip || req.socket?.remoteAddress || "";
+  }
 
   return normalizeIp(rawIp);
 };
 
 // Helper to check if the detected IP matches allowed office IP addresses
-const isAllowedOfficeIp = (clientIp, req = null) => {
-  if (!clientIp && !req) return false;
+const isAllowedOfficeIp = (clientIp) => {
+  if (!clientIp || typeof clientIp !== "string") return false;
+
+  const normalized = normalizeIp(clientIp);
+  if (!normalized) return false;
+
+  // Always allow local development and testing on localhost
+  if (normalized === "127.0.0.1" || normalized === "::1" || normalized === "localhost") {
+    return true;
+  }
 
   const rawAllowed =
     process.env.ALLOWED_OFFICE_IPS ||
-    "103.86.19.253,103.86.19,2409:40c1:57:3aba,2409:40c1,2402:a00:403:3847,2402:a00,10.145,192.168.1,192.168.29";
+    "103.86.19.253,2409:40c1:57:3aba,2402:a00:403:3847";
+
   const allowedList = rawAllowed
     .split(",")
     .map((item) => normalizeIp(item))
     .filter(Boolean);
 
-  const matchesCandidate = (ip) => {
-    if (!ip) return false;
-    const normalized = normalizeIp(ip);
-    if (!normalized) return false;
-
-    // Always allow local development and testing
-    if (normalized === "127.0.0.1" || normalized === "::1" || normalized === "localhost") {
+  return allowedList.some((allowed) => {
+    // Exact match (e.g. IPv4 "103.86.19.253" or full IPv6)
+    if (normalized === allowed) {
       return true;
     }
 
-    return allowedList.some((allowed) => {
-      return normalized === allowed || normalized.startsWith(allowed);
-    });
-  };
-
-  // Test primary clientIp first
-  if (clientIp && matchesCandidate(clientIp)) {
-    return true;
-  }
-
-  // If request object is passed, also check all candidate headers in case of proxy chaining
-  if (req) {
-    const candidateHeaders = [
-      req.headers["cf-connecting-ip"],
-      req.headers["true-client-ip"],
-      req.headers["x-real-ip"],
-      req.headers["x-client-ip"],
-      req.ip,
-      req.socket?.remoteAddress,
-    ];
-
-    const forwarded = req.headers["x-forwarded-for"];
-    if (typeof forwarded === "string") {
-      forwarded.split(",").forEach((p) => candidateHeaders.push(p.trim()));
-    } else if (Array.isArray(forwarded)) {
-      forwarded.forEach((f) => {
-        if (typeof f === "string") f.split(",").forEach((p) => candidateHeaders.push(p.trim()));
-      });
-    }
-
-    if (Array.isArray(req.ips)) {
-      req.ips.forEach((ip) => candidateHeaders.push(ip));
-    }
-
-    for (const cand of candidateHeaders) {
-      if (matchesCandidate(cand)) {
-        return true;
+    // IPv6 subnet prefix matching:
+    // Requires both to be IPv6 and allowed prefix to have at least 4 segments (/64 prefix)
+    // with colon delimiter to prevent matching broad ISP mobile data subnets
+    if (allowed.includes(":") && normalized.includes(":")) {
+      const allowedSegments = allowed.split(":").filter(Boolean);
+      if (allowedSegments.length >= 4) {
+        return normalized.startsWith(allowed + ":") || normalized === allowed;
       }
     }
-  }
 
-  return false;
+    return false;
+  });
 };
 
 // Roles exempt from IP restriction (Option A: Admins and Managers can log in from anywhere)
@@ -216,7 +193,7 @@ exports.login = async (req, res) => {
     const ipRestrictionEnabled = process.env.ENABLE_IP_RESTRICTION !== "false";
     const clientIp = getClientIp(req);
     const isExempt = isExemptFromIpRestriction(employee.role);
-    const isAllowed = isAllowedOfficeIp(clientIp, req);
+    const isAllowed = isAllowedOfficeIp(clientIp);
 
     console.log(
       `[AUTH IP CHECK] User: ${employee.officialEmail} | Role: ${employee.role} | Detected IP: "${clientIp}" | Exempt: ${isExempt} | IP Allowed: ${isAllowed} | Enforced: ${ipRestrictionEnabled}`
@@ -229,7 +206,7 @@ exports.login = async (req, res) => {
         );
         return res.status(403).json({
           success: false,
-          message: `Access Denied: Logins are only permitted from the office Wi-Fi network. (Detected IP: ${clientIp || "Unknown"})`,
+          message: "Access Denied: Logins are only permitted from the office Wi-Fi network.",
         });
       }
     }

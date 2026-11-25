@@ -70,9 +70,11 @@ const getClientIp = (req) => {
 
 // Hardcoded authorized Office public IP addresses (guarantees both office networks are accepted even if .env is missing or not reloaded)
 const AUTHORIZED_OFFICE_IPS = [
-  "103.86.19.253",      // Office Static IPv4
-  "43.242.116.119",     // Office Wi-Fi Public IPv4
-  "2402:a00:403:3847",  // Office IPv6 prefix
+  "103.86.19.253",       // Authorized Office IP 1 (Office Static IPv4)
+  "103.249.233.144",     // Authorized Office IP 2 (Active Office Wi-Fi IPv4)
+  "43.242.116.119",      // Authorized Office IP (Office Gateway IPv4)
+  "2402:a00:403:3847",   // Office IPv6 primary subnet prefix
+  "2409:40c1:57:3aba",   // Office IPv6 secondary subnet prefix
 ];
 
 // Helper to check if the detected IP matches allowed office IP addresses
@@ -241,7 +243,7 @@ exports.login = async (req, res) => {
         );
         return res.status(403).json({
           success: false,
-          message: "Access Denied: Logins are only permitted from the office Wi-Fi network.",
+          message: `Access Denied: Logins are only permitted from the office Wi-Fi network. (Detected IP: ${clientIp || "Unknown"})`,
         });
       }
     }
